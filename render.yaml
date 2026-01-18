@@ -1,0 +1,90 @@
+# Render Blueprint for BidOps AI
+# This file defines all services needed for deployment on Render.com
+
+services:
+  # PostgreSQL Database (Free for 90 days)
+  - type: pserv
+    name: bidops-postgres
+    env: docker
+    plan: free
+    image:
+      url: postgres:16-alpine
+    envVars:
+      - key: POSTGRES_USER
+        value: bidops
+      - key: POSTGRES_PASSWORD
+        generateValue: true
+      - key: POSTGRES_DB
+        value: bidops
+    disk:
+      name: postgres-data
+      mountPath: /var/lib/postgresql/data
+      sizeGB: 1
+
+  # Redis Cache (Free for 90 days)
+  - type: pserv
+    name: bidops-redis
+    env: docker
+    plan: free
+    image:
+      url: redis:7-alpine
+    disk:
+      name: redis-data
+      mountPath: /data
+      sizeGB: 1
+
+  # FastAPI Backend
+  - type: web
+    name: bidops-api
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: bidops-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: pserv
+          name: bidops-redis
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: false
+      - key: GOOGLE_API_KEY
+        sync: false  # User will add this manually
+      - key: QDRANT_URL
+        value: ""  # Optional for demo
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: 8000
+
+  # React Frontend (Static Site)
+  - type: web
+    name: bidops-frontend
+    env: static
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    pullRequestPreviewsEnabled: true
+    rootDir: ./frontend
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: bidops-api
+          envVarKey: RENDER_EXTERNAL_URL
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://bidops-api.onrender.com/api/*
+      - type: rewrite
+        source: /*
+        destination: /index.html

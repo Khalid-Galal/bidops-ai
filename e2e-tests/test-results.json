@@ -1,0 +1,1717 @@
+{
+  "config": {
+    "configFile": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright.config.ts",
+    "rootDir": "D:/Work/intercom/intercom_projects/Hassan/bidops-ai/e2e-tests",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        {
+          "outputFolder": "playwright-report"
+        }
+      ],
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "D:/Work/intercom/intercom_projects/Hassan/bidops-ai/e2e-tests/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "D:/Work/intercom/intercom_projects/Hassan/bidops-ai/e2e-tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "D:/Work/intercom/intercom_projects/Hassan/bidops-ai/e2e-tests/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "D:/Work/intercom/intercom_projects/Hassan/bidops-ai/e2e-tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "D:/Work/intercom/intercom_projects/Hassan/bidops-ai/e2e-tests/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "D:/Work/intercom/intercom_projects/Hassan/bidops-ai/e2e-tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "D:/Work/intercom/intercom_projects/Hassan/bidops-ai/e2e-tests/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "Mobile Chrome",
+        "name": "Mobile Chrome",
+        "testDir": "D:/Work/intercom/intercom_projects/Hassan/bidops-ai/e2e-tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "D:/Work/intercom/intercom_projects/Hassan/bidops-ai/e2e-tests/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "Mobile Safari",
+        "name": "Mobile Safari",
+        "testDir": "D:/Work/intercom/intercom_projects/Hassan/bidops-ai/e2e-tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.57.0",
+    "workers": 4,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "playwright-tests.spec.ts",
+      "file": "playwright-tests.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Authentication",
+          "file": "playwright-tests.spec.ts",
+          "line": 37,
+          "column": 6,
+          "specs": [
+            {
+              "title": "TC001: User Login - Valid Credentials",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 22093,
+                      "error": {
+                        "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n",
+                        "stack": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:42:16",
+                        "location": {
+                          "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                          "column": 16,
+                          "line": 42
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 40 |\u001b[39m\n \u001b[90m 41 |\u001b[39m     \u001b[90m// Fill login form\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 42 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"email\"], input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 43 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"password\"], input[type=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 44 |\u001b[39m\n \u001b[90m 45 |\u001b[39m     \u001b[90m// Submit\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                            "column": 16,
+                            "line": 42
+                          },
+                          "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n\n  40 |\n  41 |     // Fill login form\n> 42 |     await page.fill('input[name=\"email\"], input[type=\"email\"]', TEST_USER.email);\n     |                ^\n  43 |     await page.fill('input[name=\"password\"], input[type=\"password\"]', TEST_USER.password);\n  44 |\n  45 |     // Submit\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:42:16"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-06T15:29:23.846Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Authentic-1c2b8-r-Login---Valid-Credentials-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Authentic-1c2b8-r-Login---Valid-Credentials-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Authentic-1c2b8-r-Login---Valid-Credentials-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                        "column": 16,
+                        "line": 42
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f09109970829b3d94727-2d01ac3310af627e19ad",
+              "file": "playwright-tests.spec.ts",
+              "line": 38,
+              "column": 7
+            },
+            {
+              "title": "TC002: User Login - Invalid Credentials",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 19478,
+                      "error": {
+                        "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n",
+                        "stack": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:60:16",
+                        "location": {
+                          "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                          "column": 16,
+                          "line": 60
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 58 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`${BASE_URL}/login`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 59 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 60 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"email\"], input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'invalid@test.com'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 61 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"password\"], input[type=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'wrongpassword'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 62 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button[type=\"submit\"]'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 63 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                            "column": 16,
+                            "line": 60
+                          },
+                          "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n\n  58 |     await page.goto(`${BASE_URL}/login`);\n  59 |\n> 60 |     await page.fill('input[name=\"email\"], input[type=\"email\"]', 'invalid@test.com');\n     |                ^\n  61 |     await page.fill('input[name=\"password\"], input[type=\"password\"]', 'wrongpassword');\n  62 |     await page.click('button[type=\"submit\"]');\n  63 |\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:60:16"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-06T15:29:50.433Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Authentic-7c792-Login---Invalid-Credentials-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Authentic-7c792-Login---Invalid-Credentials-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Authentic-7c792-Login---Invalid-Credentials-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                        "column": 16,
+                        "line": 60
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f09109970829b3d94727-936d507d03ad69e2325c",
+              "file": "playwright-tests.spec.ts",
+              "line": 57,
+              "column": 7
+            },
+            {
+              "title": "TC003: Protected Route Access Without Login",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 12956,
+                      "error": {
+                        "message": "TimeoutError: page.waitForURL: Timeout 10000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================",
+                        "stack": "TimeoutError: page.waitForURL: Timeout 10000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:87:16",
+                        "location": {
+                          "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                          "column": 16,
+                          "line": 87
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 85 |\u001b[39m\n \u001b[90m 86 |\u001b[39m     \u001b[90m// Should redirect to login\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 87 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForURL(\u001b[35m/\\/login/\u001b[39m\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 88 |\u001b[39m     expect(page\u001b[33m.\u001b[39murl())\u001b[33m.\u001b[39mtoContain(\u001b[32m'/login'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 89 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 90 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                            "column": 16,
+                            "line": 87
+                          },
+                          "message": "TimeoutError: page.waitForURL: Timeout 10000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================\n\n  85 |\n  86 |     // Should redirect to login\n> 87 |     await page.waitForURL(/\\/login/, { timeout: 10000 });\n     |                ^\n  88 |     expect(page.url()).toContain('/login');\n  89 |   });\n  90 |\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:87:16"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-06T15:30:12.674Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Authentic-7acd9--Route-Access-Without-Login-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Authentic-7acd9--Route-Access-Without-Login-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Authentic-7acd9--Route-Access-Without-Login-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                        "column": 16,
+                        "line": 87
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f09109970829b3d94727-5d9d854cfa2fd7761097",
+              "file": "playwright-tests.spec.ts",
+              "line": 75,
+              "column": 7
+            },
+            {
+              "title": "TC004: User Logout",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 17930,
+                      "error": {
+                        "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n",
+                        "stack": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:93:5",
+                        "location": {
+                          "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                          "column": 14,
+                          "line": 21
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 19 |\u001b[39m \u001b[36masync\u001b[39m \u001b[36mfunction\u001b[39m login(page\u001b[33m:\u001b[39m \u001b[33mPage\u001b[39m) {\n \u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`${BASE_URL}/login`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"email\"], input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"password\"], input[type=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 24 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForURL(\u001b[32m`${BASE_URL}/`\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                            "column": 14,
+                            "line": 21
+                          },
+                          "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n\n  19 | async function login(page: Page) {\n  20 |   await page.goto(`${BASE_URL}/login`);\n> 21 |   await page.fill('input[name=\"email\"], input[type=\"email\"]', TEST_USER.email);\n     |              ^\n  22 |   await page.fill('input[name=\"password\"], input[type=\"password\"]', TEST_USER.password);\n  23 |   await page.click('button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")');\n  24 |   await page.waitForURL(`${BASE_URL}/`);\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:93:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-06T15:30:28.528Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Authentication-TC004-User-Logout-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Authentication-TC004-User-Logout-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Authentication-TC004-User-Logout-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                        "column": 14,
+                        "line": 21
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f09109970829b3d94727-b1124f2aefe86a6a9da8",
+              "file": "playwright-tests.spec.ts",
+              "line": 91,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Dashboard",
+          "file": "playwright-tests.spec.ts",
+          "line": 111,
+          "column": 6,
+          "specs": [
+            {
+              "title": "TC005: Dashboard Data Display",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 18461,
+                      "error": {
+                        "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n",
+                        "stack": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:113:5",
+                        "location": {
+                          "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                          "column": 14,
+                          "line": 21
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 19 |\u001b[39m \u001b[36masync\u001b[39m \u001b[36mfunction\u001b[39m login(page\u001b[33m:\u001b[39m \u001b[33mPage\u001b[39m) {\n \u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`${BASE_URL}/login`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"email\"], input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"password\"], input[type=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 24 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForURL(\u001b[32m`${BASE_URL}/`\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                            "column": 14,
+                            "line": 21
+                          },
+                          "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n\n  19 | async function login(page: Page) {\n  20 |   await page.goto(`${BASE_URL}/login`);\n> 21 |   await page.fill('input[name=\"email\"], input[type=\"email\"]', TEST_USER.email);\n     |              ^\n  22 |   await page.fill('input[name=\"password\"], input[type=\"password\"]', TEST_USER.password);\n  23 |   await page.click('button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")');\n  24 |   await page.waitForURL(`${BASE_URL}/`);\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:113:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-06T15:30:49.848Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Dashboard-TC005-Dashboard-Data-Display-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Dashboard-TC005-Dashboard-Data-Display-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Dashboard-TC005-Dashboard-Data-Display-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                        "column": 14,
+                        "line": 21
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f09109970829b3d94727-45a7b76a813c2f1b4ba5",
+              "file": "playwright-tests.spec.ts",
+              "line": 116,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Project Management",
+          "file": "playwright-tests.spec.ts",
+          "line": 136,
+          "column": 6,
+          "specs": [
+            {
+              "title": "TC006: Create New Project",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 19300,
+                      "error": {
+                        "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n",
+                        "stack": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:138:5",
+                        "location": {
+                          "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                          "column": 14,
+                          "line": 21
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 19 |\u001b[39m \u001b[36masync\u001b[39m \u001b[36mfunction\u001b[39m login(page\u001b[33m:\u001b[39m \u001b[33mPage\u001b[39m) {\n \u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`${BASE_URL}/login`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"email\"], input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"password\"], input[type=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 24 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForURL(\u001b[32m`${BASE_URL}/`\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                            "column": 14,
+                            "line": 21
+                          },
+                          "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n\n  19 | async function login(page: Page) {\n  20 |   await page.goto(`${BASE_URL}/login`);\n> 21 |   await page.fill('input[name=\"email\"], input[type=\"email\"]', TEST_USER.email);\n     |              ^\n  22 |   await page.fill('input[name=\"password\"], input[type=\"password\"]', TEST_USER.password);\n  23 |   await page.click('button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")');\n  24 |   await page.waitForURL(`${BASE_URL}/`);\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:138:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-06T15:31:11.433Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Project-Management-TC006-Create-New-Project-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Project-Management-TC006-Create-New-Project-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Project-Management-TC006-Create-New-Project-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                        "column": 14,
+                        "line": 21
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f09109970829b3d94727-f5d3b65617149cdebfae",
+              "file": "playwright-tests.spec.ts",
+              "line": 141,
+              "column": 7
+            },
+            {
+              "title": "TC007: View Projects List",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 19372,
+                      "error": {
+                        "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n",
+                        "stack": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:138:5",
+                        "location": {
+                          "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                          "column": 14,
+                          "line": 21
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 19 |\u001b[39m \u001b[36masync\u001b[39m \u001b[36mfunction\u001b[39m login(page\u001b[33m:\u001b[39m \u001b[33mPage\u001b[39m) {\n \u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`${BASE_URL}/login`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"email\"], input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"password\"], input[type=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 24 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForURL(\u001b[32m`${BASE_URL}/`\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                            "column": 14,
+                            "line": 21
+                          },
+                          "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n\n  19 | async function login(page: Page) {\n  20 |   await page.goto(`${BASE_URL}/login`);\n> 21 |   await page.fill('input[name=\"email\"], input[type=\"email\"]', TEST_USER.email);\n     |              ^\n  22 |   await page.fill('input[name=\"password\"], input[type=\"password\"]', TEST_USER.password);\n  23 |   await page.click('button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")');\n  24 |   await page.waitForURL(`${BASE_URL}/`);\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:138:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-06T15:31:33.408Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Project-Management-TC007-View-Projects-List-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Project-Management-TC007-View-Projects-List-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Project-Management-TC007-View-Projects-List-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                        "column": 14,
+                        "line": 21
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f09109970829b3d94727-f56a501ff2a58e411931",
+              "file": "playwright-tests.spec.ts",
+              "line": 169,
+              "column": 7
+            },
+            {
+              "title": "TC008: View Project Details",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 19835,
+                      "error": {
+                        "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n",
+                        "stack": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:138:5",
+                        "location": {
+                          "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                          "column": 14,
+                          "line": 21
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 19 |\u001b[39m \u001b[36masync\u001b[39m \u001b[36mfunction\u001b[39m login(page\u001b[33m:\u001b[39m \u001b[33mPage\u001b[39m) {\n \u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`${BASE_URL}/login`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"email\"], input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"password\"], input[type=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 24 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForURL(\u001b[32m`${BASE_URL}/`\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                            "column": 14,
+                            "line": 21
+                          },
+                          "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n\n  19 | async function login(page: Page) {\n  20 |   await page.goto(`${BASE_URL}/login`);\n> 21 |   await page.fill('input[name=\"email\"], input[type=\"email\"]', TEST_USER.email);\n     |              ^\n  22 |   await page.fill('input[name=\"password\"], input[type=\"password\"]', TEST_USER.password);\n  23 |   await page.click('button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")');\n  24 |   await page.waitForURL(`${BASE_URL}/`);\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:138:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-06T15:31:56.178Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Project-M-bfd96--TC008-View-Project-Details-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Project-M-bfd96--TC008-View-Project-Details-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Project-M-bfd96--TC008-View-Project-Details-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                        "column": 14,
+                        "line": 21
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f09109970829b3d94727-80c973564d22658ea347",
+              "file": "playwright-tests.spec.ts",
+              "line": 178,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Document Processing",
+          "file": "playwright-tests.spec.ts",
+          "line": 205,
+          "column": 6,
+          "specs": [
+            {
+              "title": "TC010: Upload PDF Document",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 19839,
+                      "error": {
+                        "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n",
+                        "stack": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:207:5",
+                        "location": {
+                          "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                          "column": 14,
+                          "line": 21
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 19 |\u001b[39m \u001b[36masync\u001b[39m \u001b[36mfunction\u001b[39m login(page\u001b[33m:\u001b[39m \u001b[33mPage\u001b[39m) {\n \u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`${BASE_URL}/login`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"email\"], input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"password\"], input[type=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 24 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForURL(\u001b[32m`${BASE_URL}/`\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                            "column": 14,
+                            "line": 21
+                          },
+                          "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n\n  19 | async function login(page: Page) {\n  20 |   await page.goto(`${BASE_URL}/login`);\n> 21 |   await page.fill('input[name=\"email\"], input[type=\"email\"]', TEST_USER.email);\n     |              ^\n  22 |   await page.fill('input[name=\"password\"], input[type=\"password\"]', TEST_USER.password);\n  23 |   await page.click('button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")');\n  24 |   await page.waitForURL(`${BASE_URL}/`);\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:207:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-06T15:32:20.560Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Document--0e7bf-g-TC010-Upload-PDF-Document-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Document--0e7bf-g-TC010-Upload-PDF-Document-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Document--0e7bf-g-TC010-Upload-PDF-Document-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                        "column": 14,
+                        "line": 21
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f09109970829b3d94727-2b45c7a703fc4bab6c85",
+              "file": "playwright-tests.spec.ts",
+              "line": 210,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "BOQ Extraction",
+          "file": "playwright-tests.spec.ts",
+          "line": 238,
+          "column": 6,
+          "specs": [
+            {
+              "title": "TC014: Navigate to BOQ Page",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 19765,
+                      "error": {
+                        "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n",
+                        "stack": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:240:5",
+                        "location": {
+                          "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                          "column": 14,
+                          "line": 21
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 19 |\u001b[39m \u001b[36masync\u001b[39m \u001b[36mfunction\u001b[39m login(page\u001b[33m:\u001b[39m \u001b[33mPage\u001b[39m) {\n \u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`${BASE_URL}/login`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"email\"], input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"password\"], input[type=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 24 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForURL(\u001b[32m`${BASE_URL}/`\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                            "column": 14,
+                            "line": 21
+                          },
+                          "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n\n  19 | async function login(page: Page) {\n  20 |   await page.goto(`${BASE_URL}/login`);\n> 21 |   await page.fill('input[name=\"email\"], input[type=\"email\"]', TEST_USER.email);\n     |              ^\n  22 |   await page.fill('input[name=\"password\"], input[type=\"password\"]', TEST_USER.password);\n  23 |   await page.click('button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")');\n  24 |   await page.waitForURL(`${BASE_URL}/`);\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:240:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-06T15:32:43.523Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-BOQ-Extraction-TC014-Navigate-to-BOQ-Page-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-BOQ-Extraction-TC014-Navigate-to-BOQ-Page-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-BOQ-Extraction-TC014-Navigate-to-BOQ-Page-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                        "column": 14,
+                        "line": 21
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f09109970829b3d94727-7cc086129bcc3d426d11",
+              "file": "playwright-tests.spec.ts",
+              "line": 243,
+              "column": 7
+            },
+            {
+              "title": "TC015: BOQ Table Display",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 19001,
+                      "error": {
+                        "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n",
+                        "stack": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:240:5",
+                        "location": {
+                          "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                          "column": 14,
+                          "line": 21
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 19 |\u001b[39m \u001b[36masync\u001b[39m \u001b[36mfunction\u001b[39m login(page\u001b[33m:\u001b[39m \u001b[33mPage\u001b[39m) {\n \u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`${BASE_URL}/login`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"email\"], input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"password\"], input[type=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 24 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForURL(\u001b[32m`${BASE_URL}/`\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                            "column": 14,
+                            "line": 21
+                          },
+                          "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n\n  19 | async function login(page: Page) {\n  20 |   await page.goto(`${BASE_URL}/login`);\n> 21 |   await page.fill('input[name=\"email\"], input[type=\"email\"]', TEST_USER.email);\n     |              ^\n  22 |   await page.fill('input[name=\"password\"], input[type=\"password\"]', TEST_USER.password);\n  23 |   await page.click('button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")');\n  24 |   await page.waitForURL(`${BASE_URL}/`);\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:240:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-06T15:33:07.093Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-BOQ-Extraction-TC015-BOQ-Table-Display-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-BOQ-Extraction-TC015-BOQ-Table-Display-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-BOQ-Extraction-TC015-BOQ-Table-Display-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                        "column": 14,
+                        "line": 21
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f09109970829b3d94727-b167e85aa4d2faadfb3e",
+              "file": "playwright-tests.spec.ts",
+              "line": 264,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Package Management",
+          "file": "playwright-tests.spec.ts",
+          "line": 284,
+          "column": 6,
+          "specs": [
+            {
+              "title": "TC018: Navigate to Packages Page",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 20536,
+                      "error": {
+                        "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n",
+                        "stack": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:286:5",
+                        "location": {
+                          "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                          "column": 14,
+                          "line": 21
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 19 |\u001b[39m \u001b[36masync\u001b[39m \u001b[36mfunction\u001b[39m login(page\u001b[33m:\u001b[39m \u001b[33mPage\u001b[39m) {\n \u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`${BASE_URL}/login`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"email\"], input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"password\"], input[type=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 24 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForURL(\u001b[32m`${BASE_URL}/`\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                            "column": 14,
+                            "line": 21
+                          },
+                          "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n\n  19 | async function login(page: Page) {\n  20 |   await page.goto(`${BASE_URL}/login`);\n> 21 |   await page.fill('input[name=\"email\"], input[type=\"email\"]', TEST_USER.email);\n     |              ^\n  22 |   await page.fill('input[name=\"password\"], input[type=\"password\"]', TEST_USER.password);\n  23 |   await page.click('button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")');\n  24 |   await page.waitForURL(`${BASE_URL}/`);\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:286:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-06T15:33:30.071Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Package-M-88573-8-Navigate-to-Packages-Page-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Package-M-88573-8-Navigate-to-Packages-Page-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Package-M-88573-8-Navigate-to-Packages-Page-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                        "column": 14,
+                        "line": 21
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f09109970829b3d94727-4e625c0abbb85bb6233a",
+              "file": "playwright-tests.spec.ts",
+              "line": 289,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Supplier Management",
+          "file": "playwright-tests.spec.ts",
+          "line": 312,
+          "column": 6,
+          "specs": [
+            {
+              "title": "TC022: Navigate to Suppliers Page",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 12,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 19335,
+                      "error": {
+                        "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n",
+                        "stack": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:314:5",
+                        "location": {
+                          "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                          "column": 14,
+                          "line": 21
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 19 |\u001b[39m \u001b[36masync\u001b[39m \u001b[36mfunction\u001b[39m login(page\u001b[33m:\u001b[39m \u001b[33mPage\u001b[39m) {\n \u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`${BASE_URL}/login`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"email\"], input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"password\"], input[type=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 24 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForURL(\u001b[32m`${BASE_URL}/`\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                            "column": 14,
+                            "line": 21
+                          },
+                          "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n\n  19 | async function login(page: Page) {\n  20 |   await page.goto(`${BASE_URL}/login`);\n> 21 |   await page.fill('input[name=\"email\"], input[type=\"email\"]', TEST_USER.email);\n     |              ^\n  22 |   await page.fill('input[name=\"password\"], input[type=\"password\"]', TEST_USER.password);\n  23 |   await page.click('button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")');\n  24 |   await page.waitForURL(`${BASE_URL}/`);\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:314:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-06T15:33:54.688Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Supplier--fd45c--Navigate-to-Suppliers-Page-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Supplier--fd45c--Navigate-to-Suppliers-Page-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Supplier--fd45c--Navigate-to-Suppliers-Page-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                        "column": 14,
+                        "line": 21
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f09109970829b3d94727-2027103e6b02d06ef3db",
+              "file": "playwright-tests.spec.ts",
+              "line": 317,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Offer Evaluation",
+          "file": "playwright-tests.spec.ts",
+          "line": 332,
+          "column": 6,
+          "specs": [
+            {
+              "title": "TC027: Navigate to Offers Page",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 13,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 19717,
+                      "error": {
+                        "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n",
+                        "stack": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:334:5",
+                        "location": {
+                          "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                          "column": 14,
+                          "line": 21
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 19 |\u001b[39m \u001b[36masync\u001b[39m \u001b[36mfunction\u001b[39m login(page\u001b[33m:\u001b[39m \u001b[33mPage\u001b[39m) {\n \u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`${BASE_URL}/login`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"email\"], input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"password\"], input[type=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 24 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForURL(\u001b[32m`${BASE_URL}/`\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                            "column": 14,
+                            "line": 21
+                          },
+                          "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n\n  19 | async function login(page: Page) {\n  20 |   await page.goto(`${BASE_URL}/login`);\n> 21 |   await page.fill('input[name=\"email\"], input[type=\"email\"]', TEST_USER.email);\n     |              ^\n  22 |   await page.fill('input[name=\"password\"], input[type=\"password\"]', TEST_USER.password);\n  23 |   await page.click('button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")');\n  24 |   await page.waitForURL(`${BASE_URL}/`);\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:334:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-06T15:34:18.812Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Offer-Eva-6687e-027-Navigate-to-Offers-Page-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Offer-Eva-6687e-027-Navigate-to-Offers-Page-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Offer-Eva-6687e-027-Navigate-to-Offers-Page-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                        "column": 14,
+                        "line": 21
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f09109970829b3d94727-3188eacdf5b2c6cd9ce2",
+              "file": "playwright-tests.spec.ts",
+              "line": 337,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Pricing & Export",
+          "file": "playwright-tests.spec.ts",
+          "line": 352,
+          "column": 6,
+          "specs": [
+            {
+              "title": "TC032: Navigate to Pricing Page",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 14,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 18676,
+                      "error": {
+                        "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n",
+                        "stack": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:354:5",
+                        "location": {
+                          "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                          "column": 14,
+                          "line": 21
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 19 |\u001b[39m \u001b[36masync\u001b[39m \u001b[36mfunction\u001b[39m login(page\u001b[33m:\u001b[39m \u001b[33mPage\u001b[39m) {\n \u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`${BASE_URL}/login`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"email\"], input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"password\"], input[type=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 24 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForURL(\u001b[32m`${BASE_URL}/`\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                            "column": 14,
+                            "line": 21
+                          },
+                          "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n\n  19 | async function login(page: Page) {\n  20 |   await page.goto(`${BASE_URL}/login`);\n> 21 |   await page.fill('input[name=\"email\"], input[type=\"email\"]', TEST_USER.email);\n     |              ^\n  22 |   await page.fill('input[name=\"password\"], input[type=\"password\"]', TEST_USER.password);\n  23 |   await page.click('button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")');\n  24 |   await page.waitForURL(`${BASE_URL}/`);\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:354:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-06T15:34:42.516Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Pricing-E-7c6e3-32-Navigate-to-Pricing-Page-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Pricing-E-7c6e3-32-Navigate-to-Pricing-Page-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Pricing-E-7c6e3-32-Navigate-to-Pricing-Page-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                        "column": 14,
+                        "line": 21
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f09109970829b3d94727-4881a92136a8bbbdd4ca",
+              "file": "playwright-tests.spec.ts",
+              "line": 357,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "API Health",
+          "file": "playwright-tests.spec.ts",
+          "line": 375,
+          "column": 6,
+          "specs": [
+            {
+              "title": "API Health Check",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 15,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 51,
+                      "error": {
+                        "message": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → GET http://localhost:8000/api/v1/health\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n",
+                        "stack": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → GET http://localhost:8000/api/v1/health\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n    at apiRequestContext.get: connect ECONNREFUSED ::1:8000\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:377:36",
+                        "location": {
+                          "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                          "column": 8000,
+                          "line": 1
+                        }
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                            "column": 8000,
+                            "line": 1
+                          },
+                          "message": "Error: apiRequestContext.get: connect ECONNREFUSED ::1:8000\nCall log:\n\u001b[2m  - → GET http://localhost:8000/api/v1/health\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\n    at apiRequestContext.get: connect ECONNREFUSED ::1:8000\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:377:36"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-06T15:35:03.754Z",
+                      "annotations": [],
+                      "attachments": [],
+                      "errorLocation": {
+                        "file": "apiRequestContext.get: connect ECONNREFUSED :",
+                        "column": 8000,
+                        "line": 1
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f09109970829b3d94727-7b55c530ecccd61ebd6e",
+              "file": "playwright-tests.spec.ts",
+              "line": 376,
+              "column": 7
+            },
+            {
+              "title": "API Documentation Accessible",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 16,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 4809,
+                      "error": {
+                        "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8000/docs\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8000/docs\", waiting until \"load\"\u001b[22m\n",
+                        "stack": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8000/docs\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8000/docs\", waiting until \"load\"\u001b[22m\n\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:383:16",
+                        "location": {
+                          "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                          "column": 16,
+                          "line": 383
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 381 |\u001b[39m\n \u001b[90m 382 |\u001b[39m   test(\u001b[32m'API Documentation Accessible'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 383 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`${API_URL}/docs`\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 384 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForLoadState(\u001b[32m'networkidle'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 385 |\u001b[39m\n \u001b[90m 386 |\u001b[39m     \u001b[90m// Swagger UI should be visible\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                            "column": 16,
+                            "line": 383
+                          },
+                          "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8000/docs\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8000/docs\", waiting until \"load\"\u001b[22m\n\n\n  381 |\n  382 |   test('API Documentation Accessible', async ({ page }) => {\n> 383 |     await page.goto(`${API_URL}/docs`);\n      |                ^\n  384 |     await page.waitForLoadState('networkidle');\n  385 |\n  386 |     // Swagger UI should be visible\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:383:16"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-06T15:35:05.246Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-API-Health-API-Documentation-Accessible-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-API-Health-API-Documentation-Accessible-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-API-Health-API-Documentation-Accessible-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                        "column": 16,
+                        "line": 383
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f09109970829b3d94727-d9038423e7f7892d5b4d",
+              "file": "playwright-tests.spec.ts",
+              "line": 382,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Responsive Design",
+          "file": "playwright-tests.spec.ts",
+          "line": 396,
+          "column": 6,
+          "specs": [
+            {
+              "title": "TC045: Mobile View - Dashboard",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 17,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 18415,
+                      "error": {
+                        "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n",
+                        "stack": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:401:5",
+                        "location": {
+                          "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                          "column": 14,
+                          "line": 21
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 19 |\u001b[39m \u001b[36masync\u001b[39m \u001b[36mfunction\u001b[39m login(page\u001b[33m:\u001b[39m \u001b[33mPage\u001b[39m) {\n \u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`${BASE_URL}/login`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"email\"], input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"password\"], input[type=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 24 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForURL(\u001b[32m`${BASE_URL}/`\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                            "column": 14,
+                            "line": 21
+                          },
+                          "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n\n  19 | async function login(page: Page) {\n  20 |   await page.goto(`${BASE_URL}/login`);\n> 21 |   await page.fill('input[name=\"email\"], input[type=\"email\"]', TEST_USER.email);\n     |              ^\n  22 |   await page.fill('input[name=\"password\"], input[type=\"password\"]', TEST_USER.password);\n  23 |   await page.click('button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")');\n  24 |   await page.waitForURL(`${BASE_URL}/`);\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:401:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-06T15:35:12.480Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Responsiv-24578-045-Mobile-View---Dashboard-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Responsiv-24578-045-Mobile-View---Dashboard-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Responsiv-24578-045-Mobile-View---Dashboard-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                        "column": 14,
+                        "line": 21
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f09109970829b3d94727-36d5cf02ec9047942ef7",
+              "file": "playwright-tests.spec.ts",
+              "line": 397,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Navigation",
+          "file": "playwright-tests.spec.ts",
+          "line": 420,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Sidebar Navigation",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 18,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 19351,
+                      "error": {
+                        "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n",
+                        "stack": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:422:5",
+                        "location": {
+                          "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                          "column": 14,
+                          "line": 21
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 19 |\u001b[39m \u001b[36masync\u001b[39m \u001b[36mfunction\u001b[39m login(page\u001b[33m:\u001b[39m \u001b[33mPage\u001b[39m) {\n \u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`${BASE_URL}/login`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"email\"], input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"password\"], input[type=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 24 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForURL(\u001b[32m`${BASE_URL}/`\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                            "column": 14,
+                            "line": 21
+                          },
+                          "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n\n  19 | async function login(page: Page) {\n  20 |   await page.goto(`${BASE_URL}/login`);\n> 21 |   await page.fill('input[name=\"email\"], input[type=\"email\"]', TEST_USER.email);\n     |              ^\n  22 |   await page.fill('input[name=\"password\"], input[type=\"password\"]', TEST_USER.password);\n  23 |   await page.click('button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")');\n  24 |   await page.waitForURL(`${BASE_URL}/`);\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:422:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-06T15:35:32.979Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Navigation-Sidebar-Navigation-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Navigation-Sidebar-Navigation-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Navigation-Sidebar-Navigation-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                        "column": 14,
+                        "line": 21
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f09109970829b3d94727-4a6fa64799bf409834a7",
+              "file": "playwright-tests.spec.ts",
+              "line": 425,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Error Handling",
+          "file": "playwright-tests.spec.ts",
+          "line": 449,
+          "column": 6,
+          "specs": [
+            {
+              "title": "TC040: Handle Invalid API Response",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 19,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 17806,
+                      "error": {
+                        "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n",
+                        "stack": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:451:5",
+                        "location": {
+                          "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                          "column": 14,
+                          "line": 21
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 19 |\u001b[39m \u001b[36masync\u001b[39m \u001b[36mfunction\u001b[39m login(page\u001b[33m:\u001b[39m \u001b[33mPage\u001b[39m) {\n \u001b[90m 20 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m`${BASE_URL}/login`\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 21 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"email\"], input[type=\"email\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 22 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mfill(\u001b[32m'input[name=\"password\"], input[type=\"password\"]'\u001b[39m\u001b[33m,\u001b[39m \u001b[33mTEST_USER\u001b[39m\u001b[33m.\u001b[39mpassword)\u001b[33m;\u001b[39m\n \u001b[90m 23 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[32m'button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 24 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForURL(\u001b[32m`${BASE_URL}/`\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                            "column": 14,
+                            "line": 21
+                          },
+                          "message": "TimeoutError: page.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"email\"], input[type=\"email\"]')\u001b[22m\n\n\n  19 | async function login(page: Page) {\n  20 |   await page.goto(`${BASE_URL}/login`);\n> 21 |   await page.fill('input[name=\"email\"], input[type=\"email\"]', TEST_USER.email);\n     |              ^\n  22 |   await page.fill('input[name=\"password\"], input[type=\"password\"]', TEST_USER.password);\n  23 |   await page.click('button[type=\"submit\"], button:has-text(\"Login\"), button:has-text(\"Sign In\")');\n  24 |   await page.waitForURL(`${BASE_URL}/`);\n    at login (D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:21:14)\n    at D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts:451:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-06T15:35:55.058Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Error-Han-7c048-Handle-Invalid-API-Response-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Error-Han-7c048-Handle-Invalid-API-Response-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\test-results\\playwright-tests-Error-Han-7c048-Handle-Invalid-API-Response-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\Work\\intercom\\intercom_projects\\Hassan\\bidops-ai\\e2e-tests\\playwright-tests.spec.ts",
+                        "column": 14,
+                        "line": 21
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "f09109970829b3d94727-a35e392b6949e68d1bf4",
+              "file": "playwright-tests.spec.ts",
+              "line": 454,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-01-06T15:29:19.428Z",
+    "duration": 414466.91000000003,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 20,
+    "flaky": 0
+  }
+}

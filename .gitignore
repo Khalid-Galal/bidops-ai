@@ -1,0 +1,183 @@
+# BidOps AI - Git Ignore
+
+# ============================================
+# Python
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# ============================================
+# IDE and Editors
+# ============================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# ============================================
+# Testing
+# ============================================
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# ============================================
+# Environment and Secrets
+# ============================================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets.yaml
+credentials.json
+.bidops_key
+.bidops_credentials.enc
+
+# ============================================
+# Database
+# ============================================
+*.db
+*.sqlite
+*.sqlite3
+
+# ============================================
+# Storage (project data)
+# ============================================
+storage/
+!storage/.gitkeep
+projects/
+temp/
+uploads/
+
+# ============================================
+# Logs
+# ============================================
+*.log
+logs/
+log/
+
+# ============================================
+# Docker
+# ============================================
+docker-compose.override.yml
+
+# ============================================
+# Node.js (Frontend)
+# ============================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.npm
+
+# Frontend build
+frontend/dist/
+frontend/build/
+frontend/.next/
+frontend/out/
+
+# ============================================
+# Electron
+# ============================================
+frontend/release/
+frontend/*.exe
+frontend/*.dmg
+frontend/*.AppImage
+
+# ============================================
+# OS Files
+# ============================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ============================================
+# Temporary Files
+# ============================================
+*.tmp
+*.temp
+*.bak
+*.backup
+*.cache
+
+# ============================================
+# Alembic
+# ============================================
+# Don't ignore migrations - they should be tracked
+# migrations/versions/*.pyc
+
+# ============================================
+# Documentation Build
+# ============================================
+docs/_build/
+docs/site/
+
+# ============================================
+# ML/AI Models
+# ============================================
+*.h5
+*.pkl
+*.joblib
+*.onnx
+models/
+!models/.gitkeep
+
+# ============================================
+# Large Files
+# ============================================
+*.zip
+*.tar.gz
+*.rar
+*.7z
+*.pdf
+*.dwg
+*.rvt
+*.ifc
+*.xer
+
+# ============================================
+# Keep directories
+# ============================================
+!.gitkeep

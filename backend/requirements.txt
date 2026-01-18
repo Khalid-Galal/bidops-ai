@@ -1,0 +1,104 @@
+# BidOps AI - Backend Dependencies
+# Python 3.11+ required
+
+# ============================================
+# Core Framework
+# ============================================
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0  # Separated from pydantic v2
+
+# ============================================
+# Database
+# ============================================
+sqlalchemy[asyncio]>=2.0.25
+asyncpg>=0.29.0  # PostgreSQL async driver
+alembic>=1.13.0  # Migrations
+greenlet>=3.0.0  # Required for SQLAlchemy async
+
+# ============================================
+# Vector Database
+# ============================================
+qdrant-client>=1.7.0
+
+# ============================================
+# Cache & Queue
+# ============================================
+redis>=5.0.0
+arq>=0.25.0  # Async task queue
+
+# ============================================
+# AI/LLM
+# ============================================
+langchain>=0.2.0
+langchain-community>=0.2.0
+langgraph>=0.1.0
+
+# Google Gemini
+google-generativeai>=0.8.3
+langchain-google-genai>=2.0.8
+
+# Embeddings (local fallback)
+sentence-transformers>=2.3.0
+
+# ============================================
+# Document Parsing
+# ============================================
+# PDF
+pymupdf>=1.23.0  # aka fitz
+pdf2image>=1.17.0
+pytesseract>=0.3.10
+
+# Office Documents
+python-docx>=1.1.0
+python-pptx>=0.6.23
+openpyxl>=3.1.2
+pandas>=2.2.0
+
+# Email
+extract-msg>=0.48.0
+mail-parser>=3.15.0
+
+# Images
+Pillow>=10.2.0
+
+# CAD/BIM
+ezdxf>=1.1.0  # DXF parsing
+ifcopenshell>=0.7.0  # IFC parsing (may need conda)
+
+# ============================================
+# Security
+# ============================================
+python-jose[cryptography]>=3.3.0  # JWT
+passlib[bcrypt]>=1.7.4
+cryptography>=42.0.0
+python-multipart>=0.0.6  # File uploads
+
+# ============================================
+# Utilities
+# ============================================
+pyyaml>=6.0.1
+python-dotenv>=1.0.0
+httpx>=0.26.0  # HTTP client
+aiofiles>=23.2.1  # Async file operations
+structlog>=24.1.0  # Structured logging
+tenacity>=8.2.3  # Retry logic
+jinja2>=3.1.3  # Email templates
+
+# ============================================
+# Microsoft Graph (Email/OneDrive)
+# ============================================
+msal>=1.26.0
+msgraph-sdk>=1.2.0
+
+# ============================================
+# Development
+# ============================================
+# pytest>=8.0.0
+# pytest-asyncio>=0.23.0
+# pytest-cov>=4.1.0
+# httpx>=0.26.0  # For TestClient
+# black>=24.1.0
+# ruff>=0.1.14
+# mypy>=1.8.0

@@ -1,0 +1,249 @@
+# BidOps AI - Rules Configuration
+# This file controls scoring weights, keywords, and business rules
+
+# ============================================
+# Scoring Weights for Offer Evaluation
+# ============================================
+scoring:
+  weights:
+    technical_compliance: 0.30   # Technical requirement compliance
+    price: 0.35                  # Price competitiveness
+    delivery_time: 0.15          # Delivery/completion time
+    payment_terms: 0.10          # Payment terms favorability
+    supplier_rating: 0.10        # Historical supplier performance
+
+  # Scoring thresholds
+  thresholds:
+    excellent: 90
+    good: 75
+    acceptable: 60
+    poor: 40
+
+# ============================================
+# Tender Keywords for Document Classification
+# ============================================
+keywords:
+  mandatory:
+    - "must"
+    - "shall"
+    - "required"
+    - "mandatory"
+    - "يجب"
+    - "إلزامي"
+
+  deadline:
+    - "deadline"
+    - "due date"
+    - "submission"
+    - "closing date"
+    - "موعد التسليم"
+
+  bond:
+    - "tender bond"
+    - "bid bond"
+    - "bank guarantee"
+    - "performance bond"
+    - "ضمان العطاء"
+
+  payment:
+    - "advance payment"
+    - "retention"
+    - "milestone"
+    - "interim payment"
+    - "دفعة مقدمة"
+
+# ============================================
+# Package Sizing Rules
+# ============================================
+packaging:
+  min_items_per_package: 5
+  max_items_per_package: 100
+
+  # How to group BOQ items
+  grouping_criteria:
+    - trade_category
+    - spec_section
+
+  # Trade category mappings
+  trade_categories:
+    concrete:
+      - concrete
+      - formwork
+      - rebar
+      - reinforcement
+    structural_steel:
+      - steel
+      - fabrication
+      - erection
+    mep:
+      - mechanical
+      - electrical
+      - plumbing
+      - hvac
+      - fire fighting
+    finishes:
+      - flooring
+      - painting
+      - ceiling
+      - partition
+      - cladding
+    civil:
+      - excavation
+      - earthwork
+      - roads
+      - utilities
+
+# ============================================
+# Email Configuration
+# ============================================
+email:
+  provider: "smtp"  # smtp or graph
+  from_address: "procurement@company.com"
+  reply_to: "procurement@company.com"
+  default_language: "en"  # en or ar
+  attachment_size_limit_mb: 25
+
+  # Subject formats
+  subject_formats:
+    rfq: "[{project_code}] RFQ - {package_name}"
+    clarification: "[{project_code}] Clarification Request - {supplier_name}"
+    reminder: "[{project_code}] Reminder - {package_name}"
+
+# ============================================
+# Naming Conventions
+# ============================================
+naming:
+  project_code_format: "PRJ-{year}-{seq:04d}"
+  package_code_format: "PKG-{project_code}-{trade_abbr}-{seq:03d}"
+  offer_folder_format: "{package_code}/{supplier_name}"
+  document_naming: "{project_code}_{category}_{date}_{seq}"
+
+  # Trade abbreviations for package codes
+  trade_abbreviations:
+    concrete: "CON"
+    structural_steel: "STL"
+    mep: "MEP"
+    electrical: "ELE"
+    mechanical: "MEC"
+    plumbing: "PLB"
+    hvac: "HVAC"
+    finishes: "FIN"
+    civil: "CIV"
+
+# ============================================
+# Commercial Assumptions
+# ============================================
+commercial:
+  currency: "AED"
+  vat_rate: 0.05
+  default_validity_days: 90
+  default_payment_terms: "Net 30"
+
+  # Markup/margin defaults
+  markup:
+    profit: 0.10          # 10% profit margin
+    overhead: 0.08        # 8% overhead
+    contingency: 0.05     # 5% contingency
+    risk: 0.03            # 3% risk allowance
+
+# ============================================
+# Measurement Rules
+# ============================================
+measurement:
+  contract_type: "lumpsum"  # lumpsum, remeasured, or hybrid
+  quantity_tolerance: 0.05  # 5% tolerance for quantity matching
+
+  # Unit mappings for standardization
+  unit_mappings:
+    "sqm": "m2"
+    "sq.m": "m2"
+    "square meter": "m2"
+    "lm": "m"
+    "lin.m": "m"
+    "linear meter": "m"
+    "cum": "m3"
+    "cu.m": "m3"
+    "cubic meter": "m3"
+    "nr": "no"
+    "nos": "no"
+    "number": "no"
+    "ea": "no"
+    "each": "no"
+    "ls": "ls"
+    "lump sum": "ls"
+
+# ============================================
+# LLM Settings
+# ============================================
+llm:
+  cloud_provider: "openai"
+  cloud_model: "gpt-4o"
+  local_provider: "ollama"
+  local_model: "llama3.1:8b"
+
+  # Tasks to route to local LLM (faster, cheaper)
+  use_local_for:
+    - "classification"
+    - "simple_extraction"
+    - "keyword_detection"
+
+  # Tasks requiring cloud LLM (more accurate)
+  use_cloud_for:
+    - "summary_extraction"
+    - "offer_comparison"
+    - "compliance_analysis"
+    - "clarification_drafting"
+
+  # Confidence thresholds
+  confidence_threshold: 0.7    # Accept extractions above this
+  require_review_below: 0.5    # Flag for human review below this
+
+# ============================================
+# Compliance Rules
+# ============================================
+compliance:
+  # Required fields that must be present in offers
+  required_offer_fields:
+    - total_price
+    - validity_period
+    - delivery_time
+
+  # Automatic non-compliance flags
+  non_compliance_triggers:
+    - "exclusion"
+    - "deviation"
+    - "exception"
+    - "not included"
+    - "غير مشمول"
+    - "استثناء"
+
+# ============================================
+# Indirects Calculation Rules
+# ============================================
+indirects:
+  # Percentage-based items (of direct cost)
+  percentage_based:
+    site_supervision: 0.03
+    quality_control: 0.01
+    safety: 0.015
+    insurance: 0.01
+    temporary_works: 0.02
+
+  # Duration-based items (monthly rates)
+  duration_based:
+    project_manager:
+      monthly_rate: 45000
+      currency: "AED"
+    site_engineer:
+      monthly_rate: 25000
+      currency: "AED"
+    safety_officer:
+      monthly_rate: 15000
+      currency: "AED"
+
+  # Location factors
+  location_factors:
+    dubai: 1.0
+    abu_dhabi: 1.05
+    sharjah: 0.95
+    remote: 1.15
