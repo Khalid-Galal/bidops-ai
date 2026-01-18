@@ -1,0 +1,33 @@
+# Fly.io Configuration for BidOps AI Backend
+
+app = "bidops-api"
+primary_region = "fra"  # Frankfurt - change to your preferred region
+
+[build]
+  dockerfile = "Dockerfile.prod"
+
+[env]
+  ENVIRONMENT = "production"
+  DEBUG = "false"
+  HOST = "0.0.0.0"
+  PORT = "8000"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0  # Free tier optimization
+  processes = ["app"]
+
+  [[http_service.checks]]
+    grace_period = "30s"
+    interval = "15s"
+    method = "GET"
+    timeout = "5s"
+    path = "/api/v1/health"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256

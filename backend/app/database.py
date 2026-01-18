@@ -10,13 +10,17 @@ from app.config import get_settings
 
 settings = get_settings()
 
-# Create async engine
+# Create async engine with SQLite support
+connect_args = {}
+if "sqlite" in settings.DATABASE_URL:
+    # SQLite specific settings
+    connect_args = {"check_same_thread": False}
+
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.DATABASE_ECHO,
     pool_pre_ping=True,
-    pool_size=10,
-    max_overflow=20,
+    connect_args=connect_args,
 )
 
 # Session factory

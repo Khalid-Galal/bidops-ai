@@ -32,8 +32,8 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str = Field(
-        default="postgresql+asyncpg://bidops:bidops@localhost:5432/bidops",
-        description="PostgreSQL connection string",
+        default="sqlite+aiosqlite:///./storage/database/bidops.db",
+        description="Database connection string (SQLite by default)",
     )
     DATABASE_ECHO: bool = False
 

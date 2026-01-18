@@ -1,12 +1,14 @@
 """BidOps AI - FastAPI Application."""
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import AsyncGenerator
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.v1.router import api_router
 from app.config import get_settings
@@ -102,15 +104,31 @@ async def general_exception_handler(
 app.include_router(api_router, prefix="/api/v1")
 
 
-# Root endpoint
-@app.get("/")
-async def root() -> dict:
-    """Root endpoint."""
-    return {
-        "name": settings.APP_NAME,
-        "version": settings.APP_VERSION,
-        "docs": "/docs" if settings.DEBUG else "Disabled in production",
-    }
+# Mount frontend static files if they exist
+frontend_dist = Path(__file__).parent.parent.parent / "frontend" / "dist"
+if frontend_dist.exists():
+    app.mount("/assets", StaticFiles(directory=str(frontend_dist / "assets")), name="assets")
+
+    from fastapi.responses import FileResponse
+
+    @app.get("/{full_path:path}")
+    async def serve_frontend(full_path: str):
+        """Serve frontend application."""
+        # Serve index.html for all routes (SPA)
+        file_path = frontend_dist / full_path
+        if file_path.is_file():
+            return FileResponse(file_path)
+        return FileResponse(frontend_dist / "index.html")
+else:
+    # Root endpoint if frontend not built
+    @app.get("/")
+    async def root() -> dict:
+        """Root endpoint."""
+        return {
+            "name": settings.APP_NAME,
+            "version": settings.APP_VERSION,
+            "docs": "/docs" if settings.DEBUG else "Disabled in production",
+        }
 
 
 if __name__ == "__main__":

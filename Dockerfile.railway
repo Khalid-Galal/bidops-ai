@@ -1,0 +1,45 @@
+# Railway Deployment - Full Stack SQLite Version
+
+FROM python:3.11-slim as backend-builder
+
+# Install backend dependencies
+WORKDIR /app/backend
+COPY backend/requirements.vercel.txt .
+RUN pip install --no-cache-dir -r requirements.vercel.txt
+
+# Build frontend
+FROM node:20-alpine as frontend-builder
+WORKDIR /app/frontend
+COPY frontend/package*.json ./
+RUN npm ci
+COPY frontend/ ./
+ARG VITE_API_URL=/api/v1
+ENV VITE_API_URL=$VITE_API_URL
+RUN npm run build
+
+# Final stage
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copy backend
+COPY --from=backend-builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=backend-builder /usr/local/bin /usr/local/bin
+COPY backend/ ./backend/
+
+# Copy frontend build
+COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
+
+# Create storage directory
+RUN mkdir -p /app/storage/database /app/storage/projects /app/storage/temp
+
+# Create startup script
+RUN echo '#!/bin/bash\n\
+cd /app/backend\n\
+python create_admin.py || true\n\
+uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}\n\
+' > /app/start.sh && chmod +x /app/start.sh
+
+EXPOSE 8000
+
+CMD ["/app/start.sh"]
