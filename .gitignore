@@ -155,14 +155,16 @@ docs/_build/
 docs/site/
 
 # ============================================
-# ML/AI Models
+# ML/AI Models (in root directory only)
 # ============================================
 *.h5
 *.pkl
 *.joblib
 *.onnx
-models/
-!models/.gitkeep
+/models/
+!/models/.gitkeep
+# Note: /models/ only ignores root-level models folder
+# backend/app/models/ is NOT ignored
 
 # ============================================
 # Large Files
