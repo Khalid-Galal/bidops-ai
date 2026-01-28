@@ -1,0 +1,33 @@
+# Playwright Test Results
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Node modules
+node_modules/
+
+# Test artifacts (keep screenshots, ignore others)
+test-results.json
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+
+# Keep screenshots directory but ignore its contents during commits (optional)
+# Uncomment if you don't want to commit screenshots
+# tests/screenshots/*.png
+
+# Keep test files
+!test-files/*.txt
+!test-files/*.csv

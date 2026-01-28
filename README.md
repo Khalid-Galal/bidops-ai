@@ -2,6 +2,15 @@
 
 **Production-grade tender/bidding automation system for contracting companies**
 
+## 🚀 Deploy Now!
+
+**Choose your deployment method:**
+
+- **[🆓 Free Deployment (Render.com)](./DEPLOY-QUICK-START.md#-step-a-deploy-free-on-rendercom-5-minutes)** - 5 minutes, perfect for demos
+- **[🖥️ VPS Deployment](./DEPLOY-QUICK-START.md#%EF%B8%8F-step-b-deploy-on-vps-production)** - 30 minutes, production-ready
+- **[📋 One-Page Cheat Sheet](./DEPLOYMENT-CHEATSHEET.md)** - Quick reference guide
+- **[📖 Complete Guide](./DEPLOYMENT-COMPLETE-GUIDE.md)** - All options & details
+
 ## Overview
 
 BidOps AI is a desktop+web hybrid application that automates the entire tender/bidding lifecycle:

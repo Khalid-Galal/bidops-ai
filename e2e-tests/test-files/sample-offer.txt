@@ -1,0 +1,17 @@
+SUPPLIER QUOTATION
+Supplier: ABC Contracting LLC
+Email: abc@supplier.com
+Phone: +971501234567
+
+PRICE BREAKDOWN
+
+Item Code,Description,Quantity,Unit,Unit Price,Total Price
+001,Concrete Grade 40,500,M3,420,210000
+002,Steel Reinforcement,50,TON,3400,170000
+003,Formwork,1000,M2,80,80000
+004,Blockwork 200mm,2000,M2,115,230000
+005,Plaster 25mm,3000,M2,32,96000
+
+Total Offer: AED 786,000
+Validity: 60 days
+Delivery: 30 days

@@ -10,7 +10,14 @@
     "test:report": "playwright show-report",
     "test:chrome": "playwright test --project=chromium",
     "test:firefox": "playwright test --project=firefox",
-    "test:webkit": "playwright test --project=webkit"
+    "test:webkit": "playwright test --project=webkit",
+    "test:admin": "playwright test admin-e2e.spec.ts",
+    "test:admin:headed": "playwright test admin-e2e.spec.ts --headed",
+    "test:admin:debug": "playwright test admin-e2e.spec.ts --debug",
+    "test:admin:chrome": "playwright test admin-e2e.spec.ts --project=chromium",
+    "generate:files": "node test-files/generate-test-files.js",
+    "clean:screenshots": "rimraf tests/screenshots/*.png",
+    "pretest": "node test-files/generate-test-files.js"
   },
   "keywords": ["e2e", "playwright", "testing", "bidops"],
   "author": "",

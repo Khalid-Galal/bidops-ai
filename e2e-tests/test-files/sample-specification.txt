@@ -1,0 +1,35 @@
+PROJECT SPECIFICATION DOCUMENT
+
+Project Name: Sample Construction Project
+Project Code: PRJ-2026-001
+Location: Dubai, UAE
+
+1. GENERAL REQUIREMENTS
+   - All works shall comply with Dubai Municipality standards
+   - Materials shall be approved before installation
+   - Weekly progress reports required
+
+2. CONCRETE WORKS
+   - Grade: 40 N/mm²
+   - Slump: 100-150mm
+   - Testing: As per BS standards
+
+3. STEEL REINFORCEMENT
+   - Grade: 460 N/mm²
+   - Welding: As per approved shop drawings
+   - Cover: As per structural drawings
+
+4. FORMWORK
+   - Material: Steel or approved plywood
+   - Stripping time: As per engineer approval
+   - Quality: Surface finish as per specifications
+
+5. BLOCKWORK
+   - Type: Hollow concrete blocks
+   - Size: 200mm thickness
+   - Mortar: Grade M4
+
+6. PLASTER
+   - Thickness: 25mm
+   - Mix: Cement-sand 1:5
+   - Finish: Smooth trowel finish

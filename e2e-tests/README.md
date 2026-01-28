@@ -2,6 +2,11 @@
 
 Comprehensive end-to-end testing for BidOps AI using Playwright.
 
+## 📚 Documentation
+
+- **[Admin E2E Testing Guide](./ADMIN-E2E-TESTING-GUIDE.md)** - Complete guide for comprehensive admin workflow testing with screenshots
+- **[Test Files Documentation](./test-files/README.md)** - Information about test data files
+
 ## Overview
 
 This test suite provides complete coverage of BidOps AI functionality including:

@@ -45,6 +45,12 @@ export default defineConfig({
 
     /* Maximum time each navigation can take. */
     navigationTimeout: 30000,
+
+    /* Ignore HTTPS errors */
+    ignoreHTTPSErrors: true,
+
+    /* Viewport size */
+    viewport: { width: 1920, height: 1080 },
   },
 
   /* Global timeout for each test */

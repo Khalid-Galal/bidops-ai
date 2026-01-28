@@ -1,0 +1,18 @@
+
+TENDER DOCUMENT
+Project: Sample Construction Project
+Client: Test Client Company
+
+BILL OF QUANTITIES
+
+Item Code | Description | Quantity | Unit
+----------|-------------|----------|-----
+001       | Concrete Grade 40 | 500 | M3
+002       | Steel Reinforcement | 50 | TON
+003       | Formwork | 1000 | M2
+004       | Blockwork | 2000 | M2
+005       | Plaster | 3000 | M2
+
+Project Timeline: 12 months
+Budget: AED 5,000,000
+Deadline: 2026-12-31
