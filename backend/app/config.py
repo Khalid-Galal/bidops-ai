@@ -37,6 +37,18 @@ class Settings(BaseSettings):
     )
     DATABASE_ECHO: bool = False
 
+    @field_validator("DATABASE_URL", mode="after")
+    @classmethod
+    def convert_database_url(cls, v: str) -> str:
+        """Convert database URL to async format for SQLAlchemy."""
+        if v.startswith("postgres://"):
+            # Render uses postgres://, SQLAlchemy async needs postgresql+asyncpg://
+            v = v.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif v.startswith("postgresql://") and "+asyncpg" not in v:
+            # Standard postgresql:// needs asyncpg driver
+            v = v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return v
+
     # Redis
     REDIS_URL: str = "redis://localhost:6379"
 
