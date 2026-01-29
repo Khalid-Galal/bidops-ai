@@ -47,18 +47,17 @@ app = FastAPI(
 )
 
 # CORS middleware
-# Allow all origins in production for demo deployment
-# In real production, specify exact frontend domain
+# Allow specific origins for production
 allowed_origins = [
     "http://localhost:3000",
     "http://localhost:5173",
-    "https://*.onrender.com",
+    "https://bidops-frontend.onrender.com",
+    "https://bidops-ai.onrender.com",
 ]
 
-# Allow all origins for demo (update this for production security)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # For demo deployment
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
