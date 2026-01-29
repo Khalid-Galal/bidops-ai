@@ -81,7 +81,7 @@ credentials.json
 # ============================================
 storage/
 !storage/.gitkeep
-projects/
+/projects/
 temp/
 uploads/
 
