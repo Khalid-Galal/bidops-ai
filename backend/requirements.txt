@@ -15,6 +15,7 @@ email-validator>=2.1.0  # Required for EmailStr validation
 # ============================================
 sqlalchemy[asyncio]>=2.0.25
 asyncpg>=0.29.0  # PostgreSQL async driver
+aiosqlite>=0.19.0  # SQLite async driver (for local dev)
 alembic>=1.13.0  # Migrations
 greenlet>=3.0.0  # Required for SQLAlchemy async
 
@@ -34,6 +35,7 @@ arq>=0.25.0  # Async task queue
 # ============================================
 langchain>=0.2.0
 langchain-community>=0.2.0
+langchain-openai>=0.1.0
 langgraph>=0.1.0
 
 # Google Gemini
@@ -66,7 +68,7 @@ Pillow>=10.2.0
 
 # CAD/BIM
 ezdxf>=1.1.0  # DXF parsing
-ifcopenshell>=0.7.0  # IFC parsing (may need conda)
+# ifcopenshell>=0.7.0  # IFC parsing - commented out (requires conda, not pip)
 
 # ============================================
 # Security

@@ -71,6 +71,10 @@ class Settings(BaseSettings):
     GEMINI_PRO_MODEL: str = "gemini-2.5-pro"
     GEMINI_EMBEDDING_MODEL: str = "models/text-embedding-004"
 
+    # OpenAI (optional)
+    OPENAI_API_KEY: str = ""
+    OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
+
     # Storage
     STORAGE_PATH: Path = Path("./storage")
     PROJECTS_PATH: Path = Path("./storage/projects")
