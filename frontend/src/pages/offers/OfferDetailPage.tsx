@@ -1,18 +1,17 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
   DocumentDuplicateIcon,
   CheckCircleIcon,
   XCircleIcon,
   ArrowPathIcon,
 } from '@heroicons/react/24/outline';
-import { Card, CardBody, CardHeader, Button, Badge, StatusBadge, LoadingPage, DataTable } from '@/components/ui';
+import { Card, CardBody, CardHeader, Button, StatusBadge, LoadingPage, DataTable } from '@/components/ui';
 import { useOffer, useEvaluateOffer, useSelectOffer, useRejectOffer } from '@/hooks/useOffers';
 import type { OfferLineItem } from '@/types';
 import type { Column } from '@/components/ui/DataTable';
 
 export default function OfferDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const offerId = parseInt(id || '0');
 
   const { data: offer, isLoading } = useOffer(offerId);
@@ -215,7 +214,7 @@ export default function OfferDetailPage() {
             <DataTable
               columns={lineItemColumns}
               data={offer.line_items}
-              keyExtractor={(_, i) => i}
+              keyExtractor={(item: OfferLineItem) => item.id || item.description}
               emptyMessage="No line items"
             />
           </CardBody>

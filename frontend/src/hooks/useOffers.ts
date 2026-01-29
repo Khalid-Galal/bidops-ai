@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import api, { uploadFile } from '@/services/api';
+import api from '@/services/api';
 import type { Offer, OfferComparison, PaginatedResponse, MessageResponse } from '@/types';
 
 const QUERY_KEY = 'offers';
