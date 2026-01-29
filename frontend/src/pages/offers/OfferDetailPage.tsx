@@ -214,7 +214,7 @@ export default function OfferDetailPage() {
             <DataTable
               columns={lineItemColumns}
               data={offer.line_items}
-              keyExtractor={(item: OfferLineItem) => item.id || item.description}
+              keyExtractor={(item: OfferLineItem) => `${item.description}-${item.quantity}`}
               emptyMessage="No line items"
             />
           </CardBody>
