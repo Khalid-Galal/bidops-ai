@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { useAuthStore } from '@/store/authStore';
 
 // Layouts
 import MainLayout from '@/components/layout/MainLayout';
@@ -33,13 +32,8 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
 }
 
 function PublicRoute({ children }: ProtectedRouteProps) {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-
-  if (isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
-
-  return <>{children}</>;
+  // Auth disabled - redirect login to home
+  return <Navigate to="/" replace />;
 }
 
 export default function App() {
