@@ -3,10 +3,6 @@ import { Toaster } from 'react-hot-toast';
 
 // Layouts
 import MainLayout from '@/components/layout/MainLayout';
-import AuthLayout from '@/components/layout/AuthLayout';
-
-// Auth Pages
-import LoginPage from '@/pages/auth/LoginPage';
 
 // Main Pages
 import DashboardPage from '@/pages/DashboardPage';
@@ -31,7 +27,7 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
   return <>{children}</>;
 }
 
-function PublicRoute({ children }: ProtectedRouteProps) {
+function PublicRoute() {
   // Auth disabled - redirect login to home
   return <Navigate to="/" replace />;
 }
@@ -63,17 +59,8 @@ export default function App() {
       />
 
       <Routes>
-        {/* Auth Routes */}
-        <Route
-          path="/login"
-          element={
-            <PublicRoute>
-              <AuthLayout>
-                <LoginPage />
-              </AuthLayout>
-            </PublicRoute>
-          }
-        />
+        {/* Auth Routes - redirect to home */}
+        <Route path="/login" element={<PublicRoute />} />
 
         {/* Protected Routes */}
         <Route
