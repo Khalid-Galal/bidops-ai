@@ -1,4 +1,4 @@
-# BidOps AI — Requirements
+# BidOps AI -- Requirements
 
 **Version:** v1.0
 **Date:** 2026-02-04
@@ -86,12 +86,12 @@
 
 ## Out of Scope
 
-- Auto-submission of bids — too risky, human approval required
-- Generic chat interface — structured extraction, not conversation
-- Complex pricing/estimation — different domain, use export for integration
-- Mobile-first design — desktop activity, responsive sufficient
-- Tender discovery/marketplace — separate product
-- Real-time collaborative editing — overkill for v1 single-user
+- Auto-submission of bids -- too risky, human approval required
+- Generic chat interface -- structured extraction, not conversation
+- Complex pricing/estimation -- different domain, use export for integration
+- Mobile-first design -- desktop activity, responsive sufficient
+- Tender discovery/marketplace -- separate product
+- Real-time collaborative editing -- overkill for v1 single-user
 
 ---
 
@@ -99,41 +99,42 @@
 
 | REQ-ID | Phase | Plan | Status |
 |--------|-------|------|--------|
-| ING-01 | — | — | Pending |
-| ING-02 | — | — | Pending |
-| ING-03 | — | — | Pending |
-| ING-04 | — | — | Pending |
-| ING-05 | — | — | Pending |
-| LANG-01 | — | — | Pending |
-| LANG-02 | — | — | Pending |
-| LANG-03 | — | — | Pending |
-| LANG-04 | — | — | Pending |
-| LANG-05 | — | — | Pending |
-| SUM-01 | — | — | Pending |
-| SUM-02 | — | — | Pending |
-| SUM-03 | — | — | Pending |
-| SUM-04 | — | — | Pending |
-| SUM-05 | — | — | Pending |
-| SUM-06 | — | — | Pending |
-| CHK-01 | — | — | Pending |
-| CHK-02 | — | — | Pending |
-| CHK-03 | — | — | Pending |
-| CHK-04 | — | — | Pending |
-| CHK-05 | — | — | Pending |
-| CHK-06 | — | — | Pending |
-| CHK-07 | — | — | Pending |
-| CIT-01 | — | — | Pending |
-| CIT-02 | — | — | Pending |
-| CIT-03 | — | — | Pending |
-| CIT-04 | — | — | Pending |
-| SRH-01 | — | — | Pending |
-| SRH-02 | — | — | Pending |
-| EXP-01 | — | — | Pending |
-| EXP-02 | — | — | Pending |
-| UI-01 | — | — | Pending |
-| UI-02 | — | — | Pending |
-| UI-03 | — | — | Pending |
-| UI-05 | — | — | Pending |
+| ING-01 | Phase 1 | -- | Pending |
+| ING-02 | Phase 1 | -- | Pending |
+| ING-03 | Phase 1 | -- | Pending |
+| ING-04 | Phase 1 | -- | Pending |
+| ING-05 | Phase 1 | -- | Pending |
+| LANG-01 | Phase 2 | -- | Pending |
+| LANG-02 | Phase 1 | -- | Pending |
+| LANG-03 | Phase 2 | -- | Pending |
+| LANG-04 | Phase 2 | -- | Pending |
+| LANG-05 | Phase 2 | -- | Pending |
+| SUM-01 | Phase 3 | -- | Pending |
+| SUM-02 | Phase 3 | -- | Pending |
+| SUM-03 | Phase 3 | -- | Pending |
+| SUM-04 | Phase 3 | -- | Pending |
+| SUM-05 | Phase 3 | -- | Pending |
+| SUM-06 | Phase 3 | -- | Pending |
+| CHK-01 | Phase 4 | -- | Pending |
+| CHK-02 | Phase 4 | -- | Pending |
+| CHK-03 | Phase 4 | -- | Pending |
+| CHK-04 | Phase 4 | -- | Pending |
+| CHK-05 | Phase 4 | -- | Pending |
+| CHK-06 | Phase 4 | -- | Pending |
+| CHK-07 | Phase 4 | -- | Pending |
+| CIT-01 | Phase 3 | -- | Pending |
+| CIT-02 | Phase 3 | -- | Pending |
+| CIT-03 | Phase 3 | -- | Pending |
+| CIT-04 | Phase 3 | -- | Pending |
+| SRH-01 | Phase 2 | -- | Pending |
+| SRH-02 | Phase 2 | -- | Pending |
+| EXP-01 | Phase 5 | -- | Pending |
+| EXP-02 | Phase 5 | -- | Pending |
+| UI-01 | Phase 1 | -- | Pending |
+| UI-02 | Phase 5 | -- | Pending |
+| UI-03 | Phase 5 | -- | Pending |
+| UI-04 | Phase 5 | -- | Pending |
+| UI-05 | Phase 1 | -- | Pending |
 
 ---
-*Last updated: 2026-02-04 after requirements definition*
+*Last updated: 2026-02-18 after roadmap creation*
