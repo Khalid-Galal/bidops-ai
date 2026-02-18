@@ -1,14 +1,28 @@
 """FastAPI application entry point with lifespan management."""
 
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
+from app.api.documents import router as documents_router
+from app.api.health import router as health_router
+from app.api.projects import router as projects_router
 from app.config import get_settings
 from app.database import engine
 from app.models import Base
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Jinja2 template engine (accessible from pages.py via import)
+templates_dir = Path(__file__).parent / "templates"
+templates_dir.mkdir(parents=True, exist_ok=True)
+templates = Jinja2Templates(directory=str(templates_dir))
 
 
 @asynccontextmanager
@@ -23,11 +37,16 @@ async def lifespan(app: FastAPI):
     # Ensure required directories exist
     Path("data").mkdir(parents=True, exist_ok=True)
     Path(settings.upload_dir).mkdir(parents=True, exist_ok=True)
+    templates_dir.mkdir(parents=True, exist_ok=True)
+    (Path(__file__).parent / "static" / "css").mkdir(parents=True, exist_ok=True)
+
+    logger.info("BidOps AI started -- database tables created, directories ready")
 
     yield
 
     # Shutdown: dispose database engine
     await engine.dispose()
+    logger.info("BidOps AI shutdown complete")
 
 
 settings = get_settings()
@@ -37,6 +56,20 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+# CORS middleware for local development (v1 is local-only, allow all origins)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include API routers
+app.include_router(health_router)
+app.include_router(projects_router, prefix="/api")
+app.include_router(documents_router, prefix="/api")
 
 # Mount static files
 static_dir = Path(__file__).parent / "static"
