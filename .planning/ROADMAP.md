@@ -30,12 +30,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User can see processing progress while documents are being parsed
   4. System correctly extracts text, tables, and structure from native PDFs, scanned PDFs (via OCR), Word documents, and Excel spreadsheets
   5. Parsed content preserves page numbers, section boundaries, and table structure for downstream citation use
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 01-01: FastAPI application scaffold with database, project model, and file upload API
-- [ ] 01-02: Multi-format document parsing pipeline (PDF with Docling, DOCX, XLSX)
-- [ ] 01-03: Folder batch upload with progress tracking and minimal web upload UI
+- [ ] 01-01-PLAN.md — FastAPI application scaffold with database, project/document models, and project CRUD API
+- [ ] 01-02-PLAN.md — Multi-format document parsing pipeline (PDF/DOCX with Docling, XLSX with openpyxl)
+- [ ] 01-03-PLAN.md — Document upload API, processing service, SSE progress streaming, and web UI
 
 ### Phase 2: Bilingual Processing & Search
 **Goal**: User can search across bilingual tender documents by keyword or meaning, with Arabic content handled correctly
@@ -112,7 +112,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Document Ingestion Pipeline | 0/3 | Not started | - |
+| 1. Document Ingestion Pipeline | 0/3 | Planned | - |
 | 2. Bilingual Processing & Search | 0/3 | Not started | - |
 | 3. Project Summary Extraction | 0/3 | Not started | - |
 | 4. Requirements Checklist Extraction | 0/3 | Not started | - |
