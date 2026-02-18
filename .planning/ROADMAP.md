@@ -47,12 +47,12 @@ Plans:
   3. System performs OCR on scanned Arabic documents and produces accurate text
   4. User can search across all ingested documents by keyword (full-text) and find exact matches
   5. User can search by meaning (semantic search) and find conceptually related content across languages
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 02-01: Arabic OCR pipeline with EasyOCR, RTL-aware text processing, and language detection
-- [ ] 02-02: Vector indexing with ChromaDB, semantic chunking, and multilingual embeddings
-- [ ] 02-03: Hybrid search combining full-text keyword search and vector similarity
+- [ ] 02-01-PLAN.md — Arabic OCR pipeline with EasyOCR, Arabic text normalization (PyArabic), and per-section language detection (lingua)
+- [ ] 02-02-PLAN.md — Semantic document chunking and ChromaDB vector indexing with multilingual embeddings (paraphrase-multilingual-mpnet-base-v2)
+- [ ] 02-03-PLAN.md — Hybrid search API combining BM25 keyword search (rank-bm25) and vector similarity with RRF fusion
 
 ### Phase 3: Project Summary Extraction
 **Goal**: User receives a complete, citation-backed project summary extracted from tender documents with confidence indicators
@@ -113,7 +113,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Document Ingestion Pipeline | 0/3 | Planned | - |
-| 2. Bilingual Processing & Search | 0/3 | Not started | - |
+| 2. Bilingual Processing & Search | 0/3 | Planned | - |
 | 3. Project Summary Extraction | 0/3 | Not started | - |
 | 4. Requirements Checklist Extraction | 0/3 | Not started | - |
 | 5. Results Interface & Export | 0/3 | Not started | - |
