@@ -1,0 +1,24 @@
+# Core framework
+fastapi[standard]
+uvicorn
+
+# Database
+sqlalchemy[asyncio]
+aiosqlite
+alembic
+
+# Document parsing
+docling
+easyocr
+openpyxl
+
+# File handling and UI
+python-multipart
+aiofiles
+jinja2
+
+# Progress streaming
+sse-starlette
+
+# Configuration
+pydantic-settings
