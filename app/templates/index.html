@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Projects - BidOps AI{% endblock %}
+
+{% block content %}
+<h2 class="page-title">Projects</h2>
+
+<!-- Create Project Form -->
+<div class="card">
+    <h3 class="section-title">Create New Project</h3>
+    <form id="create-project-form">
+        <div class="form-group">
+            <label for="project-name">Project Name</label>
+            <input type="text" id="project-name" name="name" required
+                   placeholder="e.g. Highway Construction Tender 2026">
+        </div>
+        <div class="form-group">
+            <label for="project-description">Description (optional)</label>
+            <textarea id="project-description" name="description"
+                      placeholder="Brief description of the tender project..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" id="create-btn">Create Project</button>
+    </form>
+    <div id="create-message"></div>
+</div>
+
+<!-- Project List -->
+<h3 class="section-title">All Projects</h3>
+
+{% if projects %}
+    {% for project in projects %}
+    <a href="/projects/{{ project.id }}" class="card-link">
+        <div class="card">
+            <div class="card-title">
+                {{ project.name }}
+                <span class="badge badge-{{ project.status }}">{{ project.status }}</span>
+            </div>
+            <div class="card-meta">
+                <span>Documents: {{ project.processed_documents }}/{{ project.total_documents }}</span>
+                {% if project.failed_documents > 0 %}
+                <span style="color: #dc2626;">Failed: {{ project.failed_documents }}</span>
+                {% endif %}
+                <span>Created: {{ project.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+            </div>
+            {% if project.description %}
+            <div class="card-description">{{ project.description[:150] }}{% if project.description|length > 150 %}...{% endif %}</div>
+            {% endif %}
+        </div>
+    </a>
+    {% endfor %}
+{% else %}
+    <div class="empty-state">
+        <p>No projects yet.</p>
+        <p>Create your first project above to get started.</p>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('create-project-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const btn = document.getElementById('create-btn');
+    const msgDiv = document.getElementById('create-message');
+    const name = document.getElementById('project-name').value.trim();
+    const description = document.getElementById('project-description').value.trim();
+
+    if (!name) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Creating...';
+    msgDiv.innerHTML = '';
+
+    try {
+        const response = await fetch('/api/projects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: name, description: description || null }),
+        });
+
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.detail || 'Failed to create project');
+        }
+
+        // Reload page to show the new project in the list.
+        window.location.reload();
+    } catch (err) {
+        msgDiv.innerHTML = '<div class="message message-error">' + err.message + '</div>';
+        btn.disabled = false;
+        btn.textContent = 'Create Project';
+    }
+});
+</script>
+{% endblock %}

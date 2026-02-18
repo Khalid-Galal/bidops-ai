@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.name }} - BidOps AI{% endblock %}
+
+{% block content %}
+<h2 class="page-title">{{ project.name }}</h2>
+
+<!-- Project Info -->
+<div class="card">
+    <div class="project-info">
+        <div class="info-item">
+            <div class="label">Status</div>
+            <div class="value"><span class="badge badge-{{ project.status }}">{{ project.status }}</span></div>
+        </div>
+        <div class="info-item">
+            <div class="label">Documents</div>
+            <div class="value">{{ project.processed_documents }}/{{ project.total_documents }} processed
+                {% if project.failed_documents > 0 %}
+                <span style="color: #dc2626;">({{ project.failed_documents }} failed)</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="info-item">
+            <div class="label">Created</div>
+            <div class="value">{{ project.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+        </div>
+    </div>
+    {% if project.description %}
+    <div class="card-description">{{ project.description }}</div>
+    {% endif %}
+</div>
+
+<!-- File Upload Section -->
+<div class="card">
+    <h3 class="section-title">Upload Documents</h3>
+
+    <div class="upload-area" id="upload-area">
+        <p>Drag and drop files here, or click to select</p>
+        <p class="upload-hint">Supported formats: PDF, DOCX, XLSX</p>
+        <input type="file" id="file-input" multiple accept=".pdf,.docx,.xlsx,.xls">
+    </div>
+    <div class="selected-files" id="selected-files"></div>
+
+    <button class="btn btn-primary" id="upload-btn" disabled>Upload Files</button>
+    <div id="upload-message"></div>
+
+    <!-- Progress Section (hidden until upload starts) -->
+    <div class="progress-section" id="progress-section">
+        <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600;">Processing Progress</h4>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <div class="progress-info">
+            <span id="progress-text">Preparing...</span>
+            <span class="current-file" id="progress-file"></span>
+        </div>
+    </div>
+</div>
+
+<!-- Document List -->
+<div class="card">
+    <h3 class="section-title">Documents</h3>
+
+    {% if documents %}
+    <table class="doc-table">
+        <thead>
+            <tr>
+                <th>Filename</th>
+                <th>Type</th>
+                <th>Size</th>
+                <th>Status</th>
+                <th>Pages</th>
+                <th>Time</th>
+            </tr>
+        </thead>
+        <tbody id="doc-table-body">
+            {% for doc in documents %}
+            <tr>
+                <td>{{ doc.filename }}</td>
+                <td>{{ doc.file_type }}</td>
+                <td class="file-size">{{ "%.1f"|format(doc.file_size / 1024) }} KB</td>
+                <td><span class="badge badge-{{ doc.status }}">{{ doc.status }}</span></td>
+                <td>{{ doc.page_count if doc.page_count else '-' }}</td>
+                <td class="processing-time">
+                    {% if doc.processing_time_ms %}
+                        {% if doc.processing_time_ms > 1000 %}
+                            {{ "%.1f"|format(doc.processing_time_ms / 1000) }}s
+                        {% else %}
+                            {{ doc.processing_time_ms }}ms
+                        {% endif %}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <p>No documents yet.</p>
+        <p>Upload files above to start processing.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    const projectId = {{ project.id }};
+    const uploadArea = document.getElementById('upload-area');
+    const fileInput = document.getElementById('file-input');
+    const uploadBtn = document.getElementById('upload-btn');
+    const selectedFilesDiv = document.getElementById('selected-files');
+    const progressSection = document.getElementById('progress-section');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const progressFile = document.getElementById('progress-file');
+    const uploadMessage = document.getElementById('upload-message');
+
+    let selectedFiles = [];
+
+    // Click to select files.
+    uploadArea.addEventListener('click', function() {
+        fileInput.click();
+    });
+
+    // File input change.
+    fileInput.addEventListener('change', function() {
+        selectedFiles = Array.from(fileInput.files);
+        updateSelectedDisplay();
+    });
+
+    // Drag and drop.
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        selectedFiles = Array.from(e.dataTransfer.files);
+        updateSelectedDisplay();
+    });
+
+    function updateSelectedDisplay() {
+        if (selectedFiles.length === 0) {
+            selectedFilesDiv.textContent = '';
+            uploadBtn.disabled = true;
+            return;
+        }
+        const names = selectedFiles.map(f => f.name).join(', ');
+        selectedFilesDiv.textContent = selectedFiles.length + ' file(s) selected: ' + names;
+        uploadBtn.disabled = false;
+    }
+
+    // Upload handler.
+    uploadBtn.addEventListener('click', async function() {
+        if (selectedFiles.length === 0) return;
+
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = 'Uploading...';
+        uploadMessage.innerHTML = '';
+
+        const formData = new FormData();
+        selectedFiles.forEach(function(file) {
+            formData.append('files', file);
+        });
+
+        try {
+            const response = await fetch('/api/projects/' + projectId + '/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.detail || 'Upload failed');
+            }
+
+            const data = await response.json();
+
+            uploadMessage.innerHTML = '<div class="message message-info">' +
+                'Uploaded ' + data.uploaded + ' file(s). Processing started...' +
+                (data.skipped > 0 ? ' (' + data.skipped + ' skipped)' : '') +
+                '</div>';
+
+            // Start SSE progress tracking.
+            startProgressTracking(data.task_id);
+
+        } catch (err) {
+            uploadMessage.innerHTML = '<div class="message message-error">' + err.message + '</div>';
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = 'Upload Files';
+        }
+    });
+
+    function startProgressTracking(taskId) {
+        progressSection.classList.add('visible');
+        progressFill.style.width = '0%';
+        progressFill.className = 'progress-fill';
+        progressText.textContent = 'Starting...';
+        progressFile.textContent = '';
+
+        const eventSource = new EventSource('/api/progress/' + taskId);
+
+        eventSource.addEventListener('progress', function(event) {
+            const data = JSON.parse(event.data);
+
+            if (data.status === 'unknown') {
+                eventSource.close();
+                progressText.textContent = 'Task not found';
+                progressFill.classList.add('error');
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Upload Files';
+                return;
+            }
+
+            const pct = data.total > 0 ? Math.round((data.processed / data.total) * 100) : 0;
+            progressFill.style.width = pct + '%';
+            progressText.textContent = 'Processing ' + data.processed + ' of ' + data.total + ' files (' + pct + '%)';
+
+            if (data.current_file) {
+                progressFile.textContent = ' - ' + data.current_file;
+            }
+
+            if (data.status === 'completed') {
+                eventSource.close();
+                progressFill.style.width = '100%';
+                progressFill.classList.add('done');
+                progressText.textContent = 'Complete! Processed ' + data.total + ' file(s).';
+                progressFile.textContent = '';
+
+                if (data.errors && data.errors.length > 0) {
+                    let errorMsg = '<div class="message message-error">Some files had errors:<ul>';
+                    data.errors.forEach(function(e) {
+                        errorMsg += '<li>' + e.filename + ': ' + e.error + '</li>';
+                    });
+                    errorMsg += '</ul></div>';
+                    uploadMessage.innerHTML += errorMsg;
+                }
+
+                // Reload page after a short delay to show updated document list.
+                setTimeout(function() {
+                    window.location.reload();
+                }, 1500);
+            }
+
+            if (data.status === 'failed') {
+                eventSource.close();
+                progressFill.classList.add('error');
+                progressText.textContent = 'Processing failed.';
+                progressFile.textContent = '';
+                uploadMessage.innerHTML += '<div class="message message-error">Processing failed. Check server logs for details.</div>';
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Upload Files';
+            }
+        });
+
+        eventSource.onerror = function() {
+            eventSource.close();
+            progressText.textContent = 'Connection lost. Refresh to check status.';
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = 'Upload Files';
+        };
+    }
+})();
+</script>
+{% endblock %}

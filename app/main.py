@@ -71,7 +71,12 @@ app.include_router(health_router)
 app.include_router(projects_router, prefix="/api")
 app.include_router(documents_router, prefix="/api")
 
-# Mount static files
+# Include page routes (imported here to avoid circular import with templates)
+from app.api.pages import router as pages_router  # noqa: E402
+
+app.include_router(pages_router)
+
+# Mount static files (MUST be last -- it's a catch-all mount)
 static_dir = Path(__file__).parent / "static"
 static_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
