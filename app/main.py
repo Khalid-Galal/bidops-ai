@@ -12,6 +12,7 @@ from fastapi.templating import Jinja2Templates
 from app.api.documents import router as documents_router
 from app.api.health import router as health_router
 from app.api.projects import router as projects_router
+from app.api.search import router as search_router
 from app.config import get_settings
 from app.database import engine
 from app.models import Base
@@ -70,6 +71,7 @@ app.add_middleware(
 app.include_router(health_router)
 app.include_router(projects_router, prefix="/api")
 app.include_router(documents_router, prefix="/api")
+app.include_router(search_router, prefix="/api")
 
 # Include page routes (imported here to avoid circular import with templates)
 from app.api.pages import router as pages_router  # noqa: E402
