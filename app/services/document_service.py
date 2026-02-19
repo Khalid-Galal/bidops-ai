@@ -13,15 +13,19 @@ Critical design decisions:
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 
 from sqlalchemy import select
 
+from app.config import get_settings
 from app.database import async_session_factory
 from app.models.base import DocumentStatus, ProjectStatus
 from app.models.document import Document
 from app.models.project import Project
+from app.services.indexing.chunking_service import ChunkingService
+from app.services.indexing.embedding_service import EmbeddingService
 from app.services.parsing.base import get_parser_for_file
 from app.services.progress import (
     add_error,
@@ -33,6 +37,34 @@ from app.services.progress import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Lazy-initialized indexing services (same pattern as PdfParser's lazy converter).
+_chunking_service = None
+_embedding_service = None
+
+
+def _get_chunking_service() -> ChunkingService:
+    """Get or create the chunking service singleton."""
+    global _chunking_service
+    if _chunking_service is None:
+        settings = get_settings()
+        _chunking_service = ChunkingService(
+            max_chunk_chars=settings.chunk_max_chars,
+            overlap_chars=settings.chunk_overlap_chars,
+        )
+    return _chunking_service
+
+
+def _get_embedding_service() -> EmbeddingService:
+    """Get or create the embedding service singleton."""
+    global _embedding_service
+    if _embedding_service is None:
+        settings = get_settings()
+        _embedding_service = EmbeddingService(
+            persist_dir=settings.chroma_persist_dir,
+            model_name=settings.embedding_model,
+        )
+    return _embedding_service
 
 
 async def process_documents_batch(
@@ -127,6 +159,67 @@ async def process_documents_batch(
 
                         await db.commit()
                         add_result(task_id, filename, "completed", parsed.page_count)
+
+                        # Phase 2: Chunk and index document for search.
+                        # Wrapped in try/except so indexing failures do NOT
+                        # fail the document parse -- search is secondary.
+                        try:
+                            chunking_svc = _get_chunking_service()
+                            embedding_svc = _get_embedding_service()
+
+                            # Delete any existing chunks (re-upload case).
+                            embedding_svc.delete_document_chunks(
+                                project_id, doc_id
+                            )
+
+                            # Chunk the parsed document.
+                            chunks = chunking_svc.chunk_document(
+                                document_id=doc_id,
+                                pages=parsed.pages,
+                                filename=filename,
+                            )
+
+                            # Index chunks into ChromaDB.
+                            # CPU-bound embedding -- run in thread pool.
+                            if chunks:
+                                chunk_count = await asyncio.to_thread(
+                                    embedding_svc.index_chunks,
+                                    project_id,
+                                    chunks,
+                                )
+                                logger.info(
+                                    "Indexed %d chunks for %s (doc_id=%d)",
+                                    chunk_count,
+                                    filename,
+                                    doc_id,
+                                )
+
+                            # Enrich metadata with chunk info.
+                            existing_meta = (
+                                json.loads(doc.metadata_json)
+                                if doc.metadata_json
+                                else {}
+                            )
+                            existing_meta["chunk_count"] = len(chunks)
+                            existing_meta["languages_detected"] = list(
+                                set(c.language for c in chunks)
+                            )
+                            doc.metadata_json = json.dumps(
+                                existing_meta,
+                                ensure_ascii=False,
+                                default=str,
+                            )
+                            await db.commit()
+
+                        except Exception as idx_exc:
+                            # Indexing failure should NOT fail document parse.
+                            logger.warning(
+                                "Indexing failed for %s (doc_id=%d): %s. "
+                                "Document parsing succeeded.",
+                                filename,
+                                doc_id,
+                                idx_exc,
+                            )
 
                 logger.info(
                     "Processed %s (%d/%d): %s, %d pages in %dms",
