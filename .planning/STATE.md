@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Extract accurate, citation-backed project summaries and complete requirements checklists from any tender document folder -- turning hours of manual review into minutes.
-**Current focus:** Phase 4 in progress -- building requirements checklist extraction. Plans 01-02 complete (schemas, categories, prompt builder, ChecklistService). Next: Plan 03 (API endpoints, DB columns).
+**Current focus:** Phase 4 complete -- requirements checklist extraction fully wired (schemas, categories, service pipeline, API endpoints). Next: Phase 5 (Results Interface & Export).
 
 ## Current Position
 
-Phase: 4 of 5 (Requirements Checklist Extraction)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-02-19 -- Completed 04-02-PLAN.md
+Phase: 4 of 5 (Requirements Checklist Extraction) -- COMPLETE
+Plan: 3 of 3 in current phase -- COMPLETE
+Status: Phase complete
+Last activity: 2026-02-19 -- Completed 04-03-PLAN.md
 
-Progress: [############.] 73%
+Progress: [################..] 80%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11 (3 Phase 1 + 3 Phase 2 + 3 Phase 3 + 2 Phase 4)
+- Total plans completed: 12 (3 Phase 1 + 3 Phase 2 + 3 Phase 3 + 3 Phase 4)
 - Average duration: ~10 min
-- Total execution time: ~1 hour 48 min
+- Total execution time: ~1 hour 53 min
 
 **By Phase:**
 
@@ -30,11 +30,11 @@ Progress: [############.] 73%
 | 1. Document Ingestion Pipeline | 3/3 | ~45 min | ~15 min |
 | 2. Bilingual Processing & Search | 3/3 | ~33 min | ~11 min |
 | 3. Project Summary Extraction | 3/3 | ~18 min | ~6 min |
-| 4. Requirements Checklist Extraction | 2/3 | ~12 min | ~6 min |
+| 4. Requirements Checklist Extraction | 3/3 | ~17 min | ~6 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-01, 03-02, 03-03, 04-01, 04-02
-- Trend: Consistent (~5-7 min for recent plans)
+- Last 5 plans: 03-03, 04-01, 04-02, 04-03
+- Trend: Consistent (~5-6 min for recent plans)
 
 *Updated after each plan completion*
 
@@ -80,6 +80,8 @@ Recent decisions affecting current work:
 - [04-02] NLI verification per requirement using same source-chunk matching logic as CitationVerifier._find_source_chunk
 - [04-02] Semantic deduplication at 0.9 cosine similarity threshold removes lower-confidence duplicate
 - [04-02] Embedding model accessed lazily via search_service._embedding_service._get_model() (no new DI parameter)
+- [04-03] Separate service instances for checklist API (not shared with extraction API) for isolation
+- [04-03] Database must be recreated for new columns (SQLite create_all only adds new tables, not new columns)
 
 ### Pending Todos
 
@@ -90,9 +92,10 @@ None.
 - Gemini API key (BIDOPS_GEMINI_API_KEY) must be configured before running extraction pipeline
 - Real Arabic tender documents needed for end-to-end validation
 - Lingua mixed detection edge case: very lopsided content (1 Arabic word among many English) may classify as dominant language rather than "mixed"
+- Existing database file was cleared during 04-03; will be recreated on next server startup with all columns
 
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 04-02-PLAN.md (ChecklistService with multi-query retrieval, LLM extraction, NLI verification, deduplication). Next: 04-03-PLAN.md (Project model columns, checklist API endpoints, router registration).
+Stopped at: Completed 04-03-PLAN.md (Project model columns, checklist API endpoints, router registration). Phase 4 complete. Next: Phase 5 (Results Interface & Export).
 Resume file: None

@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Document Ingestion Pipeline** - Parse PDF/DOCX/XLSX tender documents into clean structured content
 - [x] **Phase 2: Bilingual Processing & Search** - Handle Arabic/English content and enable document search
 - [x] **Phase 3: Project Summary Extraction** - Extract citation-backed project metadata using LLM
-- [ ] **Phase 4: Requirements Checklist Extraction** - Generate categorized requirements checklist from tender documents
+- [x] **Phase 4: Requirements Checklist Extraction** - Generate categorized requirements checklist from tender documents
 - [ ] **Phase 5: Results Interface & Export** - Complete web UI for reviewing, editing, searching, and exporting results
 
 ## Phase Details
@@ -81,12 +81,12 @@ Plans:
   3. System identifies and lists all mandatory submission documents required by the tender
   4. System detects eligibility and pre-qualification criteria and surfaces them prominently
   5. Each checklist item carries citation and confidence data (using the infrastructure from Phase 3)
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 
 Plans:
 - [x] 04-01-PLAN.md — Checklist Pydantic schemas, category definitions with search queries/prompts, and context_builder extension
 - [x] 04-02-PLAN.md — ChecklistService with multi-query retrieval, LLM list extraction, NLI verification, and semantic deduplication
-- [ ] 04-03-PLAN.md — Project model columns, checklist API endpoints (POST/GET), and router registration
+- [x] 04-03-PLAN.md — Project model columns, checklist API endpoints (POST/GET), and router registration
 
 ### Phase 5: Results Interface & Export
 **Goal**: User can review, edit, search, and export all extracted data through a complete web interface
@@ -115,5 +115,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Document Ingestion Pipeline | 3/3 | Complete | 2026-02-19 |
 | 2. Bilingual Processing & Search | 3/3 | Complete | 2026-02-19 |
 | 3. Project Summary Extraction | 3/3 | Complete    | 2026-02-19 |
-| 4. Requirements Checklist Extraction | 2/3 | In progress | - |
+| 4. Requirements Checklist Extraction | 3/3 | Complete | 2026-02-19 |
 | 5. Results Interface & Export | 0/3 | Not started | - |
