@@ -5,34 +5,34 @@
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Extract accurate, citation-backed project summaries and complete requirements checklists from any tender document folder -- turning hours of manual review into minutes.
-**Current focus:** Phase 2 - Bilingual Processing & Search
+**Current focus:** Phase 2 complete -- ready for Phase 3 (Project Summary Extraction)
 
 ## Current Position
 
-Phase: 2 of 5 (Bilingual Processing & Search)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-02-19 -- Completed 02-02-PLAN.md
+Phase: 2 of 5 (Bilingual Processing & Search) -- COMPLETE
+Plan: 3 of 3 in current phase (all plans complete)
+Status: Phase complete
+Last activity: 2026-02-19 -- Completed 02-03-PLAN.md
 
-Progress: [#####.....] 33%
+Progress: [######....] 40%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5 (3 Phase 1 + 2 Phase 2)
-- Average duration: ~14 min
-- Total execution time: ~1 hour 10 min
+- Total plans completed: 6 (3 Phase 1 + 3 Phase 2)
+- Average duration: ~13 min
+- Total execution time: ~1 hour 18 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Document Ingestion Pipeline | 3/3 | ~45 min | ~15 min |
-| 2. Bilingual Processing & Search | 2/3 | ~25 min | ~13 min |
+| 2. Bilingual Processing & Search | 3/3 | ~33 min | ~11 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01, 01-02, 01-03, 02-01, 02-02
-- Trend: Stable ~14 min per plan
+- Last 5 plans: 01-02, 01-03, 02-01, 02-02, 02-03
+- Trend: Stable ~13 min per plan
 
 *Updated after each plan completion*
 
@@ -57,6 +57,9 @@ Recent decisions affecting current work:
 - [02-02] text_normalized field embedded for consistent query matching; original text in metadata for display
 - [02-02] Per-project ChromaDB collections for search isolation
 - [02-02] Indexing failures fault-isolated from document parsing (try/except)
+- [02-03] alpha=0.7 weights semantic search higher for multilingual queries
+- [02-03] BM25 index lazily built on first search, cached with explicit invalidation
+- [02-03] Search errors return empty results (graceful degradation, not 500s)
 
 ### Pending Todos
 
@@ -71,5 +74,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 02-02-PLAN.md (semantic chunking + ChromaDB vector indexing)
+Stopped at: Completed 02-03-PLAN.md (hybrid search API with BM25 + vector + RRF). Phase 2 fully complete.
 Resume file: None

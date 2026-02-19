@@ -13,7 +13,7 @@ BidOps AI transforms construction tender document folders into structured, citat
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Document Ingestion Pipeline** - Parse PDF/DOCX/XLSX tender documents into clean structured content
-- [ ] **Phase 2: Bilingual Processing & Search** - Handle Arabic/English content and enable document search
+- [x] **Phase 2: Bilingual Processing & Search** - Handle Arabic/English content and enable document search
 - [ ] **Phase 3: Project Summary Extraction** - Extract citation-backed project metadata using LLM
 - [ ] **Phase 4: Requirements Checklist Extraction** - Generate categorized requirements checklist from tender documents
 - [ ] **Phase 5: Results Interface & Export** - Complete web UI for reviewing, editing, searching, and exporting results
@@ -52,7 +52,7 @@ Plans:
 Plans:
 - [x] 02-01-PLAN.md — Arabic OCR pipeline with EasyOCR, Arabic text normalization (PyArabic), and per-section language detection (lingua)
 - [x] 02-02-PLAN.md — Semantic document chunking and ChromaDB vector indexing with multilingual embeddings (paraphrase-multilingual-mpnet-base-v2)
-- [ ] 02-03-PLAN.md — Hybrid search API combining BM25 keyword search (rank-bm25) and vector similarity with RRF fusion
+- [x] 02-03-PLAN.md — Hybrid search API combining BM25 keyword search (rank-bm25) and vector similarity with RRF fusion
 
 ### Phase 3: Project Summary Extraction
 **Goal**: User receives a complete, citation-backed project summary extracted from tender documents with confidence indicators
@@ -113,7 +113,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Document Ingestion Pipeline | 3/3 | Complete | 2026-02-19 |
-| 2. Bilingual Processing & Search | 2/3 | In progress | - |
+| 2. Bilingual Processing & Search | 3/3 | Complete | 2026-02-19 |
 | 3. Project Summary Extraction | 0/3 | Not started | - |
 | 4. Requirements Checklist Extraction | 0/3 | Not started | - |
 | 5. Results Interface & Export | 0/3 | Not started | - |
