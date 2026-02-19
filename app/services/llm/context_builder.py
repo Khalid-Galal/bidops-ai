@@ -9,9 +9,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from app.services.extraction.field_definitions import FieldDefinition
-
 if TYPE_CHECKING:
+    from app.services.extraction.checklist_definitions import CategoryDefinition
+    from app.services.extraction.field_definitions import FieldDefinition
     from app.services.search.hybrid_search import SearchResult
 
 
@@ -79,6 +79,53 @@ INSTRUCTIONS:
 6. NEVER fabricate or infer values not explicitly stated in the documents.
 7. For list-type fields (e.g., stakeholders), include ALL items found across all excerpts.
 8. Set confidence between 0.0 and 1.0 based on how clearly and explicitly the value appears.{extra_instructions}
+
+DOCUMENT EXCERPTS:
+{context}"""
+
+    return prompt
+
+
+def build_checklist_extraction_prompt(
+    category: CategoryDefinition,
+    context: str,
+) -> str:
+    """Build extraction prompt for one requirement category with source context.
+
+    Creates a category-focused prompt instructing the LLM to extract all
+    requirements of a specific type from the provided document excerpts,
+    with mandatory classification guidance and citation requirements.
+
+    Args:
+        category: The category definition with name, description, and hints.
+        context: Labeled context string from build_labeled_context().
+
+    Returns:
+        Complete prompt string ready for LLM extraction.
+    """
+    # Build list of other categories to explicitly skip
+    all_categories = [
+        "Technical", "Commercial", "Legal", "HSE",
+        "Submission Documents", "Eligibility",
+    ]
+    other_categories = [c for c in all_categories if c != category.display_name]
+    skip_list = ", ".join(other_categories)
+
+    prompt = f"""\
+Extract ALL {category.display_name} requirements from the tender document excerpts below.
+
+CATEGORY: {category.display_name}
+CATEGORY DESCRIPTION: {category.description}
+
+{category.prompt_hints}
+
+INSTRUCTIONS:
+1. Extract EVERY {category.display_name.lower()} requirement, obligation, or condition found in the excerpts.
+2. For mandatory classification: "shall", "must", "required", "mandatory" = is_mandatory: true. "should", "may", "recommended", "desirable" = is_mandatory: false. For ambiguous language, default to mandatory (safer for tender compliance).
+3. ONLY extract {category.display_name.lower()} requirements. Skip requirements that belong to other categories ({skip_list}).
+4. Do NOT fabricate or infer requirements not explicitly stated in the documents.
+5. If no {category.display_name.lower()} requirements are found, return an empty items list.
+6. Be thorough -- missing a requirement could lead to tender disqualification.
 
 DOCUMENT EXCERPTS:
 {context}"""
