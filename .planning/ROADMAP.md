@@ -12,7 +12,7 @@ BidOps AI transforms construction tender document folders into structured, citat
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Document Ingestion Pipeline** - Parse PDF/DOCX/XLSX tender documents into clean structured content
+- [x] **Phase 1: Document Ingestion Pipeline** - Parse PDF/DOCX/XLSX tender documents into clean structured content
 - [ ] **Phase 2: Bilingual Processing & Search** - Handle Arabic/English content and enable document search
 - [ ] **Phase 3: Project Summary Extraction** - Extract citation-backed project metadata using LLM
 - [ ] **Phase 4: Requirements Checklist Extraction** - Generate categorized requirements checklist from tender documents
@@ -33,9 +33,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans:** 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — FastAPI application scaffold with database, project/document models, and project CRUD API
-- [ ] 01-02-PLAN.md — Multi-format document parsing pipeline (PDF/DOCX with Docling, XLSX with openpyxl)
-- [ ] 01-03-PLAN.md — Document upload API, processing service, SSE progress streaming, and web UI
+- [x] 01-01-PLAN.md — FastAPI application scaffold with database, project/document models, and project CRUD API
+- [x] 01-02-PLAN.md — Multi-format document parsing pipeline (PDF/DOCX with Docling, XLSX with openpyxl)
+- [x] 01-03-PLAN.md — Document upload API, processing service, SSE progress streaming, and web UI
 
 ### Phase 2: Bilingual Processing & Search
 **Goal**: User can search across bilingual tender documents by keyword or meaning, with Arabic content handled correctly
@@ -50,7 +50,7 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Arabic OCR pipeline with EasyOCR, Arabic text normalization (PyArabic), and per-section language detection (lingua)
+- [x] 02-01-PLAN.md — Arabic OCR pipeline with EasyOCR, Arabic text normalization (PyArabic), and per-section language detection (lingua)
 - [ ] 02-02-PLAN.md — Semantic document chunking and ChromaDB vector indexing with multilingual embeddings (paraphrase-multilingual-mpnet-base-v2)
 - [ ] 02-03-PLAN.md — Hybrid search API combining BM25 keyword search (rank-bm25) and vector similarity with RRF fusion
 
@@ -112,8 +112,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Document Ingestion Pipeline | 0/3 | Planned | - |
-| 2. Bilingual Processing & Search | 0/3 | Planned | - |
+| 1. Document Ingestion Pipeline | 3/3 | Complete | 2026-02-19 |
+| 2. Bilingual Processing & Search | 1/3 | In progress | - |
 | 3. Project Summary Extraction | 0/3 | Not started | - |
 | 4. Requirements Checklist Extraction | 0/3 | Not started | - |
 | 5. Results Interface & Export | 0/3 | Not started | - |
