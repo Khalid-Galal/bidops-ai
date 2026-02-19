@@ -64,12 +64,12 @@ Plans:
   3. User can view the exact quote from the source document that supports each extracted value
   4. Each extraction displays a confidence score (high/medium/low) indicating reliability
   5. Low-confidence extractions are visually flagged so the user knows which items need manual review
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 03-01: LLM service integration with Gemini 3 Pro and structured output schemas
-- [ ] 03-02: Project summary extraction pipeline with per-field retrieval and Pydantic validation
-- [ ] 03-03: Citation verification system with source linking, exact quotes, and confidence scoring
+- [ ] 03-01-PLAN.md — LLM service integration (Gemini + instructor), Pydantic extraction schemas, field definitions with query hints, and config updates
+- [ ] 03-02-PLAN.md — NLI citation verification with cross-encoder model and calibrated confidence scoring
+- [ ] 03-03-PLAN.md — Extraction pipeline orchestration with per-field retrieval, API endpoint, and database persistence
 
 ### Phase 4: Requirements Checklist Extraction
 **Goal**: User receives a categorized, evidence-backed requirements checklist covering all tender obligations
