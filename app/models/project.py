@@ -32,6 +32,10 @@ class Project(Base):
     extraction_status: Mapped[str | None] = mapped_column(
         String(20), nullable=True, default=None
     )
+    checklist_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    checklist_status: Mapped[str | None] = mapped_column(
+        String(20), nullable=True, default=None
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now()
     )
