@@ -33,3 +33,6 @@ lingua-language-detector
 # Vector database and embeddings (Phase 2)
 chromadb
 sentence-transformers
+
+# BM25 keyword search (Phase 2)
+rank-bm25
