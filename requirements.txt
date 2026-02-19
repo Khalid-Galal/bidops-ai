@@ -29,3 +29,7 @@ python-bidi
 
 # Language detection (Phase 2)
 lingua-language-detector
+
+# Vector database and embeddings (Phase 2)
+chromadb
+sentence-transformers
