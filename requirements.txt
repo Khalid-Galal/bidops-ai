@@ -26,3 +26,6 @@ pydantic-settings
 # Arabic text processing (Phase 2)
 PyArabic
 python-bidi
+
+# Language detection (Phase 2)
+lingua-language-detector
