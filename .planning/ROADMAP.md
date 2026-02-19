@@ -81,12 +81,12 @@ Plans:
   3. System identifies and lists all mandatory submission documents required by the tender
   4. System detects eligibility and pre-qualification criteria and surfaces them prominently
   5. Each checklist item carries citation and confidence data (using the infrastructure from Phase 3)
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 04-01: Requirements extraction pipeline with category-specific prompts and schemas
-- [ ] 04-02: Mandatory documents detection and eligibility/pre-qualification criteria extraction
-- [ ] 04-03: Checklist assembly with categorization, citation linking, and confidence scoring
+- [ ] 04-01-PLAN.md — Checklist Pydantic schemas, category definitions with search queries/prompts, and context_builder extension
+- [ ] 04-02-PLAN.md — ChecklistService with multi-query retrieval, LLM list extraction, NLI verification, and semantic deduplication
+- [ ] 04-03-PLAN.md — Project model columns, checklist API endpoints (POST/GET), and router registration
 
 ### Phase 5: Results Interface & Export
 **Goal**: User can review, edit, search, and export all extracted data through a complete web interface
