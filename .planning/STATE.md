@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Extract accurate, citation-backed project summaries and complete requirements checklists from any tender document folder -- turning hours of manual review into minutes.
-**Current focus:** Phase 4 in progress -- building requirements checklist extraction. Plan 01 complete (schemas, categories, prompt builder). Next: Plan 02 (ChecklistService).
+**Current focus:** Phase 4 in progress -- building requirements checklist extraction. Plans 01-02 complete (schemas, categories, prompt builder, ChecklistService). Next: Plan 03 (API endpoints, DB columns).
 
 ## Current Position
 
 Phase: 4 of 5 (Requirements Checklist Extraction)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-02-19 -- Completed 04-01-PLAN.md
+Last activity: 2026-02-19 -- Completed 04-02-PLAN.md
 
-Progress: [###########..] 67%
+Progress: [############.] 73%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10 (3 Phase 1 + 3 Phase 2 + 3 Phase 3 + 1 Phase 4)
+- Total plans completed: 11 (3 Phase 1 + 3 Phase 2 + 3 Phase 3 + 2 Phase 4)
 - Average duration: ~10 min
-- Total execution time: ~1 hour 43 min
+- Total execution time: ~1 hour 48 min
 
 **By Phase:**
 
@@ -30,10 +30,10 @@ Progress: [###########..] 67%
 | 1. Document Ingestion Pipeline | 3/3 | ~45 min | ~15 min |
 | 2. Bilingual Processing & Search | 3/3 | ~33 min | ~11 min |
 | 3. Project Summary Extraction | 3/3 | ~18 min | ~6 min |
-| 4. Requirements Checklist Extraction | 1/3 | ~7 min | ~7 min |
+| 4. Requirements Checklist Extraction | 2/3 | ~12 min | ~6 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-03, 03-01, 03-02, 03-03, 04-01
+- Last 5 plans: 03-01, 03-02, 03-03, 04-01, 04-02
 - Trend: Consistent (~5-7 min for recent plans)
 
 *Updated after each plan completion*
@@ -76,6 +76,10 @@ Recent decisions affecting current work:
 - [04-01] FieldDefinition import moved to TYPE_CHECKING guard to fix pre-existing circular import
 - [04-01] Wrapper model (CategoryExtractionResponse) over Iterable for Gemini compatibility
 - [04-01] 6 categories with variable max_context_chunks (20 for major, 15 for smaller categories)
+- [04-02] Multi-query retrieval merges results across category queries, deduplicates by chunk_id, sorts by score
+- [04-02] NLI verification per requirement using same source-chunk matching logic as CitationVerifier._find_source_chunk
+- [04-02] Semantic deduplication at 0.9 cosine similarity threshold removes lower-confidence duplicate
+- [04-02] Embedding model accessed lazily via search_service._embedding_service._get_model() (no new DI parameter)
 
 ### Pending Todos
 
@@ -90,5 +94,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 04-01-PLAN.md (checklist schemas, category definitions, prompt builder). Next: 04-02-PLAN.md (ChecklistService with multi-query retrieval, LLM list extraction, NLI verification, deduplication).
+Stopped at: Completed 04-02-PLAN.md (ChecklistService with multi-query retrieval, LLM extraction, NLI verification, deduplication). Next: 04-03-PLAN.md (Project model columns, checklist API endpoints, router registration).
 Resume file: None
