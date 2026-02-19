@@ -1,0 +1,227 @@
+"""Checklist API endpoints for triggering and retrieving requirements checklist extraction.
+
+Routes:
+    POST /api/projects/{project_id}/checklist - Trigger full checklist extraction pipeline
+    GET  /api/projects/{project_id}/checklist - Retrieve stored checklist results
+"""
+
+from __future__ import annotations
+
+import logging
+
+from fastapi import APIRouter, HTTPException, status
+
+from app.config import get_settings
+from app.database import async_session_factory
+from app.models.project import Project
+from app.schemas.checklist import ChecklistResponse, RequirementsChecklist
+
+logger = logging.getLogger(__name__)
+
+# Lazy singleton for ChecklistService (same pattern as extraction API).
+_checklist_service = None
+
+
+def _get_checklist_service():
+    """Get or create the ChecklistService singleton.
+
+    Lazily initializes all required services (embedding, search, LLM,
+    citation verifier) on first call. Validates Gemini API key is set.
+
+    Returns:
+        The ChecklistService singleton instance.
+
+    Raises:
+        HTTPException: 500 if BIDOPS_GEMINI_API_KEY is not configured.
+    """
+    global _checklist_service
+    if _checklist_service is None:
+        settings = get_settings()
+        if not settings.gemini_api_key:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="BIDOPS_GEMINI_API_KEY not configured. Set it in .env or environment.",
+            )
+        from app.services.extraction.checklist_service import ChecklistService
+        from app.services.extraction.citation_verifier import CitationVerifier
+        from app.services.indexing.embedding_service import EmbeddingService
+        from app.services.llm.gemini_service import GeminiService
+        from app.services.search.hybrid_search import HybridSearchService
+
+        embedding_svc = EmbeddingService(
+            persist_dir=settings.chroma_persist_dir,
+            model_name=settings.embedding_model,
+        )
+        search_svc = HybridSearchService(embedding_service=embedding_svc)
+        llm_svc = GeminiService(
+            api_key=settings.gemini_api_key,
+            model=settings.gemini_model,
+        )
+        verifier = CitationVerifier(
+            model_name=settings.nli_model,
+            confidence_high=settings.confidence_high_threshold,
+            confidence_low=settings.confidence_low_threshold,
+            review_threshold=settings.review_threshold,
+        )
+        _checklist_service = ChecklistService(
+            search_service=search_svc,
+            llm_service=llm_svc,
+            citation_verifier=verifier,
+        )
+    return _checklist_service
+
+
+def _count_checklist(checklist: RequirementsChecklist) -> tuple[int, int]:
+    """Count total and review-requiring requirements in a checklist.
+
+    Args:
+        checklist: The RequirementsChecklist to count items for.
+
+    Returns:
+        Tuple of (total_requirements, requirements_requiring_review).
+    """
+    all_items = (
+        checklist.requirements
+        + checklist.submission_documents
+        + checklist.eligibility_criteria
+    )
+    total_requirements = len(all_items)
+    requirements_requiring_review = sum(
+        1 for item in all_items if item.requires_review
+    )
+    return total_requirements, requirements_requiring_review
+
+
+router = APIRouter(tags=["checklist"])
+
+
+@router.post(
+    "/projects/{project_id}/checklist",
+    response_model=ChecklistResponse,
+)
+async def extract_project_checklist(project_id: int) -> ChecklistResponse:
+    """Trigger full checklist extraction pipeline for a project.
+
+    Runs per-category hybrid search retrieval, Gemini LLM extraction, NLI
+    citation verification, semantic deduplication, and checklist assembly.
+    Results are persisted to the project's checklist_json column.
+
+    Args:
+        project_id: Database ID of the project to extract.
+
+    Returns:
+        ChecklistResponse with status, checklist, and requirement counts.
+
+    Raises:
+        HTTPException: 404 if project not found.
+        HTTPException: 409 if checklist extraction already in progress.
+        HTTPException: 500 on extraction failure.
+    """
+    # Verify project exists
+    async with async_session_factory() as session:
+        project = await session.get(Project, project_id)
+        if project is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Project with id {project_id} not found",
+            )
+        # Prevent duplicate extraction
+        if project.checklist_status == "in_progress":
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Checklist extraction already in progress for this project",
+            )
+
+    checklist_service = _get_checklist_service()
+
+    try:
+        checklist = await checklist_service.extract_and_persist_checklist(project_id)
+        total_requirements, requirements_requiring_review = _count_checklist(checklist)
+
+        return ChecklistResponse(
+            project_id=project_id,
+            status="completed",
+            checklist=checklist,
+            total_requirements=total_requirements,
+            requirements_requiring_review=requirements_requiring_review,
+        )
+    except Exception as exc:
+        logger.exception("Checklist extraction failed for project %d", project_id)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Checklist extraction failed: {exc}",
+        ) from exc
+
+
+@router.get(
+    "/projects/{project_id}/checklist",
+    response_model=ChecklistResponse,
+)
+async def get_checklist_result(project_id: int) -> ChecklistResponse:
+    """Retrieve stored checklist extraction results for a project.
+
+    Returns the previously extracted requirements checklist from the database
+    without re-running extraction. Includes extraction status, checklist
+    data, and requirement counts.
+
+    Args:
+        project_id: Database ID of the project.
+
+    Returns:
+        ChecklistResponse with current status and stored checklist.
+
+    Raises:
+        HTTPException: 404 if project not found.
+    """
+    async with async_session_factory() as session:
+        project = await session.get(Project, project_id)
+        if project is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Project with id {project_id} not found",
+            )
+
+        # Not started
+        if project.checklist_status is None:
+            return ChecklistResponse(
+                project_id=project_id,
+                status="not_started",
+                checklist=None,
+                total_requirements=0,
+                requirements_requiring_review=0,
+            )
+
+        # In progress
+        if project.checklist_status == "in_progress":
+            return ChecklistResponse(
+                project_id=project_id,
+                status="in_progress",
+                checklist=None,
+                total_requirements=0,
+                requirements_requiring_review=0,
+            )
+
+        # Completed with results
+        if project.checklist_status == "completed" and project.checklist_json:
+            checklist = RequirementsChecklist.model_validate_json(
+                project.checklist_json
+            )
+            total_requirements, requirements_requiring_review = _count_checklist(
+                checklist
+            )
+            return ChecklistResponse(
+                project_id=project_id,
+                status="completed",
+                checklist=checklist,
+                total_requirements=total_requirements,
+                requirements_requiring_review=requirements_requiring_review,
+            )
+
+        # Failed
+        return ChecklistResponse(
+            project_id=project_id,
+            status="failed",
+            checklist=None,
+            total_requirements=0,
+            requirements_requiring_review=0,
+        )
