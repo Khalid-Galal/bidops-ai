@@ -22,3 +22,7 @@ sse-starlette
 
 # Configuration
 pydantic-settings
+
+# Arabic text processing (Phase 2)
+PyArabic
+python-bidi

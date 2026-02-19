@@ -3,11 +3,11 @@
 Uses IBM's Docling library for high-accuracy PDF parsing including:
 - Native text extraction with reading order preservation
 - Table structure recognition (ACCURATE mode via TableFormer)
-- OCR for scanned pages (EasyOCR, English)
+- OCR for scanned pages (EasyOCR, English + Arabic)
 - Markdown export for full-text indexing
 
 The Docling converter is lazily initialized because:
-1. It downloads ~2 GB of models on first run.
+1. It downloads ~2 GB of models on first run (Arabic OCR adds ~100 MB).
 2. Import alone is heavy (PyTorch, transformers).
 """
 
@@ -18,6 +18,8 @@ from pathlib import Path
 from app.services.parsing.base import PageContent, ParsedDocument, ParserInterface
 
 # Module-level converter cache -- lazy initialization.
+# NOTE: Adding Arabic to EasyOCR increases first-run model download size
+# by ~100 MB (Arabic recognition model). Subsequent runs use the cached model.
 _converter = None
 
 
@@ -45,7 +47,7 @@ def _get_converter():
     pipeline_options = PdfPipelineOptions()
     pipeline_options.do_ocr = True
     pipeline_options.ocr_options = EasyOcrOptions(
-        lang=["en"],  # English only for Phase 1; Arabic added in Phase 2
+        lang=["en", "ar"],  # English + Arabic OCR (Phase 2)
         use_gpu=False,
         force_full_page_ocr=False,  # Only OCR pages with insufficient text
     )
