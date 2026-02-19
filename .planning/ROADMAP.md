@@ -98,12 +98,12 @@ Plans:
   3. User can search documents from the web interface and see results with context
   4. User can export the project summary and checklist to an Excel file
   5. User can export a formatted report to PDF with citation appendix
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 05-01: Project summary and checklist review UI with inline editing
-- [ ] 05-02: Document search UI with result highlighting and context display
-- [ ] 05-03: Export service for Excel and PDF output with citation appendix
+- [ ] 05-01-PLAN.md — Project summary and checklist review UI with tab navigation, inline checklist editing via PATCH endpoint
+- [ ] 05-02-PLAN.md — Document search tab with query input, mode selection, and results with source metadata
+- [ ] 05-03-PLAN.md — Excel and PDF export services with API endpoints and download buttons
 
 ## Progress
 
