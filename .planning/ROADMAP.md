@@ -84,7 +84,7 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Checklist Pydantic schemas, category definitions with search queries/prompts, and context_builder extension
+- [x] 04-01-PLAN.md — Checklist Pydantic schemas, category definitions with search queries/prompts, and context_builder extension
 - [ ] 04-02-PLAN.md — ChecklistService with multi-query retrieval, LLM list extraction, NLI verification, and semantic deduplication
 - [ ] 04-03-PLAN.md — Project model columns, checklist API endpoints (POST/GET), and router registration
 
@@ -115,5 +115,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Document Ingestion Pipeline | 3/3 | Complete | 2026-02-19 |
 | 2. Bilingual Processing & Search | 3/3 | Complete | 2026-02-19 |
 | 3. Project Summary Extraction | 3/3 | Complete    | 2026-02-19 |
-| 4. Requirements Checklist Extraction | 0/3 | Not started | - |
+| 4. Requirements Checklist Extraction | 1/3 | In progress | - |
 | 5. Results Interface & Export | 0/3 | Not started | - |
