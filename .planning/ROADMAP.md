@@ -115,5 +115,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Document Ingestion Pipeline | 3/3 | Complete | 2026-02-19 |
 | 2. Bilingual Processing & Search | 3/3 | Complete | 2026-02-19 |
 | 3. Project Summary Extraction | 3/3 | Complete    | 2026-02-19 |
-| 4. Requirements Checklist Extraction | 3/3 | Complete | 2026-02-19 |
+| 4. Requirements Checklist Extraction | 3/3 | Complete    | 2026-02-19 |
 | 5. Results Interface & Export | 0/3 | Not started | - |
