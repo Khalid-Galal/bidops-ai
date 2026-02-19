@@ -21,6 +21,18 @@ class Settings(BaseSettings):
     chunk_max_chars: int = 400
     chunk_overlap_chars: int = 50
 
+    # LLM settings (Phase 3)
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-2.5-pro"
+
+    # NLI citation verification (Phase 3)
+    nli_model: str = "cross-encoder/nli-deberta-v3-xsmall"
+
+    # Confidence thresholds (Phase 3)
+    confidence_high_threshold: float = 0.8
+    confidence_low_threshold: float = 0.5
+    review_threshold: float = 0.5
+
     model_config = {
         "env_prefix": "BIDOPS_",
         "env_file": ".env",

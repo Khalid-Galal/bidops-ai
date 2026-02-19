@@ -36,3 +36,8 @@ sentence-transformers
 
 # BM25 keyword search (Phase 2)
 rank-bm25
+
+# LLM integration (Phase 3)
+google-genai
+instructor
+tenacity
