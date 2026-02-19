@@ -68,7 +68,7 @@ Plans:
 
 Plans:
 - [x] 03-01-PLAN.md — LLM service integration (Gemini + instructor), Pydantic extraction schemas, field definitions with query hints, and config updates
-- [ ] 03-02-PLAN.md — NLI citation verification with cross-encoder model and calibrated confidence scoring
+- [x] 03-02-PLAN.md — NLI citation verification with cross-encoder model and calibrated confidence scoring
 - [ ] 03-03-PLAN.md — Extraction pipeline orchestration with per-field retrieval, API endpoint, and database persistence
 
 ### Phase 4: Requirements Checklist Extraction
@@ -114,6 +114,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Document Ingestion Pipeline | 3/3 | Complete | 2026-02-19 |
 | 2. Bilingual Processing & Search | 3/3 | Complete | 2026-02-19 |
-| 3. Project Summary Extraction | 1/3 | In progress | - |
+| 3. Project Summary Extraction | 2/3 | In progress | - |
 | 4. Requirements Checklist Extraction | 0/3 | Not started | - |
 | 5. Results Interface & Export | 0/3 | Not started | - |
