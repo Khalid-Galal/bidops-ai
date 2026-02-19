@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Document Ingestion Pipeline** - Parse PDF/DOCX/XLSX tender documents into clean structured content
 - [x] **Phase 2: Bilingual Processing & Search** - Handle Arabic/English content and enable document search
-- [ ] **Phase 3: Project Summary Extraction** - Extract citation-backed project metadata using LLM
+- [x] **Phase 3: Project Summary Extraction** - Extract citation-backed project metadata using LLM
 - [ ] **Phase 4: Requirements Checklist Extraction** - Generate categorized requirements checklist from tender documents
 - [ ] **Phase 5: Results Interface & Export** - Complete web UI for reviewing, editing, searching, and exporting results
 
@@ -69,7 +69,7 @@ Plans:
 Plans:
 - [x] 03-01-PLAN.md — LLM service integration (Gemini + instructor), Pydantic extraction schemas, field definitions with query hints, and config updates
 - [x] 03-02-PLAN.md — NLI citation verification with cross-encoder model and calibrated confidence scoring
-- [ ] 03-03-PLAN.md — Extraction pipeline orchestration with per-field retrieval, API endpoint, and database persistence
+- [x] 03-03-PLAN.md — Extraction pipeline orchestration with per-field retrieval, API endpoint, and database persistence
 
 ### Phase 4: Requirements Checklist Extraction
 **Goal**: User receives a categorized, evidence-backed requirements checklist covering all tender obligations
@@ -114,6 +114,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Document Ingestion Pipeline | 3/3 | Complete | 2026-02-19 |
 | 2. Bilingual Processing & Search | 3/3 | Complete | 2026-02-19 |
-| 3. Project Summary Extraction | 2/3 | In progress | - |
+| 3. Project Summary Extraction | 3/3 | Complete | 2026-02-19 |
 | 4. Requirements Checklist Extraction | 0/3 | Not started | - |
 | 5. Results Interface & Export | 0/3 | Not started | - |

@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Extract accurate, citation-backed project summaries and complete requirements checklists from any tender document folder -- turning hours of manual review into minutes.
-**Current focus:** Phase 3 in progress -- LLM service, extraction schemas, and NLI citation verification complete, extraction pipeline orchestration next
+**Current focus:** Phase 3 complete -- full extraction pipeline with per-field retrieval, Gemini LLM, NLI verification, and REST API. Next: Phase 4 (Requirements Checklist).
 
 ## Current Position
 
 Phase: 3 of 5 (Project Summary Extraction)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-02-19 -- Completed 03-02-PLAN.md
+Plan: 3 of 3 in current phase
+Status: Phase complete
+Last activity: 2026-02-19 -- Completed 03-03-PLAN.md
 
-Progress: [########..] 53%
+Progress: [#########.] 60%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8 (3 Phase 1 + 3 Phase 2 + 2 Phase 3)
-- Average duration: ~12 min
-- Total execution time: ~1 hour 31 min
+- Total plans completed: 9 (3 Phase 1 + 3 Phase 2 + 3 Phase 3)
+- Average duration: ~11 min
+- Total execution time: ~1 hour 36 min
 
 **By Phase:**
 
@@ -29,11 +29,11 @@ Progress: [########..] 53%
 |-------|-------|-------|----------|
 | 1. Document Ingestion Pipeline | 3/3 | ~45 min | ~15 min |
 | 2. Bilingual Processing & Search | 3/3 | ~33 min | ~11 min |
-| 3. Project Summary Extraction | 2/3 | ~13 min | ~7 min |
+| 3. Project Summary Extraction | 3/3 | ~18 min | ~6 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01, 02-02, 02-03, 03-01, 03-02
-- Trend: Accelerating (~6 min for 03-02)
+- Last 5 plans: 02-02, 02-03, 03-01, 03-02, 03-03
+- Trend: Accelerating (~5 min for 03-03)
 
 *Updated after each plan completion*
 
@@ -68,6 +68,10 @@ Recent decisions affecting current work:
 - [03-02] Lazy NLI model loading to avoid startup delay
 - [03-02] Confidence weights: NLI 50%, retrieval 30%, LLM 20%
 - [03-02] Lenient NLI threshold (0.3) for keeping citations -- score flows into overall confidence
+- [03-03] Per-field extraction with 0.5s inter-field delay to avoid Gemini rate limiting
+- [03-03] Individual field failures produce empty ExtractedField (graceful degradation)
+- [03-03] Extraction status lifecycle (None -> in_progress -> completed/failed) for concurrency control
+- [03-03] Lazy singleton ExtractionService in API layer composes all dependencies on first request
 
 ### Pending Todos
 
@@ -75,12 +79,12 @@ None.
 
 ### Blockers/Concerns
 
-- Gemini API key (BIDOPS_GEMINI_API_KEY) must be configured before running extraction pipeline in 03-03
-- Real Arabic tender documents needed for validation
+- Gemini API key (BIDOPS_GEMINI_API_KEY) must be configured before running extraction pipeline
+- Real Arabic tender documents needed for end-to-end validation
 - Lingua mixed detection edge case: very lopsided content (1 Arabic word among many English) may classify as dominant language rather than "mixed"
 
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 03-02-PLAN.md (NLI citation verification with cross-encoder and confidence scoring). Next: 03-03 (extraction pipeline orchestration).
+Stopped at: Completed 03-03-PLAN.md (extraction pipeline orchestration with API endpoint and persistence). Phase 3 complete. Next: Phase 4 (Requirements Checklist).
 Resume file: None
