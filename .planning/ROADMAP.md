@@ -51,7 +51,7 @@ Plans:
 
 Plans:
 - [x] 02-01-PLAN.md — Arabic OCR pipeline with EasyOCR, Arabic text normalization (PyArabic), and per-section language detection (lingua)
-- [ ] 02-02-PLAN.md — Semantic document chunking and ChromaDB vector indexing with multilingual embeddings (paraphrase-multilingual-mpnet-base-v2)
+- [x] 02-02-PLAN.md — Semantic document chunking and ChromaDB vector indexing with multilingual embeddings (paraphrase-multilingual-mpnet-base-v2)
 - [ ] 02-03-PLAN.md — Hybrid search API combining BM25 keyword search (rank-bm25) and vector similarity with RRF fusion
 
 ### Phase 3: Project Summary Extraction
@@ -113,7 +113,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Document Ingestion Pipeline | 3/3 | Complete | 2026-02-19 |
-| 2. Bilingual Processing & Search | 1/3 | In progress | - |
+| 2. Bilingual Processing & Search | 2/3 | In progress | - |
 | 3. Project Summary Extraction | 0/3 | Not started | - |
 | 4. Requirements Checklist Extraction | 0/3 | Not started | - |
 | 5. Results Interface & Export | 0/3 | Not started | - |

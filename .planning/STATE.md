@@ -10,29 +10,29 @@ See: .planning/PROJECT.md (updated 2026-02-04)
 ## Current Position
 
 Phase: 2 of 5 (Bilingual Processing & Search)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-02-19 -- Completed 02-01-PLAN.md
+Last activity: 2026-02-19 -- Completed 02-02-PLAN.md
 
-Progress: [####......] 27%
+Progress: [#####.....] 33%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4 (3 Phase 1 + 1 Phase 2)
-- Average duration: ~15 min
-- Total execution time: ~1 hour
+- Total plans completed: 5 (3 Phase 1 + 2 Phase 2)
+- Average duration: ~14 min
+- Total execution time: ~1 hour 10 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Document Ingestion Pipeline | 3/3 | ~45 min | ~15 min |
-| 2. Bilingual Processing & Search | 1/3 | ~15 min | ~15 min |
+| 2. Bilingual Processing & Search | 2/3 | ~25 min | ~13 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01, 01-02, 01-03, 02-01
-- Trend: Stable ~15 min per plan
+- Last 5 plans: 01-01, 01-02, 01-03, 02-01, 02-02
+- Trend: Stable ~14 min per plan
 
 *Updated after each plan completion*
 
@@ -53,6 +53,10 @@ Recent decisions affecting current work:
 - [02-01] PyArabic with regex fallback for Arabic diacritics removal
 - [02-01] Script-based pre-check for mixed language detection (Arabic+Latin chars triggers per-section detection)
 - [02-01] Conservative bidi correction (only when suspicious number ordering detected)
+- [02-02] Tables always emitted as single chunks (never split mid-row)
+- [02-02] text_normalized field embedded for consistent query matching; original text in metadata for display
+- [02-02] Per-project ChromaDB collections for search isolation
+- [02-02] Indexing failures fault-isolated from document parsing (try/except)
 
 ### Pending Todos
 
@@ -67,5 +71,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 02-01-PLAN.md (Arabic OCR + bilingual text processing)
+Stopped at: Completed 02-02-PLAN.md (semantic chunking + ChromaDB vector indexing)
 Resume file: None
