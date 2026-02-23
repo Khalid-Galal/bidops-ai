@@ -35,6 +35,7 @@
     <button class="tab active" data-tab="documents">Documents</button>
     <button class="tab" data-tab="summary">Summary</button>
     <button class="tab" data-tab="checklist">Checklist</button>
+    <button class="tab" data-tab="search">Search</button>
 </div>
 
 <!-- Documents Tab -->
@@ -162,6 +163,25 @@
 
     <!-- Data display -->
     <div id="checklist-data" style="display: none;"></div>
+</div>
+
+<!-- Search Tab -->
+<div class="tab-content" id="tab-search">
+    <div class="card">
+        <div class="search-form">
+            <input type="text" id="search-input" placeholder="Search documents..." class="search-input">
+            <button class="btn btn-primary" id="search-btn">Search</button>
+        </div>
+        <div class="search-form-options">
+            <select id="search-mode" class="search-mode-select">
+                <option value="hybrid" selected>Hybrid (Keyword + Semantic)</option>
+                <option value="semantic">Semantic (Meaning)</option>
+                <option value="keyword">Keyword (Exact Match)</option>
+            </select>
+            <span id="search-count" class="search-count"></span>
+        </div>
+    </div>
+    <div id="search-results" class="search-results"></div>
 </div>
 {% endblock %}
 
@@ -500,6 +520,112 @@
         var div = document.createElement('div');
         div.appendChild(document.createTextNode(text));
         return div.innerHTML;
+    }
+
+    // ── Search Tab ──────────────────────────────────────────────
+    async function performSearch(pid) {
+        var queryInput = document.getElementById('search-input');
+        var modeSelect = document.getElementById('search-mode');
+        var searchBtn = document.getElementById('search-btn');
+        var countSpan = document.getElementById('search-count');
+        var resultsContainer = document.getElementById('search-results');
+
+        var query = queryInput.value.trim();
+        var mode = modeSelect.value;
+
+        if (!query) {
+            resultsContainer.innerHTML = '<div class="search-empty">Enter a search query</div>';
+            countSpan.textContent = '';
+            return;
+        }
+
+        // Disable button and show loading state
+        searchBtn.disabled = true;
+        searchBtn.textContent = 'Searching...';
+        countSpan.textContent = '';
+        resultsContainer.innerHTML = '<div class="loading">Searching...</div>';
+
+        try {
+            var url = '/api/projects/' + pid + '/search?q=' + encodeURIComponent(query) + '&mode=' + mode + '&limit=20';
+            var resp = await fetch(url);
+            if (!resp.ok) {
+                var err = await resp.json();
+                throw new Error(err.detail || 'Search failed');
+            }
+            var data = await resp.json();
+
+            countSpan.textContent = data.total_results + ' result' + (data.total_results !== 1 ? 's' : '') + ' found';
+            renderSearchResults(data.results, resultsContainer);
+        } catch (err) {
+            resultsContainer.innerHTML = '<div class="search-empty">Search failed: ' + escapeHtml(err.message) + '</div>';
+            countSpan.textContent = '';
+            console.error('Search error:', err);
+        } finally {
+            searchBtn.disabled = false;
+            searchBtn.textContent = 'Search';
+        }
+    }
+
+    function renderSearchResults(results, container) {
+        if (!results || results.length === 0) {
+            container.innerHTML = '<div class="search-empty">No results found. Try a different query or search mode.</div>';
+            return;
+        }
+
+        var html = '';
+        results.forEach(function(result) {
+            var isArabic = result.language === 'ar';
+            var rtlClass = isArabic ? ' rtl-text' : '';
+            var rtlAttr = isArabic ? ' dir="rtl"' : '';
+
+            // Language badge
+            var langLabel = 'EN';
+            var langClass = 'badge-lang-en';
+            if (result.language === 'ar') {
+                langLabel = 'AR';
+                langClass = 'badge-lang-ar';
+            } else if (result.language === 'mixed') {
+                langLabel = 'MIXED';
+                langClass = 'badge-lang-mixed';
+            }
+
+            // Chunk type badge
+            var chunkLabel = result.chunk_type === 'table' ? 'TABLE' : 'TEXT';
+            var chunkClass = result.chunk_type === 'table' ? 'badge-chunk-table' : 'badge-chunk-text';
+
+            // Score as percentage
+            var scorePct = Math.round(result.score * 100) + '%';
+
+            html += '<div class="search-result-card">';
+            html += '  <div class="search-result-text' + rtlClass + '"' + rtlAttr + '>' + escapeHtml(result.text) + '</div>';
+            html += '  <div class="search-result-meta">';
+            html += '    <span class="meta-filename">' + escapeHtml(result.filename) + '</span>';
+            html += '    <span class="meta-page">p.' + result.page_number + '</span>';
+            html += '    <span class="badge ' + langClass + '">' + langLabel + '</span>';
+            html += '    <span class="badge ' + chunkClass + '">' + chunkLabel + '</span>';
+            html += '    <span class="meta-score">' + scorePct + '</span>';
+            html += '  </div>';
+            html += '</div>';
+        });
+
+        container.innerHTML = html;
+    }
+
+    // Search event listeners
+    var searchBtn = document.getElementById('search-btn');
+    if (searchBtn) {
+        searchBtn.addEventListener('click', function() {
+            performSearch(projectId);
+        });
+    }
+
+    var searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch(projectId);
+            }
+        });
     }
 
     // ── Upload Functionality (preserved from original) ────────────
