@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Extract accurate, citation-backed project summaries and complete requirements checklists from any tender document folder -- turning hours of manual review into minutes.
-**Current focus:** Phase 4 complete -- requirements checklist extraction fully wired (schemas, categories, service pipeline, API endpoints). Next: Phase 5 (Results Interface & Export).
+**Current focus:** Phase 5 in progress -- results interface with tab navigation (Documents, Summary, Checklist), inline checklist editing via PATCH endpoint. Next: 05-02 (Export).
 
 ## Current Position
 
-Phase: 4 of 5 (Requirements Checklist Extraction) -- COMPLETE
-Plan: 3 of 3 in current phase -- COMPLETE
-Status: Phase complete
-Last activity: 2026-02-19 -- Completed 04-03-PLAN.md
+Phase: 5 of 5 (Results Interface & Export)
+Plan: 1 of 3 in current phase -- COMPLETE
+Status: In progress
+Last activity: 2026-02-23 -- Completed 05-01-PLAN.md
 
-Progress: [################..] 80%
+Progress: [#################.] 87%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12 (3 Phase 1 + 3 Phase 2 + 3 Phase 3 + 3 Phase 4)
-- Average duration: ~10 min
-- Total execution time: ~1 hour 53 min
+- Total plans completed: 13 (3 Phase 1 + 3 Phase 2 + 3 Phase 3 + 3 Phase 4 + 1 Phase 5)
+- Average duration: ~9 min
+- Total execution time: ~1 hour 57 min
 
 **By Phase:**
 
@@ -31,10 +31,11 @@ Progress: [################..] 80%
 | 2. Bilingual Processing & Search | 3/3 | ~33 min | ~11 min |
 | 3. Project Summary Extraction | 3/3 | ~18 min | ~6 min |
 | 4. Requirements Checklist Extraction | 3/3 | ~17 min | ~6 min |
+| 5. Results Interface & Export | 1/3 | ~4 min | ~4 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-03, 04-01, 04-02, 04-03
-- Trend: Consistent (~5-6 min for recent plans)
+- Last 5 plans: 04-01, 04-02, 04-03, 05-01
+- Trend: Consistent (~4-6 min for recent plans)
 
 *Updated after each plan completion*
 
@@ -82,6 +83,9 @@ Recent decisions affecting current work:
 - [04-02] Embedding model accessed lazily via search_service._embedding_service._get_model() (no new DI parameter)
 - [04-03] Separate service instances for checklist API (not shared with extraction API) for isolation
 - [04-03] Database must be recreated for new columns (SQLite create_all only adds new tables, not new columns)
+- [05-01] Lazy tab loading: data only fetched when tab first clicked, avoiding unnecessary API calls
+- [05-01] Optimistic checkbox toggle: UI updates immediately, reverts on PATCH failure for responsive UX
+- [05-01] Category validation in PATCH endpoint rejects invalid category names with 400 error
 
 ### Pending Todos
 
@@ -96,6 +100,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-19
-Stopped at: Completed 04-03-PLAN.md (Project model columns, checklist API endpoints, router registration). Phase 4 complete. Next: Phase 5 (Results Interface & Export).
+Last session: 2026-02-23
+Stopped at: Completed 05-01-PLAN.md (Tab navigation, summary/checklist views, PATCH endpoint). Next: 05-02 (Export).
 Resume file: None
