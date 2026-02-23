@@ -30,78 +30,138 @@
     {% endif %}
 </div>
 
-<!-- File Upload Section -->
-<div class="card">
-    <h3 class="section-title">Upload Documents</h3>
+<!-- Tab Navigation -->
+<div class="tabs">
+    <button class="tab active" data-tab="documents">Documents</button>
+    <button class="tab" data-tab="summary">Summary</button>
+    <button class="tab" data-tab="checklist">Checklist</button>
+</div>
 
-    <div class="upload-area" id="upload-area">
-        <p>Drag and drop files here, or click to select</p>
-        <p class="upload-hint">Supported formats: PDF, DOCX, XLSX</p>
-        <input type="file" id="file-input" multiple accept=".pdf,.docx,.xlsx,.xls">
+<!-- Documents Tab -->
+<div class="tab-content active" id="tab-documents">
+    <!-- File Upload Section -->
+    <div class="card">
+        <h3 class="section-title">Upload Documents</h3>
+
+        <div class="upload-area" id="upload-area">
+            <p>Drag and drop files here, or click to select</p>
+            <p class="upload-hint">Supported formats: PDF, DOCX, XLSX</p>
+            <input type="file" id="file-input" multiple accept=".pdf,.docx,.xlsx,.xls">
+        </div>
+        <div class="selected-files" id="selected-files"></div>
+
+        <button class="btn btn-primary" id="upload-btn" disabled>Upload Files</button>
+        <div id="upload-message"></div>
+
+        <!-- Progress Section (hidden until upload starts) -->
+        <div class="progress-section" id="progress-section">
+            <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600;">Processing Progress</h4>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div class="progress-info">
+                <span id="progress-text">Preparing...</span>
+                <span class="current-file" id="progress-file"></span>
+            </div>
+        </div>
     </div>
-    <div class="selected-files" id="selected-files"></div>
 
-    <button class="btn btn-primary" id="upload-btn" disabled>Upload Files</button>
-    <div id="upload-message"></div>
+    <!-- Document List -->
+    <div class="card">
+        <h3 class="section-title">Documents</h3>
 
-    <!-- Progress Section (hidden until upload starts) -->
-    <div class="progress-section" id="progress-section">
-        <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600;">Processing Progress</h4>
-        <div class="progress-bar">
-            <div class="progress-fill" id="progress-fill"></div>
+        {% if documents %}
+        <table class="doc-table">
+            <thead>
+                <tr>
+                    <th>Filename</th>
+                    <th>Type</th>
+                    <th>Size</th>
+                    <th>Status</th>
+                    <th>Pages</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody id="doc-table-body">
+                {% for doc in documents %}
+                <tr>
+                    <td>{{ doc.filename }}</td>
+                    <td>{{ doc.file_type }}</td>
+                    <td class="file-size">{{ "%.1f"|format(doc.file_size / 1024) }} KB</td>
+                    <td><span class="badge badge-{{ doc.status }}">{{ doc.status }}</span></td>
+                    <td>{{ doc.page_count if doc.page_count else '-' }}</td>
+                    <td class="processing-time">
+                        {% if doc.processing_time_ms %}
+                            {% if doc.processing_time_ms > 1000 %}
+                                {{ "%.1f"|format(doc.processing_time_ms / 1000) }}s
+                            {% else %}
+                                {{ doc.processing_time_ms }}ms
+                            {% endif %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <p>No documents yet.</p>
+            <p>Upload files above to start processing.</p>
         </div>
-        <div class="progress-info">
-            <span id="progress-text">Preparing...</span>
-            <span class="current-file" id="progress-file"></span>
-        </div>
+        {% endif %}
     </div>
 </div>
 
-<!-- Document List -->
-<div class="card">
-    <h3 class="section-title">Documents</h3>
+<!-- Summary Tab -->
+<div class="tab-content" id="tab-summary">
+    <div class="loading" id="summary-loading">Loading summary...</div>
 
-    {% if documents %}
-    <table class="doc-table">
-        <thead>
-            <tr>
-                <th>Filename</th>
-                <th>Type</th>
-                <th>Size</th>
-                <th>Status</th>
-                <th>Pages</th>
-                <th>Time</th>
-            </tr>
-        </thead>
-        <tbody id="doc-table-body">
-            {% for doc in documents %}
-            <tr>
-                <td>{{ doc.filename }}</td>
-                <td>{{ doc.file_type }}</td>
-                <td class="file-size">{{ "%.1f"|format(doc.file_size / 1024) }} KB</td>
-                <td><span class="badge badge-{{ doc.status }}">{{ doc.status }}</span></td>
-                <td>{{ doc.page_count if doc.page_count else '-' }}</td>
-                <td class="processing-time">
-                    {% if doc.processing_time_ms %}
-                        {% if doc.processing_time_ms > 1000 %}
-                            {{ "%.1f"|format(doc.processing_time_ms / 1000) }}s
-                        {% else %}
-                            {{ doc.processing_time_ms }}ms
-                        {% endif %}
-                    {% else %}
-                        -
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <div class="empty-state">
-        <p>No documents yet.</p>
-        <p>Upload files above to start processing.</p>
+    <!-- Empty state -->
+    <div class="card" id="summary-empty" style="display: none;">
+        <div class="empty-state">
+            <p>No extraction results yet.</p>
+            <p>Run the extraction pipeline to generate a project summary from your documents.</p>
+            <button class="btn btn-primary" id="btn-run-extraction" style="margin-top: 1rem;">Run Extraction</button>
+        </div>
     </div>
-    {% endif %}
+
+    <!-- In-progress state -->
+    <div class="card" id="summary-progress" style="display: none;">
+        <div class="empty-state">
+            <p>Extraction in progress...</p>
+            <p>This may take a few minutes. Refresh the page to check for updates.</p>
+        </div>
+    </div>
+
+    <!-- Data display -->
+    <div id="summary-data" style="display: none;"></div>
+</div>
+
+<!-- Checklist Tab -->
+<div class="tab-content" id="tab-checklist">
+    <div class="loading" id="checklist-loading">Loading checklist...</div>
+
+    <!-- Empty state -->
+    <div class="card" id="checklist-empty" style="display: none;">
+        <div class="empty-state">
+            <p>No checklist results yet.</p>
+            <p>Run the checklist extraction to identify requirements from your documents.</p>
+            <button class="btn btn-primary" id="btn-run-checklist" style="margin-top: 1rem;">Run Checklist Extraction</button>
+        </div>
+    </div>
+
+    <!-- In-progress state -->
+    <div class="card" id="checklist-progress" style="display: none;">
+        <div class="empty-state">
+            <p>Checklist extraction in progress...</p>
+            <p>This may take a few minutes. Refresh the page to check for updates.</p>
+        </div>
+    </div>
+
+    <!-- Data display -->
+    <div id="checklist-data" style="display: none;"></div>
 </div>
 {% endblock %}
 
@@ -109,6 +169,340 @@
 <script>
 (function() {
     const projectId = {{ project.id }};
+
+    // ── Tab Switching ──────────────────────────────────────────────
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            const target = tab.dataset.tab;
+
+            // Toggle active class on buttons
+            tabs.forEach(function(t) { t.classList.remove('active'); });
+            tab.classList.add('active');
+
+            // Toggle active class on content panels
+            tabContents.forEach(function(tc) { tc.classList.remove('active'); });
+            document.getElementById('tab-' + target).classList.add('active');
+
+            // Lazy-load data on first activation
+            if (!tab.dataset.loaded) {
+                tab.dataset.loaded = 'true';
+                if (target === 'summary') {
+                    loadSummary(projectId);
+                } else if (target === 'checklist') {
+                    loadChecklist(projectId);
+                }
+            }
+        });
+    });
+
+    // ── Utility: Format Field Labels ──────────────────────────────
+    function formatFieldLabel(key) {
+        return key.replace(/_/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+    }
+
+    function confidenceBadgeClass(level) {
+        if (level === 'high') return 'badge badge-high';
+        if (level === 'medium') return 'badge badge-medium';
+        return 'badge badge-low';
+    }
+
+    // ── Summary Tab ───────────────────────────────────────────────
+    async function loadSummary(pid) {
+        var loading = document.getElementById('summary-loading');
+        var empty = document.getElementById('summary-empty');
+        var progress = document.getElementById('summary-progress');
+        var data = document.getElementById('summary-data');
+
+        loading.style.display = 'block';
+        empty.style.display = 'none';
+        progress.style.display = 'none';
+        data.style.display = 'none';
+
+        try {
+            var resp = await fetch('/api/projects/' + pid + '/extract');
+            if (!resp.ok) throw new Error('Failed to load extraction results');
+            var result = await resp.json();
+
+            loading.style.display = 'none';
+
+            if (result.status === 'not_started') {
+                empty.style.display = 'block';
+            } else if (result.status === 'in_progress') {
+                progress.style.display = 'block';
+            } else if (result.status === 'completed' && result.summary) {
+                renderSummary(result.summary);
+                data.style.display = 'block';
+            } else {
+                // failed or unknown
+                empty.style.display = 'block';
+            }
+        } catch (err) {
+            loading.style.display = 'none';
+            empty.style.display = 'block';
+            console.error('Summary load error:', err);
+        }
+    }
+
+    function renderSummary(summary) {
+        var container = document.getElementById('summary-data');
+        var html = '';
+
+        for (var key in summary) {
+            if (!summary.hasOwnProperty(key)) continue;
+            var field = summary[key];
+            if (typeof field !== 'object' || field === null) continue;
+
+            var valueText = field.value || '';
+            var valueClass = valueText ? 'summary-field-value' : 'summary-field-value empty';
+            var displayValue = valueText || 'Not found in documents';
+
+            html += '<div class="summary-field">';
+            html += '  <div class="summary-field-header">';
+            html += '    <span class="summary-field-label">' + formatFieldLabel(key) + '</span>';
+            html += '    <span class="' + confidenceBadgeClass(field.confidence_level) + '">' + (field.confidence_level || 'low') + '</span>';
+            if (field.requires_review) {
+                html += '    <span class="review-flag">Requires Review</span>';
+            }
+            html += '  </div>';
+            html += '  <div class="' + valueClass + '">' + escapeHtml(displayValue) + '</div>';
+
+            // Citations
+            if (field.citations && field.citations.length > 0) {
+                var citId = 'cit-' + key;
+                html += '  <button class="citations-toggle" onclick="toggleCitations(\'' + citId + '\')">';
+                html += '    Show ' + field.citations.length + ' citation(s)';
+                html += '  </button>';
+                html += '  <div class="citations-list" id="' + citId + '">';
+                field.citations.forEach(function(cit) {
+                    html += '    <div class="citation-item">';
+                    html += '      <span class="citation-source">' + escapeHtml(cit.document_name) + ', p.' + cit.page_number + '</span>';
+                    html += '      <span class="citation-quote">"' + escapeHtml(cit.quote) + '"</span>';
+                    html += '    </div>';
+                });
+                html += '  </div>';
+            }
+
+            html += '</div>';
+        }
+
+        container.innerHTML = html;
+    }
+
+    // ── Trigger Extraction ────────────────────────────────────────
+    var btnRunExtraction = document.getElementById('btn-run-extraction');
+    if (btnRunExtraction) {
+        btnRunExtraction.addEventListener('click', function() {
+            triggerExtraction(projectId);
+        });
+    }
+
+    async function triggerExtraction(pid) {
+        var btn = document.getElementById('btn-run-extraction');
+        btn.disabled = true;
+        btn.textContent = 'Extracting...';
+
+        try {
+            var resp = await fetch('/api/projects/' + pid + '/extract', { method: 'POST' });
+            if (!resp.ok) {
+                var err = await resp.json();
+                throw new Error(err.detail || 'Extraction failed');
+            }
+            // Reload summary data
+            loadSummary(pid);
+        } catch (err) {
+            alert('Extraction failed: ' + err.message);
+            btn.disabled = false;
+            btn.textContent = 'Run Extraction';
+        }
+    }
+
+    // ── Checklist Tab ─────────────────────────────────────────────
+    async function loadChecklist(pid) {
+        var loading = document.getElementById('checklist-loading');
+        var empty = document.getElementById('checklist-empty');
+        var progress = document.getElementById('checklist-progress');
+        var data = document.getElementById('checklist-data');
+
+        loading.style.display = 'block';
+        empty.style.display = 'none';
+        progress.style.display = 'none';
+        data.style.display = 'none';
+
+        try {
+            var resp = await fetch('/api/projects/' + pid + '/checklist');
+            if (!resp.ok) throw new Error('Failed to load checklist results');
+            var result = await resp.json();
+
+            loading.style.display = 'none';
+
+            if (result.status === 'not_started') {
+                empty.style.display = 'block';
+            } else if (result.status === 'in_progress') {
+                progress.style.display = 'block';
+            } else if (result.status === 'completed' && result.checklist) {
+                renderChecklist(result.checklist);
+                data.style.display = 'block';
+            } else {
+                empty.style.display = 'block';
+            }
+        } catch (err) {
+            loading.style.display = 'none';
+            empty.style.display = 'block';
+            console.error('Checklist load error:', err);
+        }
+    }
+
+    function renderChecklist(checklist) {
+        var container = document.getElementById('checklist-data');
+        var html = '';
+
+        // Stats bar
+        var totalCount = checklist.total_count || 0;
+        var mandatoryCount = checklist.mandatory_count || 0;
+        html += '<div class="checklist-stats">';
+        html += '  <span>Total: <strong>' + totalCount + '</strong> requirements</span>';
+        html += '  <span>Mandatory: <strong>' + mandatoryCount + '</strong></span>';
+        html += '</div>';
+
+        // Categories
+        var categories = [
+            { key: 'requirements', title: 'Requirements' },
+            { key: 'submission_documents', title: 'Submission Documents' },
+            { key: 'eligibility_criteria', title: 'Eligibility Criteria' }
+        ];
+
+        categories.forEach(function(cat) {
+            var items = checklist[cat.key] || [];
+            html += '<div class="checklist-category">';
+            html += '  <div class="checklist-category-header">';
+            html += '    <span class="checklist-category-title">' + cat.title + '</span>';
+            html += '    <span class="count-badge">' + items.length + '</span>';
+            html += '  </div>';
+
+            if (items.length === 0) {
+                html += '  <div class="empty-state" style="padding: 1rem;"><p>No items in this category.</p></div>';
+            }
+
+            items.forEach(function(item, idx) {
+                var isChecked = item.checked || false;
+                var checkedClass = isChecked ? ' checked' : '';
+                var checkedAttr = isChecked ? ' checked' : '';
+
+                html += '  <div class="checklist-item' + checkedClass + '" id="ci-' + cat.key + '-' + idx + '">';
+                html += '    <input type="checkbox"' + checkedAttr + ' onchange="toggleChecklistItem(' + projectId + ', ' + idx + ', \'' + cat.key + '\', this.checked)">';
+                html += '    <div class="checklist-item-content">';
+                html += '      <div class="checklist-item-text">' + escapeHtml(item.requirement || '') + '</div>';
+                if (item.description) {
+                    html += '      <div class="checklist-item-description">' + escapeHtml(item.description) + '</div>';
+                }
+                html += '      <div class="checklist-item-meta">';
+                if (item.is_mandatory) {
+                    html += '        <span class="mandatory-badge mandatory-yes">MANDATORY</span>';
+                } else {
+                    html += '        <span class="mandatory-badge mandatory-no">OPTIONAL</span>';
+                }
+                if (item.confidence_level) {
+                    html += '        <span class="' + confidenceBadgeClass(item.confidence_level) + '">' + item.confidence_level + '</span>';
+                }
+                if (item.citation) {
+                    html += '        <span class="citation-source" style="font-size: 0.75rem;">' + escapeHtml(item.citation.document_name) + ', p.' + item.citation.page_number + '</span>';
+                }
+                html += '      </div>';
+                html += '    </div>';
+                html += '  </div>';
+            });
+
+            html += '</div>';
+        });
+
+        container.innerHTML = html;
+    }
+
+    // ── Trigger Checklist Extraction ──────────────────────────────
+    var btnRunChecklist = document.getElementById('btn-run-checklist');
+    if (btnRunChecklist) {
+        btnRunChecklist.addEventListener('click', function() {
+            triggerChecklistExtraction(projectId);
+        });
+    }
+
+    async function triggerChecklistExtraction(pid) {
+        var btn = document.getElementById('btn-run-checklist');
+        btn.disabled = true;
+        btn.textContent = 'Extracting...';
+
+        try {
+            var resp = await fetch('/api/projects/' + pid + '/checklist', { method: 'POST' });
+            if (!resp.ok) {
+                var err = await resp.json();
+                throw new Error(err.detail || 'Checklist extraction failed');
+            }
+            // Reload checklist data
+            loadChecklist(pid);
+        } catch (err) {
+            alert('Checklist extraction failed: ' + err.message);
+            btn.disabled = false;
+            btn.textContent = 'Run Checklist Extraction';
+        }
+    }
+
+    // ── Toggle Checklist Item (PATCH) ─────────────────────────────
+    window.toggleChecklistItem = async function(pid, index, category, checked) {
+        var itemEl = document.getElementById('ci-' + category + '-' + index);
+
+        // Optimistic UI update
+        if (checked) {
+            itemEl.classList.add('checked');
+        } else {
+            itemEl.classList.remove('checked');
+        }
+
+        try {
+            var resp = await fetch('/api/projects/' + pid + '/checklist/items', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    category: category,
+                    index: index,
+                    updates: { checked: checked }
+                })
+            });
+            if (!resp.ok) {
+                throw new Error('Failed to save');
+            }
+        } catch (err) {
+            // Revert on failure
+            var cb = itemEl.querySelector('input[type="checkbox"]');
+            cb.checked = !checked;
+            if (!checked) {
+                itemEl.classList.add('checked');
+            } else {
+                itemEl.classList.remove('checked');
+            }
+            alert('Failed to update checklist item. Please try again.');
+            console.error('Checklist PATCH error:', err);
+        }
+    };
+
+    // ── Toggle Citations ──────────────────────────────────────────
+    window.toggleCitations = function(id) {
+        var el = document.getElementById(id);
+        if (el) {
+            el.classList.toggle('visible');
+        }
+    };
+
+    // ── HTML Escaping ─────────────────────────────────────────────
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(text));
+        return div.innerHTML;
+    }
+
+    // ── Upload Functionality (preserved from original) ────────────
     const uploadArea = document.getElementById('upload-area');
     const fileInput = document.getElementById('file-input');
     const uploadBtn = document.getElementById('upload-btn');
