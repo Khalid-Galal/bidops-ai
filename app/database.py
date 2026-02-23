@@ -1,12 +1,16 @@
 """Async SQLAlchemy database engine and session management."""
 
 from collections.abc import AsyncGenerator
+from pathlib import Path
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.config import get_settings
 
 settings = get_settings()
+
+# Ensure database directory exists before engine creation
+Path(settings.database_path).parent.mkdir(parents=True, exist_ok=True)
 
 engine = create_async_engine(
     f"sqlite+aiosqlite:///{settings.database_path}",
