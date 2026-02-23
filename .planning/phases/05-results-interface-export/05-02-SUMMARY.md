@@ -67,7 +67,7 @@ Each task was committed atomically:
 
 1. **Task 1: Add Search tab with query form and results display** - `3375430` (feat)
 
-**Plan metadata:** [pending] (docs: complete plan)
+**Plan metadata:** `1926042` (docs: complete plan)
 
 ## Files Created/Modified
 - `app/templates/project.html` - Added Search tab button, search form HTML (input, mode selector, button, result count), search results container, performSearch() and renderSearchResults() JS functions, event listeners for click and Enter key

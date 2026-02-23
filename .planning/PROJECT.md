@@ -71,5 +71,11 @@ Extract accurate, citation-backed project summaries and complete requirements ch
 | Skip CAD parsing v1 | High complexity, low v1 priority | — Pending |
 | Fresh build using reference | Existing code is scaffold only, cleaner to rebuild | — Pending |
 
+## Deployment
+
+- **Platform:** [Render.com](https://render.com)
+- **Status:** Deployed
+- **Date:** 2026-02-23
+
 ---
-*Last updated: 2026-02-04 after initialization*
+*Last updated: 2026-02-23 after v1.0 milestone completion and deployment*
