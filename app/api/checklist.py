@@ -1,20 +1,32 @@
 """Checklist API endpoints for triggering and retrieving requirements checklist extraction.
 
 Routes:
-    POST /api/projects/{project_id}/checklist - Trigger full checklist extraction pipeline
-    GET  /api/projects/{project_id}/checklist - Retrieve stored checklist results
+    POST  /api/projects/{project_id}/checklist       - Trigger full checklist extraction pipeline
+    GET   /api/projects/{project_id}/checklist       - Retrieve stored checklist results
+    PATCH /api/projects/{project_id}/checklist/items - Update individual checklist items
 """
 
 from __future__ import annotations
 
+import json
 import logging
 
 from fastapi import APIRouter, HTTPException, status
+from pydantic import BaseModel
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.config import get_settings
 from app.database import async_session_factory
 from app.models.project import Project
 from app.schemas.checklist import ChecklistResponse, RequirementsChecklist
+
+
+class ChecklistItemUpdate(BaseModel):
+    """Request body for updating a single checklist item."""
+
+    category: str
+    index: int
+    updates: dict
 
 logger = logging.getLogger(__name__)
 
@@ -225,3 +237,71 @@ async def get_checklist_result(project_id: int) -> ChecklistResponse:
             total_requirements=0,
             requirements_requiring_review=0,
         )
+
+
+@router.patch("/projects/{project_id}/checklist/items")
+async def update_checklist_item(
+    project_id: int,
+    update: ChecklistItemUpdate,
+) -> dict:
+    """Update a single checklist item within a category.
+
+    Allows toggling the checked state or editing the requirement text
+    for an individual item, identified by category and index.
+
+    Args:
+        project_id: Database ID of the project.
+        update: The category, index, and fields to update.
+
+    Returns:
+        Success status with updated category and index.
+
+    Raises:
+        HTTPException: 404 if project not found, checklist not extracted,
+            category missing, or index out of bounds.
+    """
+    valid_categories = {"requirements", "submission_documents", "eligibility_criteria"}
+    if update.category not in valid_categories:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid category '{update.category}'. Must be one of: {', '.join(sorted(valid_categories))}",
+        )
+
+    async with async_session_factory() as session:
+        project = await session.get(Project, project_id)
+        if project is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Project with id {project_id} not found",
+            )
+        if project.checklist_json is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No checklist data exists for this project",
+            )
+
+        checklist_data = json.loads(project.checklist_json)
+
+        if update.category not in checklist_data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Category '{update.category}' not found in checklist data",
+            )
+
+        category_items = checklist_data[update.category]
+        if update.index < 0 or update.index >= len(category_items):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Index {update.index} out of bounds for category '{update.category}' (length: {len(category_items)})",
+            )
+
+        category_items[update.index].update(update.updates)
+        project.checklist_json = json.dumps(checklist_data, ensure_ascii=False)
+        flag_modified(project, "checklist_json")
+        await session.commit()
+
+    return {
+        "status": "updated",
+        "category": update.category,
+        "index": update.index,
+    }
