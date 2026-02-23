@@ -57,8 +57,8 @@
 
 ### Export
 
-- [ ] **EXP-01**: User can export checklists and summaries to Excel
-- [ ] **EXP-02**: User can export formatted reports to PDF
+- [x] **EXP-01**: User can export checklists and summaries to Excel
+- [x] **EXP-02**: User can export formatted reports to PDF
 
 ### UI & Platform
 
