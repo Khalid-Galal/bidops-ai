@@ -65,7 +65,7 @@
 - [ ] **UI-01**: User can create projects and upload documents via web interface
 - [x] **UI-02**: User can view project summaries in the web interface
 - [x] **UI-03**: User can view and edit requirements checklists in the web interface
-- [ ] **UI-04**: User can search documents from the web interface
+- [x] **UI-04**: User can search documents from the web interface
 - [ ] **UI-05**: System runs as local FastAPI backend with browser-based UI
 
 ---

@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Extract accurate, citation-backed project summaries and complete requirements checklists from any tender document folder -- turning hours of manual review into minutes.
-**Current focus:** Phase 5 in progress -- results interface with tab navigation (Documents, Summary, Checklist), inline checklist editing via PATCH endpoint. Next: 05-02 (Export).
+**Current focus:** Phase 5 in progress -- results interface with four-tab layout (Documents, Summary, Checklist, Search), search tab with hybrid/semantic/keyword modes. Next: 05-03 (Export).
 
 ## Current Position
 
 Phase: 5 of 5 (Results Interface & Export)
-Plan: 1 of 3 in current phase -- COMPLETE
+Plan: 2 of 3 in current phase -- COMPLETE
 Status: In progress
-Last activity: 2026-02-23 -- Completed 05-01-PLAN.md
+Last activity: 2026-02-23 -- Completed 05-02-PLAN.md
 
-Progress: [#################.] 87%
+Progress: [##################] 93%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13 (3 Phase 1 + 3 Phase 2 + 3 Phase 3 + 3 Phase 4 + 1 Phase 5)
-- Average duration: ~9 min
-- Total execution time: ~1 hour 57 min
+- Total plans completed: 14 (3 Phase 1 + 3 Phase 2 + 3 Phase 3 + 3 Phase 4 + 2 Phase 5)
+- Average duration: ~8.5 min
+- Total execution time: ~1 hour 59 min
 
 **By Phase:**
 
@@ -31,11 +31,11 @@ Progress: [#################.] 87%
 | 2. Bilingual Processing & Search | 3/3 | ~33 min | ~11 min |
 | 3. Project Summary Extraction | 3/3 | ~18 min | ~6 min |
 | 4. Requirements Checklist Extraction | 3/3 | ~17 min | ~6 min |
-| 5. Results Interface & Export | 1/3 | ~4 min | ~4 min |
+| 5. Results Interface & Export | 2/3 | ~6 min | ~3 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-01, 04-02, 04-03, 05-01
-- Trend: Consistent (~4-6 min for recent plans)
+- Last 5 plans: 04-02, 04-03, 05-01, 05-02
+- Trend: Consistent (~2-6 min for recent plans)
 
 *Updated after each plan completion*
 
@@ -86,6 +86,8 @@ Recent decisions affecting current work:
 - [05-01] Lazy tab loading: data only fetched when tab first clicked, avoiding unnecessary API calls
 - [05-01] Optimistic checkbox toggle: UI updates immediately, reverts on PATCH failure for responsive UX
 - [05-01] Category validation in PATCH endpoint rejects invalid category names with 400 error
+- [05-02] Search tab uses user-initiated fetch (button/Enter), not lazy-load or on-type, since it starts empty
+- [05-02] Search form split into two rows: input+button top, mode selector+count bottom
 
 ### Pending Todos
 
@@ -101,5 +103,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 05-01-PLAN.md (Tab navigation, summary/checklist views, PATCH endpoint). Next: 05-02 (Export).
+Stopped at: Completed 05-02-PLAN.md (Search tab with query form, mode selector, result cards). Next: 05-03 (Export).
 Resume file: None
