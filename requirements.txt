@@ -41,3 +41,6 @@ rank-bm25
 google-genai
 instructor
 tenacity
+
+# PDF report generation (Phase 5)
+weasyprint

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ project_name }} - Tender Analysis Report</title>
+</head>
+<body>
+
+<!-- Cover Section -->
+<div class="cover">
+    <h1>{{ project_name }}</h1>
+    <p class="subtitle">Tender Analysis Report</p>
+    <p class="generated-date">Generated: {{ generated_at }}</p>
+</div>
+
+<!-- Summary Section -->
+{% if summary %}
+<h2>Project Summary</h2>
+<table class="report-table">
+    <thead>
+        <tr>
+            <th>Field</th>
+            <th>Value</th>
+            <th>Confidence</th>
+            <th>Requires Review</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for key, field in summary.items() %}
+        <tr>
+            <td>{{ field_labels.get(key, key) }}</td>
+            <td>{% if field.value %}{{ field.value }}{% else %}<em>Not found</em>{% endif %}</td>
+            <td><span class="confidence-{{ field.confidence_level }}">{{ field.confidence_level }}</span></td>
+            <td>{% if field.requires_review %}Yes{% else %}No{% endif %}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<h2>Project Summary</h2>
+<p>No extraction results available.</p>
+{% endif %}
+
+<!-- Checklist Section -->
+{% if checklist %}
+<h2>Requirements Checklist</h2>
+
+{% set category_labels = {
+    'requirements': 'Requirements',
+    'submission_documents': 'Submission Documents',
+    'eligibility_criteria': 'Eligibility Criteria'
+} %}
+
+{% for cat_key, cat_label in category_labels.items() %}
+{% set items = checklist.get(cat_key, []) %}
+{% if items %}
+<h3>{{ cat_label }} ({{ items|length }})</h3>
+<table class="report-table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Requirement</th>
+            <th>Mandatory</th>
+            <th>Confidence</th>
+            <th>Source</th>
+            <th>Page</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in items %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ item.requirement }}</td>
+            <td>{% if item.is_mandatory %}<span class="mandatory">Yes</span>{% else %}<span class="optional">No</span>{% endif %}</td>
+            <td><span class="confidence-{{ item.confidence_level }}">{{ item.confidence_level }}</span></td>
+            <td>{% if item.citation %}{{ item.citation.document_name }}{% endif %}</td>
+            <td>{% if item.citation %}{{ item.citation.page_number }}{% endif %}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endfor %}
+{% else %}
+<h2>Requirements Checklist</h2>
+<p>No checklist results available.</p>
+{% endif %}
+
+<!-- Citation Appendix -->
+<div class="citation-appendix">
+<h2>Citation Appendix</h2>
+
+{% if summary %}
+<h3>Summary Field Citations</h3>
+{% for key, field in summary.items() %}
+{% if field.citations %}
+<div class="citation-entry">
+    <strong>{{ field_labels.get(key, key) }}</strong>
+    {% for cit in field.citations %}
+    <div class="citation-detail">
+        {{ cit.document_name }}, p.{{ cit.page_number }}
+        <span class="citation-quote">"{{ cit.quote }}"</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if checklist %}
+<h3>Checklist Item Citations</h3>
+{% for cat_key in ['requirements', 'submission_documents', 'eligibility_criteria'] %}
+{% set items = checklist.get(cat_key, []) %}
+{% for item in items %}
+{% if item.citation %}
+<div class="citation-entry">
+    <strong>{{ item.requirement|truncate(80, True) }}</strong>
+    <div class="citation-detail">
+        {{ item.citation.document_name }}, p.{{ item.citation.page_number }}
+        <span class="citation-quote">"{{ item.citation.quote }}"</span>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+{% endfor %}
+{% endif %}
+
+{% if not summary and not checklist %}
+<p>No citations available.</p>
+{% endif %}
+
+</div>
+
+</body>
+</html>
