@@ -873,3 +873,11 @@ footer {
   color: #94a3b8;
   font-size: 0.9rem;
 }
+
+/* ── Export bar ──────────────────────────────────────────────── */
+.export-bar {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  justify-content: flex-end;
+}

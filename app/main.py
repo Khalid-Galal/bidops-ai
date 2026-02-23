@@ -11,6 +11,7 @@ from fastapi.templating import Jinja2Templates
 
 from app.api.checklist import router as checklist_router
 from app.api.documents import router as documents_router
+from app.api.export import router as export_router
 from app.api.extraction import router as extraction_router
 from app.api.health import router as health_router
 from app.api.projects import router as projects_router
@@ -76,6 +77,7 @@ app.include_router(documents_router, prefix="/api")
 app.include_router(search_router, prefix="/api")
 app.include_router(extraction_router, prefix="/api")
 app.include_router(checklist_router, prefix="/api")
+app.include_router(export_router, prefix="/api")
 
 # Include page routes (imported here to avoid circular import with templates)
 from app.api.pages import router as pages_router  # noqa: E402

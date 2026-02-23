@@ -38,6 +38,12 @@
     <button class="tab" data-tab="search">Search</button>
 </div>
 
+<!-- Export Bar -->
+<div class="export-bar">
+    <button class="btn btn-secondary" id="export-excel-btn" onclick="downloadExport({{ project.id }}, 'excel')">Export Excel</button>
+    <button class="btn btn-secondary" id="export-pdf-btn" onclick="downloadExport({{ project.id }}, 'pdf')">Export PDF</button>
+</div>
+
 <!-- Documents Tab -->
 <div class="tab-content active" id="tab-documents">
     <!-- File Upload Section -->
@@ -627,6 +633,50 @@
             }
         });
     }
+
+    // ── Export Download ─────────────────────────────────────────
+    window.downloadExport = async function(projectId, format) {
+        var btnId = 'export-' + format + '-btn';
+        var btn = document.getElementById(btnId);
+        var originalText = btn.textContent;
+
+        btn.disabled = true;
+        btn.textContent = 'Generating...';
+
+        try {
+            var resp = await fetch('/api/projects/' + projectId + '/export/' + format);
+            if (!resp.ok) {
+                if (resp.status === 501) {
+                    alert('PDF export requires WeasyPrint. Install it with: pip install weasyprint');
+                } else {
+                    var err = await resp.json();
+                    alert('Export failed: ' + (err.detail || 'Unknown error'));
+                }
+                return;
+            }
+
+            // Parse filename from Content-Disposition header
+            var disposition = resp.headers.get('Content-Disposition') || '';
+            var filenameMatch = disposition.match(/filename="?([^"]+)"?/);
+            var filename = filenameMatch ? filenameMatch[1] : 'project_report.' + (format === 'excel' ? 'xlsx' : 'pdf');
+
+            var blob = await resp.blob();
+            var url = window.URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            alert('Export failed: ' + err.message);
+            console.error('Export error:', err);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
+    };
 
     // ── Upload Functionality (preserved from original) ────────────
     const uploadArea = document.getElementById('upload-area');
