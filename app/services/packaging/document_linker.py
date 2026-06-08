@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import logging
+
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.boq import BOQItem
 from app.models.package import Package, PackageDocument
+
+logger = logging.getLogger(__name__)
 
 _EXCERPT_LEN = 300
 _DEFAULT_TOP_K = 30
@@ -37,6 +41,7 @@ class DocumentLinker:
             await db.execute(
                 select(BOQItem.description)
                 .where(BOQItem.package_id == package.id)
+                .order_by(BOQItem.client_row_index)
                 .limit(_QUERY_ITEM_SAMPLE)
             )
         ).scalars().all()
@@ -58,7 +63,12 @@ class DocumentLinker:
             hits = self._search().search(
                 project_id=package.project_id, query=query, top_k=top_k, mode="semantic"
             )
-        except Exception:  # noqa: BLE001 - search infra failure -> no links, not a crash
+        except Exception as exc:  # noqa: BLE001 - search infra failure -> no links, not a crash
+            logger.warning(
+                "Document search failed for package %s; linking 0 documents: %s",
+                package.id,
+                exc,
+            )
             hits = []
 
         # Aggregate hits per document: keep max score + its best excerpt/page.
