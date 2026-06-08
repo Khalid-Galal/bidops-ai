@@ -102,11 +102,21 @@ def get_parser_for_file(filename: str) -> ParserInterface:
     from app.services.parsing.pdf_parser import PdfParser
     from app.services.parsing.docx_parser import DocxParser
     from app.services.parsing.xlsx_parser import XlsxParser
+    from app.services.parsing.text_parser import TextParser
+    from app.services.parsing.email_parser import EmailParser
+    from app.services.parsing.pptx_parser import PptxParser
+    from app.services.parsing.image_parser import ImageParser
+    from app.services.parsing.zip_parser import ZipParser
 
     parsers: list[ParserInterface] = [
         PdfParser(),
         DocxParser(),
         XlsxParser(),
+        TextParser(),
+        EmailParser(),
+        PptxParser(),
+        ImageParser(),
+        ZipParser(),
     ]
 
     for parser in parsers:
