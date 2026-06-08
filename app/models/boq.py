@@ -35,7 +35,7 @@ class BOQItem(Base, TimestampMixin):
     # Item details
     description: Mapped[str] = mapped_column(Text, nullable=False)
     description_ar: Mapped[str | None] = mapped_column(Text, nullable=True)  # Arabic description
-    unit: Mapped[str] = mapped_column(String(50), nullable=False)
+    unit: Mapped[str | None] = mapped_column(String(50), nullable=True)
     quantity: Mapped[float] = mapped_column(Float, nullable=False)
 
     # Client reference (for mapping back to template)

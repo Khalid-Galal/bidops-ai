@@ -16,6 +16,12 @@ def classify_trade(description: str, rules: RulesConfig) -> tuple[str | None, fl
     text = description.lower()
     best_cat: str | None = None
     best_hits = 0
+    # NOTE: substring keyword matching is deliberately simple and can yield
+    # false positives (e.g. "stainless steel sink" matches "steel" -> classified
+    # as structural_steel). This is acceptable for a first-pass deterministic
+    # classifier: low-confidence / ambiguous rows are surfaced via the
+    # `requires_review` flag downstream, and a future LLM pass is expected to
+    # disambiguate these cases before packages are finalized.
     for category, keywords in rules.packaging.trade_categories.items():
         hits = sum(1 for kw in keywords if kw.lower() in text)
         if hits > best_hits:
