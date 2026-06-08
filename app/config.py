@@ -23,6 +23,9 @@ class Settings(BaseSettings):
 
     # LLM settings (Phase 3)
     gemini_api_key: str = ""
+    # Optional comma-separated list of keys; enables rotation/failover across
+    # per-key free-tier rate limits. Takes precedence over gemini_api_key.
+    gemini_api_keys: str = ""
     gemini_model: str = "gemini-2.5-pro"
 
     # NLI citation verification (Phase 3)
@@ -32,6 +35,15 @@ class Settings(BaseSettings):
     confidence_high_threshold: float = 0.8
     confidence_low_threshold: float = 0.5
     review_threshold: float = 0.5
+
+    def gemini_key_list(self) -> list[str]:
+        """Return configured Gemini API keys (rotation list preferred).
+
+        Uses ``gemini_api_keys`` (comma-separated) if set, otherwise falls back
+        to the single ``gemini_api_key``. Empty entries are dropped.
+        """
+        raw = self.gemini_api_keys or self.gemini_api_key
+        return [k.strip() for k in raw.split(",") if k.strip()]
 
     model_config = {
         "env_prefix": "BIDOPS_",

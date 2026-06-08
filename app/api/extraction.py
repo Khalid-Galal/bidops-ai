@@ -37,10 +37,10 @@ def _get_extraction_service():
     global _extraction_service
     if _extraction_service is None:
         settings = get_settings()
-        if not settings.gemini_api_key:
+        if not settings.gemini_key_list():
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="BIDOPS_GEMINI_API_KEY not configured. Set it in .env or environment.",
+                detail="BIDOPS_GEMINI_API_KEY (or BIDOPS_GEMINI_API_KEYS) not configured. Set it in .env or environment.",
             )
         from app.services.extraction.citation_verifier import CitationVerifier
         from app.services.extraction.extraction_service import ExtractionService
@@ -54,7 +54,7 @@ def _get_extraction_service():
         )
         search_svc = HybridSearchService(embedding_service=embedding_svc)
         llm_svc = GeminiService(
-            api_key=settings.gemini_api_key,
+            api_keys=settings.gemini_key_list(),
             model=settings.gemini_model,
         )
         verifier = CitationVerifier(

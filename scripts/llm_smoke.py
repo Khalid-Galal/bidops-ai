@@ -32,11 +32,9 @@ PROMPT = (
 
 def main() -> int:
     s = get_settings()
-    svc = GeminiService(api_key=s.gemini_api_key, model=s.gemini_model)
-    print(f"model={s.gemini_model} key_len={len(s.gemini_api_key)}", flush=True)
-
-    print("waiting 65s for free-tier RPM window to reset...", flush=True)
-    time.sleep(65)
+    keys = s.gemini_key_list()
+    svc = GeminiService(api_keys=keys, model=s.gemini_model)
+    print(f"model={s.gemini_model} keys={len(keys)}", flush=True)
 
     for attempt in range(1, 4):
         try:

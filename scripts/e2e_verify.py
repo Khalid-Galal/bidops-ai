@@ -20,6 +20,14 @@ from pathlib import Path
 
 import httpx
 
+# Windows consoles default to cp1252 which cannot encode Arabic — force UTF-8
+# so logging bilingual field values does not crash the driver.
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 BASE = "http://127.0.0.1:8000"
 ROOT = Path(__file__).resolve().parent.parent
 TENDER = ROOT / "sample_tender"
