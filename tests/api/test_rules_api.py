@@ -9,7 +9,6 @@ def rules_client(tmp_path, monkeypatch):
     from app.services.rules.rules_service import RulesService
 
     svc = RulesService(user_path=tmp_path / "rules.json")
-    monkeypatch.setattr(rules_api, "_rules_service", svc, raising=False)
     monkeypatch.setattr(rules_api, "get_rules_service", lambda: svc)
 
     from app.main import app

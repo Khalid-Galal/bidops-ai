@@ -39,7 +39,15 @@ class RulesService:
         self._user_path = user_path or _USER_PATH
 
     def load(self) -> RulesConfig:
-        """Return the effective config: defaults deep-merged with user overrides."""
+        """Return the effective config: defaults deep-merged with user overrides.
+
+        Merge is ADDITIVE for dict-valued sections (e.g. unit_mappings,
+        trade_categories, location_factors): a user file can add or change keys
+        but cannot delete a default key — on reload the committed default key
+        re-appears. Scalars and list values are replaced wholesale. To remove a
+        default map entry, edit config/rules.default.json rather than relying on
+        a PUT to drop it.
+        """
         data = json.loads(self._defaults_path.read_text(encoding="utf-8"))
         if self._user_path.exists():
             user = json.loads(self._user_path.read_text(encoding="utf-8"))
