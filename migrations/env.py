@@ -7,9 +7,20 @@ from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-# Import Base and all models so Alembic can detect them
+# Import Base and all models so Alembic can detect them.
+# Importing app.models triggers app/models/__init__.py, which registers every
+# model (v1 + v2 domain) with Base.metadata for autogenerate.
 from app.models import Base  # noqa: F401
-from app.models import document, project  # noqa: F401
+from app.models import (  # noqa: F401
+    audit,
+    boq,
+    document,
+    email,
+    package,
+    project,
+    supplier,
+    user,
+)
 
 # Alembic Config object
 config = context.config
