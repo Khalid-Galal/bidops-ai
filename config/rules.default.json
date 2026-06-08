@@ -1,0 +1,88 @@
+{
+  "scoring": {
+    "weights": {
+      "technical_compliance": 0.30,
+      "price": 0.35,
+      "delivery_time": 0.15,
+      "payment_terms": 0.10,
+      "supplier_rating": 0.10
+    },
+    "thresholds": { "excellent": 90, "good": 75, "acceptable": 60, "poor": 40 }
+  },
+  "keywords": {
+    "mandatory": ["must", "shall", "required", "mandatory", "يجب", "إلزامي"],
+    "deadline": ["deadline", "due date", "submission", "closing date", "موعد التسليم"],
+    "bond": ["tender bond", "bid bond", "bank guarantee", "performance bond", "ضمان العطاء"],
+    "payment": ["advance payment", "retention", "milestone", "interim payment", "دفعة مقدمة"]
+  },
+  "packaging": {
+    "min_items_per_package": 5,
+    "max_items_per_package": 100,
+    "grouping_criteria": ["trade_category", "spec_section"],
+    "trade_categories": {
+      "concrete": ["concrete", "formwork", "rebar", "reinforcement"],
+      "structural_steel": ["steel", "fabrication", "erection"],
+      "mep": ["mechanical", "electrical", "plumbing", "hvac", "fire fighting"],
+      "finishes": ["flooring", "painting", "ceiling", "partition", "cladding"],
+      "civil": ["excavation", "earthwork", "roads", "utilities"]
+    }
+  },
+  "email": {
+    "provider": "smtp",
+    "draft_only": true,
+    "from_address": "",
+    "reply_to": "",
+    "default_language": "en",
+    "attachment_size_limit_mb": 25,
+    "subject_formats": {
+      "rfq": "[{project_code}] RFQ - {package_name}",
+      "clarification": "[{project_code}] Clarification Request - {supplier_name}",
+      "reminder": "[{project_code}] Reminder - {package_name}"
+    }
+  },
+  "naming": {
+    "project_code_format": "PRJ-{year}-{seq:04d}",
+    "package_code_format": "PKG-{project_code}-{trade_abbr}-{seq:03d}",
+    "offer_folder_format": "{package_code}/{supplier_name}",
+    "document_naming": "{project_code}_{category}_{date}_{seq}",
+    "trade_abbreviations": {
+      "concrete": "CON", "structural_steel": "STL", "mep": "MEP",
+      "electrical": "ELE", "mechanical": "MEC", "plumbing": "PLB",
+      "hvac": "HVAC", "finishes": "FIN", "civil": "CIV"
+    }
+  },
+  "commercial": {
+    "currency": "USD",
+    "vat_rate": 0.0,
+    "default_validity_days": 90,
+    "default_payment_terms": "Net 30",
+    "markup": { "profit": 0.10, "overhead": 0.08, "contingency": 0.05, "risk": 0.03 }
+  },
+  "measurement": {
+    "contract_type": "lumpsum",
+    "quantity_tolerance": 0.05,
+    "unit_mappings": {
+      "sqm": "m2", "sq.m": "m2", "square meter": "m2",
+      "lm": "m", "lin.m": "m", "linear meter": "m",
+      "cum": "m3", "cu.m": "m3", "cubic meter": "m3",
+      "nr": "no", "nos": "no", "number": "no", "ea": "no", "each": "no",
+      "ls": "ls", "lump sum": "ls"
+    }
+  },
+  "compliance": {
+    "required_offer_fields": ["total_price", "validity_period", "delivery_time"],
+    "non_compliance_triggers": ["exclusion", "deviation", "exception", "not included", "غير مشمول", "استثناء"]
+  },
+  "indirects": {
+    "percentage_based": {
+      "site_supervision": 0.03, "quality_control": 0.01, "safety": 0.015,
+      "insurance": 0.01, "temporary_works": 0.02
+    },
+    "duration_based": {
+      "project_manager": { "monthly_rate": 0.0 },
+      "site_engineer": { "monthly_rate": 0.0 },
+      "safety_officer": { "monthly_rate": 0.0 }
+    },
+    "location_factors": { "default": 1.0, "remote": 1.15 }
+  }
+}
