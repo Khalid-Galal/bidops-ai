@@ -194,6 +194,22 @@ async def process_documents_batch(
                                     doc_id,
                                 )
 
+                                # Invalidate the cached BM25 keyword index for
+                                # this project so keyword/hybrid search reflects
+                                # the newly-indexed chunks (the search service is
+                                # a separate singleton with its own cache).
+                                try:
+                                    from app.api.search import _get_search_service
+
+                                    _get_search_service().invalidate_keyword_index(
+                                        project_id
+                                    )
+                                except Exception as inv_exc:  # pragma: no cover
+                                    logger.debug(
+                                        "Keyword index invalidation skipped: %s",
+                                        inv_exc,
+                                    )
+
                             # Enrich metadata with chunk info.
                             existing_meta = (
                                 json.loads(doc.metadata_json)

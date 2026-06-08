@@ -106,7 +106,7 @@ def build_checklist_extraction_prompt(
     # Build list of other categories to explicitly skip
     all_categories = [
         "Technical", "Commercial", "Legal", "HSE",
-        "Submission Documents", "Eligibility",
+        "Submission Documents", "Eligibility / Pre-Qualification",
     ]
     other_categories = [c for c in all_categories if c != category.display_name]
     skip_list = ", ".join(other_categories)

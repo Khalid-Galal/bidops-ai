@@ -113,6 +113,14 @@ class VerifiedRequirement(BaseModel):
         default=True,
         description="Whether this requirement needs human review",
     )
+    checked: bool = Field(
+        default=False,
+        description=(
+            "User-toggled completion state, set via PATCH /checklist/items. "
+            "Declared here so it round-trips through model_validate_json and is "
+            "reflected in Excel/PDF exports."
+        ),
+    )
 
 
 class RequirementsChecklist(BaseModel):

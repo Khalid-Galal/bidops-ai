@@ -52,14 +52,16 @@ async def generate_pdf_report(project_id: int) -> BytesIO:
         ValueError: If the project does not exist.
         RuntimeError: If WeasyPrint is not installed.
     """
-    # Lazy import -- graceful degradation if WeasyPrint is missing
+    # Lazy import -- graceful degradation if WeasyPrint (or its native Pango/
+    # GObject libraries) is missing. Some platforms import the package fine but
+    # fail to load native libs (OSError); treat both as "unavailable".
     try:
         import weasyprint
-    except ImportError:
+    except (ImportError, OSError) as exc:
         raise RuntimeError(
-            "WeasyPrint is not installed. "
-            "Install it with: pip install weasyprint "
-            "(requires Pango system library)"
+            "WeasyPrint is unavailable (Python package or native Pango/GObject "
+            f"libraries missing): {exc}. Install WeasyPrint and its system "
+            "dependencies (Pango, cairo, GDK-PixBuf) to enable PDF export."
         )
 
     async with async_session_factory() as session:
@@ -117,9 +119,18 @@ async def generate_pdf_report(project_id: int) -> BytesIO:
     if css_path.exists():
         stylesheets.append(weasyprint.CSS(filename=str(css_path)))
 
-    # Generate PDF
-    html_doc = weasyprint.HTML(string=html_string)
-    pdf_bytes = html_doc.write_pdf(stylesheets=stylesheets)
+    # Generate PDF -- native Pango/GObject libraries load lazily at this point,
+    # so missing system deps surface here as OSError. Degrade gracefully to a
+    # RuntimeError (mapped to HTTP 501 by the API layer) instead of a 500.
+    try:
+        html_doc = weasyprint.HTML(string=html_string)
+        pdf_bytes = html_doc.write_pdf(stylesheets=stylesheets)
+    except OSError as exc:
+        raise RuntimeError(
+            "WeasyPrint cannot load its native rendering libraries "
+            f"(Pango/GObject): {exc}. Install the system dependencies to enable "
+            "PDF export."
+        )
 
     buffer = BytesIO(pdf_bytes)
     buffer.seek(0)

@@ -25,3 +25,9 @@ Thumbs.db
 
 # Environment
 .env
+
+# Phase 0 verification artifacts
+.venv_req_core.txt
+sample_tender/
+verification_out/
+verification_out_run*.log
