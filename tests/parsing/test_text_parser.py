@@ -1,6 +1,3 @@
-import pytest
-
-
 async def test_text_parser_reads_plain_text(tmp_path):
     from app.services.parsing.text_parser import TextParser
 

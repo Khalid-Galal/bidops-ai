@@ -10,10 +10,29 @@ ingestion degrades gracefully rather than breaking the pipeline.
 
 from __future__ import annotations
 
+import asyncio
 import time
 from pathlib import Path
 
 from app.services.parsing.base import PageContent, ParsedDocument, ParserInterface
+
+# Module-level EasyOCR Reader cache -- lazy, built once. Constructing a Reader
+# loads detection/recognition models from disk, so we must not do it per image.
+_EASYOCR_READER = None
+
+
+def _get_easyocr_reader():
+    """Create and cache an EasyOCR Reader for English + Arabic.
+
+    Returns:
+        A cached easyocr.Reader instance (CPU mode).
+    """
+    global _EASYOCR_READER
+    if _EASYOCR_READER is None:
+        import easyocr
+
+        _EASYOCR_READER = easyocr.Reader(["en", "ar"], gpu=False)
+    return _EASYOCR_READER
 
 
 class ImageParser(ParserInterface):
@@ -51,7 +70,8 @@ class ImageParser(ParserInterface):
                 warnings=[f"Failed to open image: {exc}"],
             )
 
-        text = self._run_ocr(file_path, warnings)
+        # OCR is CPU-bound (model inference); run it off the event loop.
+        text = await asyncio.to_thread(self._run_ocr, file_path, warnings)
 
         elapsed = int((time.monotonic() - start) * 1000)
         return ParsedDocument(
@@ -69,11 +89,9 @@ class ImageParser(ParserInterface):
     @staticmethod
     def _run_ocr(file_path: str, warnings: list[str]) -> str:
         """OCR with EasyOCR -> pytesseract fallback. Never raises."""
-        # 1. EasyOCR (Arabic + English).
+        # 1. EasyOCR (Arabic + English). Reader is built once and cached.
         try:
-            import easyocr
-
-            reader = easyocr.Reader(["en", "ar"], gpu=False)
+            reader = _get_easyocr_reader()
             result = reader.readtext(file_path, detail=0)
             return "\n".join(result).strip()
         except Exception:  # noqa: BLE001 -- fall through to next engine.
