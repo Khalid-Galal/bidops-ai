@@ -66,3 +66,19 @@ async def test_generate_404_missing_project(pkg_client):
     async with client:
         r = await client.post("/api/projects/999999/packages/generate")
     assert r.status_code == 404
+
+
+async def test_detail_404_missing_and_wrong_project(pkg_client):
+    client, pid = pkg_client
+    async with client:
+        # generate so at least one real package exists for this project
+        await client.post(f"/api/projects/{pid}/packages/generate")
+        real_pkg = (await client.get(f"/api/projects/{pid}/packages")).json()[0]
+
+        # missing package id -> 404
+        missing = await client.get(f"/api/projects/{pid}/packages/999999")
+        assert missing.status_code == 404
+
+        # real package id but under a different (non-owning) project -> 404
+        wrong = await client.get(f"/api/projects/424242/packages/{real_pkg['id']}")
+    assert wrong.status_code == 404
