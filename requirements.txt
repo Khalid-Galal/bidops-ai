@@ -12,6 +12,11 @@ docling
 easyocr
 openpyxl
 
+# Additional document formats (Phase 7A)
+python-pptx
+extract-msg
+Pillow
+
 # File handling and UI
 python-multipart
 aiofiles
