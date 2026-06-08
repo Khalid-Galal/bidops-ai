@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from app.api.boq import router as boq_router
 from app.api.checklist import router as checklist_router
 from app.api.documents import router as documents_router
 from app.api.export import router as export_router
@@ -80,6 +81,7 @@ app.include_router(extraction_router, prefix="/api")
 app.include_router(checklist_router, prefix="/api")
 app.include_router(export_router, prefix="/api")
 app.include_router(rules_router, prefix="/api")
+app.include_router(boq_router, prefix="/api")
 
 # Include page routes (imported here to avoid circular import with templates)
 from app.api.pages import router as pages_router  # noqa: E402
