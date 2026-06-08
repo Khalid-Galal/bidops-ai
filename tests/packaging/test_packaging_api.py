@@ -82,3 +82,71 @@ async def test_detail_404_missing_and_wrong_project(pkg_client):
         # real package id but under a different (non-owning) project -> 404
         wrong = await client.get(f"/api/projects/424242/packages/{real_pkg['id']}")
     assert wrong.status_code == 404
+
+
+async def test_link_documents_and_detail_shows_links(pkg_client, monkeypatch):
+    from dataclasses import dataclass
+
+    import app.api.packaging as pkg_api
+
+    client, pid = pkg_client
+
+    @dataclass
+    class FakeHit:
+        document_id: int
+        score: float
+        text: str
+        page_number: int = 1
+        filename: str = "spec.pdf"
+
+    class FakeSearch:
+        def __init__(self, hits):
+            self._hits = hits
+
+        def search(self, project_id, query, top_k=10, mode="hybrid"):
+            return self._hits
+
+    # Seed a real Document via the same DB the API uses: drive the override
+    # dependency's async generator directly (app.main.app holds the override
+    # object the fixture installed).
+    from app.database import get_db
+    from app.main import app as fastapi_app
+    from app.models.document import Document
+
+    override = fastapi_app.dependency_overrides[get_db]
+    agen = override()
+    session = await agen.__anext__()
+    doc = Document(
+        project_id=pid,
+        filename="concrete_spec.pdf",
+        file_path="/tmp/concrete_spec.pdf",
+        file_type="pdf",
+        file_size=1,
+    )
+    session.add(doc)
+    await session.commit()
+    doc_id = doc.id
+    await agen.aclose()
+
+    from app.services.packaging.document_linker import DocumentLinker
+
+    # Force the linker to use a fake search returning a hit for that document.
+    monkeypatch.setattr(
+        pkg_api,
+        "DocumentLinker",
+        lambda: DocumentLinker(
+            search_service=FakeSearch([FakeHit(doc_id, 0.88, "Concrete C35/45 spec", 7)])
+        ),
+    )
+
+    async with client:
+        await client.post(f"/api/projects/{pid}/packages/generate")
+        link = await client.post(f"/api/projects/{pid}/packages/link-documents")
+        assert link.status_code == 200, link.text
+        assert link.json()["links_created"] >= 1
+
+        packages = (await client.get(f"/api/projects/{pid}/packages")).json()
+        concrete = next(p for p in packages if p["trade_category"] == "concrete")
+        detail = (await client.get(f"/api/projects/{pid}/packages/{concrete['id']}")).json()
+        assert any(ld["document_id"] == doc_id for ld in detail["linked_documents"])
+        assert detail["linked_documents"][0]["filename"] == "concrete_spec.pdf"

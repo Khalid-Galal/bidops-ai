@@ -18,8 +18,17 @@ class PackageResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class LinkedDocumentResponse(BaseModel):
+    document_id: int
+    filename: str
+    relevance_score: float | None
+    relevance_reason: str | None
+    excerpt: str | None
+
+
 class PackageDetailResponse(PackageResponse):
     items: list[BOQItemResponse] = []
+    linked_documents: list[LinkedDocumentResponse] = []
 
 
 class PackagingResult(BaseModel):
@@ -28,3 +37,9 @@ class PackagingResult(BaseModel):
     items_assigned: int
     items_unassigned: int
     by_trade: dict[str, int]
+
+
+class DocumentLinkResult(BaseModel):
+    project_id: int
+    packages: int
+    links_created: int

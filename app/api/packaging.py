@@ -3,16 +3,22 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.models.document import Document
+from app.models.package import PackageDocument
 from app.models.project import Project
 from app.schemas.boq import BOQItemResponse
 from app.schemas.packaging import (
+    DocumentLinkResult,
+    LinkedDocumentResponse,
     PackageDetailResponse,
     PackageResponse,
     PackagingResult,
 )
+from app.services.packaging.document_linker import DocumentLinker
 from app.services.packaging.packaging_service import PackagingService
 
 router = APIRouter(prefix="/projects/{project_id}/packages", tags=["packaging"])
@@ -28,6 +34,18 @@ async def generate_packages(
         raise HTTPException(status_code=404, detail=f"Project {project_id} not found")
     summary = await PackagingService().generate(db, project_id)
     return PackagingResult(**summary)
+
+
+@router.post("/link-documents", response_model=DocumentLinkResult)
+async def link_documents(
+    project_id: int,
+    db: AsyncSession = Depends(get_db),
+) -> DocumentLinkResult:
+    """Link the most relevant documents to each package via semantic search."""
+    if await db.get(Project, project_id) is None:
+        raise HTTPException(status_code=404, detail=f"Project {project_id} not found")
+    summary = await DocumentLinker().link_all(db, project_id)
+    return DocumentLinkResult(**summary)
 
 
 @router.get("", response_model=list[PackageResponse])
@@ -51,7 +69,30 @@ async def package_detail(
         raise HTTPException(status_code=404, detail=f"Package {package_id} not found")
     items = await svc.get_package_items(db, package_id)
     base = PackageResponse.model_validate(package)
+
+    # Build linked documents via an explicit join (never a lazy relationship
+    # load) to stay within the async session and avoid MissingGreenlet.
+    rows = (
+        await db.execute(
+            select(PackageDocument, Document.filename)
+            .join(Document, Document.id == PackageDocument.document_id)
+            .where(PackageDocument.package_id == package_id)
+            .order_by(PackageDocument.relevance_score.desc())
+        )
+    ).all()
+    linked_documents = [
+        LinkedDocumentResponse(
+            document_id=pd.document_id,
+            filename=filename,
+            relevance_score=pd.relevance_score,
+            relevance_reason=pd.relevance_reason,
+            excerpt=pd.excerpt,
+        )
+        for pd, filename in rows
+    ]
+
     return PackageDetailResponse(
         **base.model_dump(),
         items=[BOQItemResponse.model_validate(i) for i in items],
+        linked_documents=linked_documents,
     )
