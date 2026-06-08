@@ -38,7 +38,7 @@ class Organization(Base, TimestampMixin):
     address: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Settings (JSON)
-    settings: Mapped[dict | None] = mapped_column(JSON, default=None)
+    settings: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 

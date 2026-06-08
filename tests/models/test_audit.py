@@ -1,7 +1,7 @@
 async def test_audit_log_roundtrip(db_session):
     from app.models.audit import AuditLog
     entry = AuditLog(
-        action="extraction.run", entity_type="project", entity_id="1",
+        action="extraction.run", entity_type="project", entity_id=1,
         description="ran summary extraction", success=True,
     )
     db_session.add(entry)

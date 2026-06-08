@@ -52,6 +52,7 @@ class EmailLog(Base, TimestampMixin):
     total_attachment_size: Mapped[int | None] = mapped_column(Integer, nullable=True)  # bytes
 
     # Sending details
+    # Intentionally nullable: a draft email may not have a sender assigned yet.
     from_address: Mapped[str | None] = mapped_column(String(255), nullable=True)
     reply_to: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
