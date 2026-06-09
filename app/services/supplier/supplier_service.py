@@ -27,8 +27,7 @@ _SETTABLE = (
 
 class SupplierService:
     async def _next_code(self, db: AsyncSession) -> str:
-        count = (await db.execute(select(func.count(Supplier.id)))).scalar() or 0
-        return f"SUP-{count + 1:04d}"
+        return _format_code(await self._count(db) + 1)
 
     async def create(
         self,
@@ -154,80 +153,92 @@ class SupplierService:
             wb = load_workbook(path, read_only=True, data_only=True)
         except Exception as exc:  # noqa: BLE001 - surface a clean message
             raise ValueError(f"Failed to read Excel file: {exc}") from exc
-        ws = wb.active
-        rows = ws.iter_rows(values_only=True)
+        # Always close the workbook before returning/raising, otherwise on
+        # Windows the file handle leaks and the caller's unlink() fails with
+        # PermissionError [WinError 32]. A partially-consumed read-only row
+        # iterator is suspended inside `with self._get_source()`, holding an
+        # open zip member, so the generator must be closed too — wb.close()
+        # alone (which only closes the archive) is not enough.
+        rows = None
         try:
-            header = next(rows)
-        except StopIteration:
-            raise ValueError("Excel file is empty")
-
-        normalized = [_norm_header(h) for h in header]
-        col = {
-            key: _find_col(normalized, candidates)
-            for key, candidates in self._COLUMN_CANDIDATES.items()
-        }
-        if col["name"] is None:
-            raise ValueError("Required column 'name' not found")
-
-        imported = updated = skipped = 0
-        errors: list[str] = []
-        # Capture the supplier count ONCE up front. Calling _count() inside the
-        # loop would trigger autoflush of pending db.add()s and double-count,
-        # producing gapped codes. base + imported + 1 stays correct & gap-free.
-        base_count = await self._count(db)
-
-        for row_idx, row in enumerate(rows, start=2):
+            ws = wb.active
+            rows = ws.iter_rows(values_only=True)
             try:
-                name = _cell(row, col["name"])
-                if not name:
-                    skipped += 1
-                    continue
-                emails = _split_multi(_cell(row, col["email"]), at_only=True)
-                trades = [
-                    _norm_trade(t)
-                    for t in _split_multi(_cell(row, col["trade"]))
-                    if t
-                ]
-                existing = (
-                    await db.execute(select(Supplier).where(Supplier.name == name))
-                ).scalar_one_or_none()
-                if existing is not None:
-                    if not update_existing:
+                header = next(rows)
+            except StopIteration:
+                raise ValueError("Excel file is empty")
+
+            normalized = [_norm_header(h) for h in header]
+            col = {
+                key: _find_col(normalized, candidates)
+                for key, candidates in self._COLUMN_CANDIDATES.items()
+            }
+            if col["name"] is None:
+                raise ValueError("Required column 'name' not found")
+
+            imported = updated = skipped = 0
+            errors: list[str] = []
+            # Capture the supplier count ONCE up front. Calling _count() inside
+            # the loop would trigger autoflush of pending db.add()s and double-
+            # count, producing gapped codes. base + imported + 1 stays correct
+            # & gap-free.
+            base_count = await self._count(db)
+
+            for row_idx, row in enumerate(rows, start=2):
+                try:
+                    name = _cell(row, col["name"])
+                    if not name:
                         skipped += 1
                         continue
-                    if emails:
-                        existing.emails = emails
-                    if trades:
-                        existing.trade_categories = trades
-                    for fld, idx in (("phone", col["phone"]), ("contact_name", col["contact"]),
-                                     ("region", col["region"]), ("country", col["country"]),
-                                     ("address", col["address"]), ("website", col["website"])):
-                        val = _cell(row, idx)
-                        if val:
-                            setattr(existing, fld, val)
-                    updated += 1
-                    continue
+                    emails = _split_multi(_cell(row, col["email"]), at_only=True)
+                    trades = [
+                        _norm_trade(t)
+                        for t in _split_multi(_cell(row, col["trade"]))
+                        if t
+                    ]
+                    existing = (
+                        await db.execute(select(Supplier).where(Supplier.name == name))
+                    ).scalar_one_or_none()
+                    if existing is not None:
+                        if not update_existing:
+                            skipped += 1
+                            continue
+                        if emails:
+                            existing.emails = emails
+                        if trades:
+                            existing.trade_categories = trades
+                        for fld, idx in (("phone", col["phone"]), ("contact_name", col["contact"]),
+                                         ("region", col["region"]), ("country", col["country"]),
+                                         ("address", col["address"]), ("website", col["website"])):
+                            val = _cell(row, idx)
+                            if val:
+                                setattr(existing, fld, val)
+                        updated += 1
+                        continue
 
-                supplier = Supplier(
-                    organization_id=None,
-                    name=name,
-                    code=f"SUP-{base_count + imported + 1:04d}",
-                    emails=emails,
-                    trade_categories=trades,
-                    phone=_cell(row, col["phone"]),
-                    contact_name=_cell(row, col["contact"]),
-                    region=_cell(row, col["region"]),
-                    country=_cell(row, col["country"]),
-                    address=_cell(row, col["address"]),
-                    website=_cell(row, col["website"]),
-                )
-                db.add(supplier)
-                imported += 1
-            except Exception as exc:  # noqa: BLE001 - per-row resilience
-                errors.append(f"Row {row_idx}: {exc}")
+                    supplier = Supplier(
+                        organization_id=None,
+                        name=name,
+                        code=_format_code(base_count + imported + 1),
+                        emails=emails,
+                        trade_categories=trades,
+                        phone=_cell(row, col["phone"]),
+                        contact_name=_cell(row, col["contact"]),
+                        region=_cell(row, col["region"]),
+                        country=_cell(row, col["country"]),
+                        address=_cell(row, col["address"]),
+                        website=_cell(row, col["website"]),
+                    )
+                    db.add(supplier)
+                    imported += 1
+                except Exception as exc:  # noqa: BLE001 - per-row resilience
+                    errors.append(f"Row {row_idx}: {exc}")
 
-        await db.commit()
-        wb.close()
+            await db.commit()
+        finally:
+            if rows is not None:
+                rows.close()
+            wb.close()
         return {
             "imported": imported,
             "updated": updated,
@@ -270,6 +281,10 @@ class SupplierService:
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         wb.save(output_path)
         return output_path
+
+
+def _format_code(n: int) -> str:
+    return f"SUP-{n:04d}"
 
 
 def _norm_header(value) -> str:

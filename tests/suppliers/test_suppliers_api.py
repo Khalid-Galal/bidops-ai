@@ -77,3 +77,16 @@ async def test_import_and_export(api_client):
         assert exp.headers["content-type"].startswith(
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
         assert len(exp.content) > 0
+
+
+async def test_import_malformed_returns_400(api_client):
+    wb = openpyxl.Workbook(); ws = wb.active
+    ws.append(["Company", "Email"]); ws.append(["X", "x@x.test"])
+    buf = io.BytesIO(); wb.save(buf); buf.seek(0)
+    async with api_client as c:
+        up = await c.post(
+            "/api/suppliers/import",
+            files={"file": ("bad.xlsx", buf.getvalue(),
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+        )
+        assert up.status_code == 400, up.text
