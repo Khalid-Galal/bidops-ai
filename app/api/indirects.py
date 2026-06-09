@@ -21,6 +21,8 @@ async def get_indirects(
     location: str = Query(default="default"),
     db: AsyncSession = Depends(get_db),
 ) -> IndirectsResult:
+    """Indirect-cost breakdown only (percentage-of-direct + duration-based staff +
+    location factor). For the full priced rollup use GET .../cost-summary."""
     if await db.get(Project, project_id) is None:
         raise HTTPException(status_code=404, detail=f"Project {project_id} not found")
     result = await IndirectsService().indirects_result(
@@ -36,6 +38,12 @@ async def get_cost_summary(
     location: str = Query(default="default"),
     db: AsyncSession = Depends(get_db),
 ) -> ProjectCostSummary:
+    """Full project cost rollup: direct cost -> + indirects -> + markups -> + VAT.
+
+    NOTE: this marks up the **direct + indirects** base, so its grand_total is
+    intentionally larger than GET .../pricing/summary (which marks up the direct
+    cost only). Use this endpoint for the complete project total.
+    """
     if await db.get(Project, project_id) is None:
         raise HTTPException(status_code=404, detail=f"Project {project_id} not found")
     result = await IndirectsService().project_cost_summary(

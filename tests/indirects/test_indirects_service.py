@@ -95,3 +95,51 @@ async def test_project_cost_summary_rolls_up_indirects_then_markups(db_session):
     assert out["selling_before_vat"] == round(23870.0 * 1.26, 2)  # 30076.2
     assert out["grand_total"] == round(23870.0 * 1.26, 2)  # vat 0
     assert out["currency"] == "USD"
+
+
+def test_compute_zero_months_omits_real_rate_role():
+    # A role with a REAL monthly_rate is still dropped when duration_months=0
+    # (isolates the zero-months omission from the zero-rate case).
+    cfg = RulesConfig()
+    cfg.indirects.percentage_based = {}
+    cfg.indirects.duration_based = {"project_manager": DurationBasedRole(monthly_rate=5000)}
+    out = IndirectsService(rules_service=_FakeRules(cfg)).compute(10000.0, duration_months=0)
+    assert out["duration_based"] == {}  # 5000 * 0 -> 0.0 -> omitted
+    assert out["subtotal_before_location"] == 0.0
+    assert out["total_indirects"] == 0.0
+
+
+async def test_cost_summary_threads_vat_and_currency(db_session):
+    # VAT (non-zero) and currency must propagate through the direct+indirects base.
+    cfg = RulesConfig()
+    cfg.commercial.vat_rate = 0.10
+    cfg.indirects.percentage_based = {"site_supervision": 0.085}
+    project = Project(name="EGP proj")
+    db_session.add(project)
+    await db_session.flush()
+    db_session.add(
+        BOQItem(project_id=project.id, line_number="1", description="X", unit="no",
+                quantity=1, client_row_index=2, trade_category="mep",
+                unit_rate=22000, total_price=22000, currency="EGP")
+    )
+    await db_session.commit()
+    out = await _IS(rules_service=_FakeRules(cfg)).project_cost_summary(db_session, project.id)
+    assert out["currency"] == "EGP"
+    assert out["total_cost_base"] == 23870.0  # 22000 + 0.085*22000
+    selling = round(23870.0 * 1.26, 2)
+    assert out["selling_before_vat"] == selling
+    assert out["vat_rate"] == 0.10
+    assert out["vat_amount"] == round(selling * 0.10, 2)
+    assert out["grand_total"] == round(selling + selling * 0.10, 2)
+
+
+async def test_cost_summary_empty_project(db_session):
+    project = Project(name="Empty")
+    db_session.add(project)
+    await db_session.commit()
+    out = await _IS().project_cost_summary(db_session, project.id)
+    assert out["direct_cost"] == 0.0
+    assert out["indirects"]["total_indirects"] == 0.0
+    assert out["total_cost_base"] == 0.0
+    assert out["grand_total"] == 0.0
+    assert out["currency"]  # non-null fallback (rules default "USD")

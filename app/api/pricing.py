@@ -57,6 +57,12 @@ async def populate_prices(
 async def pricing_summary(
     project_id: int, db: AsyncSession = Depends(get_db)
 ) -> PricingSummary:
+    """Direct-cost pricing summary: markups + VAT on the priced BOQ subtotal only.
+
+    Does NOT include indirects — its grand_total is the direct-cost selling total.
+    For the full project total (direct + indirects, marked up), use
+    GET .../cost-summary.
+    """
     if await db.get(Project, project_id) is None:
         raise HTTPException(status_code=404, detail=f"Project {project_id} not found")
     return PricingSummary(**await PricingService().pricing_summary(db, project_id))

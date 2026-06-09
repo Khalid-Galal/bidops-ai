@@ -29,9 +29,19 @@ class ProjectCostSummary(BaseModel):
     currency: str
     direct_cost: float
     indirects: IndirectsBreakdown
-    total_cost_base: float  # direct + indirects (the markup base)
+    total_cost_base: float = Field(
+        description="Direct cost + total indirects — the base markups are applied to."
+    )
     markups: MarkupBreakdown
-    selling_before_vat: float
+    selling_before_vat: float = Field(
+        description="total_cost_base + markups (markups computed on direct+indirects)."
+    )
     vat_rate: float
     vat_amount: float
-    grand_total: float
+    grand_total: float = Field(
+        description=(
+            "Complete project total (direct+indirects, marked up, plus VAT). "
+            "Intentionally LARGER than /pricing/summary.grand_total, which marks up "
+            "the direct cost only."
+        )
+    )

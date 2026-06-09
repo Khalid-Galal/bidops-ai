@@ -42,7 +42,13 @@ class PricingSummary(BaseModel):
     selling_before_vat: float
     vat_rate: float
     vat_amount: float
-    grand_total: float
+    grand_total: float = Field(
+        description=(
+            "Selling total for the DIRECT cost only (markups on the direct subtotal "
+            "+ VAT). Excludes indirects — see GET .../cost-summary for the full "
+            "project total that marks up direct+indirects."
+        )
+    )
     by_trade: list[TradePricing] = Field(default_factory=list)
 
 

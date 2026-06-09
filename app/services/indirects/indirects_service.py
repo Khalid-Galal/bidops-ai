@@ -33,10 +33,14 @@ class IndirectsService:
             name: round(direct_cost * frac, 2)
             for name, frac in ind.percentage_based.items()
         }
-        duration_based = {
+        # Compute each role's amount once, then drop roles that contribute
+        # nothing (zero monthly_rate or zero duration) so the breakdown stays clean.
+        _duration_amounts = {
             role: round(cfg.monthly_rate * duration_months, 2)
             for role, cfg in ind.duration_based.items()
-            if round(cfg.monthly_rate * duration_months, 2) != 0.0
+        }
+        duration_based = {
+            role: amount for role, amount in _duration_amounts.items() if amount != 0.0
         }
         subtotal = round(
             sum(percentage_based.values()) + sum(duration_based.values()), 2
