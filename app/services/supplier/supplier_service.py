@@ -7,6 +7,10 @@ not work on SQLite/aiosqlite.
 
 from __future__ import annotations
 
+from pathlib import Path
+
+from openpyxl import Workbook, load_workbook
+from openpyxl.styles import Font, PatternFill
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -127,3 +131,177 @@ class SupplierService:
         await db.commit()
         await db.refresh(supplier)
         return supplier
+
+    _COLUMN_CANDIDATES = {
+        "name": ("name", "supplier_name", "vendor", "supplier"),
+        "email": ("email", "emails", "email_address", "e-mail", "e_mail"),
+        "trade": ("trade", "trades", "trade_category", "category", "specialization"),
+        "phone": ("phone", "telephone", "tel", "mobile"),
+        "contact": ("contact", "contact_name", "contact_person", "person"),
+        "region": ("region", "area", "location"),
+        "country": ("country",),
+        "address": ("address", "full_address"),
+        "website": ("website", "web", "url"),
+    }
+
+    async def import_excel(
+        self, db: AsyncSession, file_path: str, update_existing: bool = False
+    ) -> dict:
+        path = Path(file_path)
+        if not path.exists():
+            raise FileNotFoundError(f"File not found: {file_path}")
+        try:
+            wb = load_workbook(path, read_only=True, data_only=True)
+        except Exception as exc:  # noqa: BLE001 - surface a clean message
+            raise ValueError(f"Failed to read Excel file: {exc}") from exc
+        ws = wb.active
+        rows = ws.iter_rows(values_only=True)
+        try:
+            header = next(rows)
+        except StopIteration:
+            raise ValueError("Excel file is empty")
+
+        normalized = [_norm_header(h) for h in header]
+        col = {
+            key: _find_col(normalized, candidates)
+            for key, candidates in self._COLUMN_CANDIDATES.items()
+        }
+        if col["name"] is None:
+            raise ValueError("Required column 'name' not found")
+
+        imported = updated = skipped = 0
+        errors: list[str] = []
+        # Capture the supplier count ONCE up front. Calling _count() inside the
+        # loop would trigger autoflush of pending db.add()s and double-count,
+        # producing gapped codes. base + imported + 1 stays correct & gap-free.
+        base_count = await self._count(db)
+
+        for row_idx, row in enumerate(rows, start=2):
+            try:
+                name = _cell(row, col["name"])
+                if not name:
+                    skipped += 1
+                    continue
+                emails = _split_multi(_cell(row, col["email"]), at_only=True)
+                trades = [
+                    _norm_trade(t)
+                    for t in _split_multi(_cell(row, col["trade"]))
+                    if t
+                ]
+                existing = (
+                    await db.execute(select(Supplier).where(Supplier.name == name))
+                ).scalar_one_or_none()
+                if existing is not None:
+                    if not update_existing:
+                        skipped += 1
+                        continue
+                    if emails:
+                        existing.emails = emails
+                    if trades:
+                        existing.trade_categories = trades
+                    for fld, idx in (("phone", col["phone"]), ("contact_name", col["contact"]),
+                                     ("region", col["region"]), ("country", col["country"]),
+                                     ("address", col["address"]), ("website", col["website"])):
+                        val = _cell(row, idx)
+                        if val:
+                            setattr(existing, fld, val)
+                    updated += 1
+                    continue
+
+                supplier = Supplier(
+                    organization_id=None,
+                    name=name,
+                    code=f"SUP-{base_count + imported + 1:04d}",
+                    emails=emails,
+                    trade_categories=trades,
+                    phone=_cell(row, col["phone"]),
+                    contact_name=_cell(row, col["contact"]),
+                    region=_cell(row, col["region"]),
+                    country=_cell(row, col["country"]),
+                    address=_cell(row, col["address"]),
+                    website=_cell(row, col["website"]),
+                )
+                db.add(supplier)
+                imported += 1
+            except Exception as exc:  # noqa: BLE001 - per-row resilience
+                errors.append(f"Row {row_idx}: {exc}")
+
+        await db.commit()
+        wb.close()
+        return {
+            "imported": imported,
+            "updated": updated,
+            "skipped": skipped,
+            "errors": errors[:10],
+            "total_errors": len(errors),
+        }
+
+    async def _count(self, db: AsyncSession) -> int:
+        return (await db.execute(select(func.count(Supplier.id)))).scalar() or 0
+
+    async def export_excel(self, db: AsyncSession, output_path: str) -> str:
+        suppliers = (
+            await db.execute(select(Supplier).order_by(Supplier.name))
+        ).scalars().all()
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Suppliers"
+        headers = ["Code", "Name", "Email(s)", "Trades", "Contact", "Phone",
+                   "Region", "Country", "Rating", "Active"]
+        fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+        font = Font(bold=True, color="FFFFFF")
+        for c, h in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=c, value=h)
+            cell.fill = fill
+            cell.font = font
+        for r, s in enumerate(suppliers, 2):
+            ws.cell(row=r, column=1, value=s.code)
+            ws.cell(row=r, column=2, value=s.name)
+            ws.cell(row=r, column=3, value=", ".join(s.emails or []))
+            ws.cell(row=r, column=4, value=", ".join(s.trade_categories or []))
+            ws.cell(row=r, column=5, value=s.contact_name)
+            ws.cell(row=r, column=6, value=s.phone)
+            ws.cell(row=r, column=7, value=s.region)
+            ws.cell(row=r, column=8, value=s.country)
+            ws.cell(row=r, column=9, value=s.rating)
+            ws.cell(row=r, column=10, value="yes" if s.is_active else "no")
+        for col_letter, width in zip("ABCDEFGHIJ", (12, 30, 35, 30, 20, 15, 15, 15, 10, 8)):
+            ws.column_dimensions[col_letter].width = width
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+        wb.save(output_path)
+        return output_path
+
+
+def _norm_header(value) -> str:
+    return str(value or "").lower().strip().replace(" ", "_")
+
+
+def _find_col(normalized: list[str], candidates: tuple[str, ...]) -> int | None:
+    for cand in candidates:
+        if cand in normalized:
+            return normalized.index(cand)
+    return None
+
+
+def _cell(row, idx: int | None) -> str | None:
+    if idx is None or idx >= len(row):
+        return None
+    val = row[idx]
+    if val is None:
+        return None
+    text = str(val).strip()
+    return text or None
+
+
+def _split_multi(value: str | None, *, at_only: bool = False) -> list[str]:
+    if not value:
+        return []
+    parts = [p.strip() for p in value.replace(";", ",").split(",")]
+    parts = [p for p in parts if p]
+    if at_only:
+        parts = [p for p in parts if "@" in p]
+    return parts
+
+
+def _norm_trade(value: str) -> str:
+    return value.strip().lower().replace(" ", "_")
