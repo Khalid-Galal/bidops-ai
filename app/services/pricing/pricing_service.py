@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.base import OfferStatus
 from app.models.boq import BOQItem
 from app.models.supplier import SupplierOffer
+from app.services.pricing.commercial import compute_commercial
 from app.services.pricing.line_item_matcher import (
     DEFAULT_THRESHOLD,
     HIGH_CONFIDENCE,
@@ -127,16 +128,7 @@ class PricingService:
         priced = [i for i in items if i.total_price is not None and not i.is_excluded]
         cost_subtotal = round(sum(i.total_price for i in priced), 2)
 
-        m = rules.commercial.markup
-        overhead = round(cost_subtotal * m.overhead, 2)
-        profit = round(cost_subtotal * m.profit, 2)
-        contingency = round(cost_subtotal * m.contingency, 2)
-        risk = round(cost_subtotal * m.risk, 2)
-        markup_total = round(overhead + profit + contingency + risk, 2)
-        selling_before_vat = round(cost_subtotal + markup_total, 2)
-        vat_rate = rules.commercial.vat_rate
-        vat_amount = round(selling_before_vat * vat_rate, 2)
-        grand_total = round(selling_before_vat + vat_amount, 2)
+        commercial = compute_commercial(cost_subtotal, rules)
 
         by_trade: dict[str, dict] = {}
         for i in priced:
@@ -169,17 +161,11 @@ class PricingService:
             "unpriced_items": len(items) - len(priced),
             "completion_rate": round(len(priced) / len(items) * 100, 1) if items else 0.0,
             "cost_subtotal": cost_subtotal,
-            "markups": {
-                "overhead": overhead,
-                "profit": profit,
-                "contingency": contingency,
-                "risk": risk,
-                "markup_total": markup_total,
-            },
-            "selling_before_vat": selling_before_vat,
-            "vat_rate": vat_rate,
-            "vat_amount": vat_amount,
-            "grand_total": grand_total,
+            "markups": commercial["markups"],
+            "selling_before_vat": commercial["selling_before_vat"],
+            "vat_rate": commercial["vat_rate"],
+            "vat_amount": commercial["vat_amount"],
+            "grand_total": commercial["grand_total"],
             "by_trade": by_trade_list,
         }
 
