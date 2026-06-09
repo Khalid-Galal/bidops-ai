@@ -108,3 +108,15 @@ async def test_reselect_same_offer_does_not_double_award(db_session):
     await svc.select_offer(db_session, o1.id)
     await db_session.refresh(supplier)
     assert supplier.total_awards == 1
+
+
+async def test_update_commercial_can_clear_field(db_session):
+    package, supplier = await _seed(db_session)
+    svc = OfferService()
+    offer = await svc.create_offer(db_session, package.id, supplier.id, [])
+    await svc.update_commercial(db_session, offer.id, total_price=100000)
+    await db_session.refresh(offer)
+    assert offer.total_price == 100000
+    await svc.update_commercial(db_session, offer.id, total_price=None)
+    await db_session.refresh(offer)
+    assert offer.total_price is None

@@ -62,8 +62,10 @@ class OfferService:
         offer = await db.get(SupplierOffer, offer_id)
         if offer is None:
             return None
+        # The API passes only explicitly-set fields (model_dump exclude_unset),
+        # so an explicit null here is intentional and must clear the field.
         for key, value in fields.items():
-            if value is not None and key in _SETTABLE:
+            if key in _SETTABLE:
                 setattr(offer, key, value)
         await db.commit()
         await db.refresh(offer)
