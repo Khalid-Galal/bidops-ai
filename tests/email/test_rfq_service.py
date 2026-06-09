@@ -4,8 +4,19 @@ from app.models.base import EmailStatus, EmailType
 from app.models.package import Package
 from app.models.project import Project
 from app.models.supplier import Supplier
+from app.schemas.rules import RulesConfig
 from app.services.email.rfq_service import RFQService
 from app.services.email.smtp_sender import SendError
+
+
+class _FakeRules:
+    """Stands in for RulesService — returns a fixed RulesConfig from load()."""
+
+    def __init__(self, cfg):
+        self._cfg = cfg
+
+    def load(self):
+        return self._cfg
 
 
 async def _seed(db):
@@ -124,6 +135,9 @@ async def test_send_uses_injected_sender_and_marks_sent(db_session):
     assert out.message_id == "<msgid@test>"
     assert out.sent_at is not None
     assert len(sender.calls) == 1
+    assert sender.calls[0]["to"] == ["sales@coolair.test"]
+    assert sender.calls[0]["subject"] == draft.subject
+    assert sender.calls[0]["body_html"]
     # supplier RFQ counter incremented
     refreshed = await db_session.get(Supplier, sup_en.id)
     assert refreshed.total_rfqs_sent == 1
@@ -135,7 +149,9 @@ async def test_send_failure_marks_failed(db_session):
     [draft] = await svc.create_rfq_drafts(db_session, package.id, [sup_en.id])
     out = await svc.send(db_session, draft.id, sender=_FakeSender(fail=True))
     assert out.status == EmailStatus.FAILED.value
-    assert out.error_message and "boom" in out.error_message
+    # Raw SMTP/socket text is never surfaced to clients; generic message only.
+    assert out.error_message == "SMTP send failed"
+    assert out.retry_count == 1
 
 
 async def test_send_raises_when_not_configured(db_session):
@@ -144,3 +160,23 @@ async def test_send_raises_when_not_configured(db_session):
     [draft] = await svc.create_rfq_drafts(db_session, package.id, [sup_en.id])
     with pytest.raises(RuntimeError):
         await svc.send(db_session, draft.id, sender=_FakeSender(configured=False))
+
+
+async def test_misconfigured_subject_format_does_not_crash(db_session):
+    _, package, sup_en, *_ = await _seed(db_session)
+    cfg = RulesConfig()
+    bad_template = "[{project_code}] #{seq:04d}"  # 'seq' is not provided -> KeyError
+    cfg.email.subject_formats.rfq = bad_template
+    svc = RFQService(rules_service=_FakeRules(cfg))
+    drafts = await svc.create_rfq_drafts(db_session, package.id, [sup_en.id])
+    assert len(drafts) == 1
+    # Falls back to the raw template instead of crashing.
+    assert drafts[0].subject == bad_template
+
+
+async def test_duplicate_supplier_ids_create_one_draft(db_session):
+    _, package, sup_en, *_ = await _seed(db_session)
+    drafts = await RFQService().create_rfq_drafts(
+        db_session, package.id, [sup_en.id, sup_en.id]
+    )
+    assert len(drafts) == 1

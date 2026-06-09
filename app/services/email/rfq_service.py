@@ -102,7 +102,9 @@ class RFQService:
         subject_fmt = rules.email.subject_formats.rfq
 
         drafts: list[EmailLog] = []
-        for supplier_id in supplier_ids:
+        # Dedupe supplier ids, preserving the caller's order, so a repeated id
+        # never yields duplicate drafts.
+        for supplier_id in dict.fromkeys(supplier_ids):
             supplier = await db.get(Supplier, supplier_id)
             if supplier is None or not supplier.emails:
                 logger.info("Skipping supplier %s: missing or no email", supplier_id)
@@ -225,7 +227,7 @@ class RFQService:
         try:
             message_id = sender.send(
                 from_address=email_log.from_address or "",
-                from_name=from_name(),
+                from_name=get_settings_name(),
                 to=list(email_log.to or []),
                 cc=email_log.cc,
                 bcc=email_log.bcc,
@@ -236,8 +238,11 @@ class RFQService:
                 attachments=email_log.attachments,
             )
         except SendError as exc:
+            # Log full diagnostics server-side, but never surface raw SMTP/
+            # socket text (host/IP/auth details) to clients.
+            logger.warning("SMTP send failed for email %s: %s", email_id, exc)
             email_log.status = EmailStatus.FAILED.value
-            email_log.error_message = str(exc)
+            email_log.error_message = "SMTP send failed"
             email_log.retry_count += 1
             await db.commit()
             await db.refresh(email_log)
@@ -256,23 +261,28 @@ class RFQService:
 
 
 def _safe_format(template: str, **values) -> str:
-    """str.format that never raises on a missing/extra placeholder."""
+    """Format ``template`` defensively for operator-editable subject formats.
+
+    Never raises — a missing placeholder renders as ``{key}``; on any other
+    malformed/invalid format string (bad spec, positional field, etc.) the raw
+    template is returned unchanged.
+    """
 
     class _Default(dict):
         def __missing__(self, key):  # noqa: D401
             return "{" + key + "}"
 
-    return template.format_map(_Default(values))
+    try:
+        return template.format_map(_Default(values))
+    except (ValueError, IndexError, KeyError) as exc:
+        logger.warning("Invalid subject format %r: %s", template, exc)
+        return template
 
 
 def get_settings_name() -> str:
     from app.config import get_settings
 
     return get_settings().email_from_name
-
-
-def from_name() -> str:
-    return get_settings_name()
 
 
 def company_name() -> str:
