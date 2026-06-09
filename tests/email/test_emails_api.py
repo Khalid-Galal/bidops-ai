@@ -81,6 +81,23 @@ async def test_edit_draft(emails_client):
         assert patched.json()["subject"] == "Custom RFQ"
 
 
+async def test_edit_draft_cc_bcc_roundtrip(emails_client):
+    client, ids = emails_client
+    async with client as c:
+        rfq = await c.post(
+            f"/api/projects/{ids['project']}/packages/{ids['package']}/rfq",
+            json={"supplier_ids": [ids["supplier"]]})
+        email_id = rfq.json()["email_ids"][0]
+        patched = await c.patch(
+            f"/api/emails/{email_id}",
+            json={"cc": ["c@x.test"], "bcc": ["b@x.test"]})
+        assert patched.status_code == 200, patched.text
+        got = await c.get(f"/api/emails/{email_id}")
+        assert got.status_code == 200
+        assert got.json()["cc"] == ["c@x.test"]
+        assert got.json()["bcc"] == ["b@x.test"]
+
+
 async def test_send_returns_503_when_smtp_not_configured(emails_client):
     client, ids = emails_client
     async with client as c:

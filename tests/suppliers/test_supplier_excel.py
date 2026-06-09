@@ -72,4 +72,11 @@ async def test_export_roundtrips(db_session, tmp_path):
     ws = wb.active
     header = [c.value for c in ws[1]]
     assert header[0] == "Code" and "Name" in header
+    # Column order: Code, Name, Email(s), Trades, Contact, Phone, Region,
+    # Country, Rating, Active.
     assert ws.cell(row=2, column=2).value == "Acme"
+    assert ws.cell(row=2, column=3).value == "a@x.test"
+    assert ws.cell(row=2, column=4).value == "mep"
+    assert ws.cell(row=2, column=7).value == "North"
+    assert ws.cell(row=2, column=9).value == 4.0
+    assert ws.cell(row=2, column=10).value == "yes"

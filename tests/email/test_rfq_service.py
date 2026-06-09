@@ -180,3 +180,44 @@ async def test_duplicate_supplier_ids_create_one_draft(db_session):
         db_session, package.id, [sup_en.id, sup_en.id]
     )
     assert len(drafts) == 1
+
+
+async def test_custom_message_appears_in_draft(db_session):
+    _, package, sup_en, *_ = await _seed(db_session)
+    drafts = await RFQService().create_rfq_drafts(
+        db_session, package.id, [sup_en.id], custom_message="Site visit Tuesday"
+    )
+    assert "Site visit Tuesday" in drafts[0].body_html
+    assert "Site visit Tuesday" in drafts[0].body_text
+
+
+async def test_attachments_collected_and_size_capped(db_session, tmp_path):
+    _, package, sup_en, *_ = await _seed(db_session)
+    # Real folder layout: <folder>/Documents/{brief.pdf, a.pdf, b.pdf}.
+    folder = tmp_path / "PKG-001-MEP"
+    docs = folder / "Documents"
+    docs.mkdir(parents=True)
+    brief = docs / "brief.pdf"        # lives INSIDE Documents -> must dedupe
+    brief.write_bytes(b"x" * 1024)    # ~1 KB
+    a = docs / "a.pdf"
+    a.write_bytes(b"y" * (200 * 1024))      # ~200 KB, kept
+    b = docs / "b.pdf"
+    b.write_bytes(b"z" * (2 * 1024 * 1024))  # 2 MB, dropped by a 1 MB cap
+    package.folder_path = str(folder)
+    package.brief_path = str(brief)
+    await db_session.commit()
+
+    cfg = RulesConfig()
+    cfg.email.attachment_size_limit_mb = 1  # 1 MiB cap -> b.pdf excluded
+    svc = RFQService(rules_service=_FakeRules(cfg))
+    [draft] = await svc.create_rfq_drafts(db_session, package.id, [sup_en.id])
+
+    names = [att["name"] for att in draft.attachments]
+    # brief appears exactly once despite being both brief_path and in Documents.
+    assert names.count("brief.pdf") == 1
+    assert "a.pdf" in names
+    assert "b.pdf" not in names  # oversized -> dropped
+    kept_sizes = {att["name"]: att["size"] for att in draft.attachments}
+    assert kept_sizes["a.pdf"] == a.stat().st_size
+    assert kept_sizes["brief.pdf"] == brief.stat().st_size
+    assert draft.total_attachment_size == sum(kept_sizes.values())
