@@ -7,6 +7,7 @@ rules.scoring.weights. Pure logic — no LLM.
 
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 
 from sqlalchemy import select
@@ -30,12 +31,38 @@ class ScoringService:
 
     @staticmethod
     def _ratio_score(value: float | None, best: float | None) -> float:
-        """100 when value == best (the minimum); lower as value grows."""
+        """Lower-is-better ratio score: 100 when value == best (the minimum).
+
+        Returns the neutral 50 only when NO offer has a value (best is None).
+        When other offers have a value but this offer's is missing or <= 0, it
+        returns 0 — a missing price/delivery is treated as the worst commercial
+        position, so interim rankings made before all data is entered will
+        penalize incomplete offers (rather than reward them with a neutral 50).
+        """
         if best is None:
             return _NEUTRAL
         if not value or value <= 0:
             return 0.0
         return round(min(100.0, 100.0 * best / value), 1)
+
+    @staticmethod
+    def _net_days(payment_terms: str | None) -> int | None:
+        """Parse the first integer in a payment-terms string (e.g. 'Net 30'->30,
+        '30 days'->30). Returns None when no integer is present."""
+        if not payment_terms:
+            return None
+        match = re.search(r"\d+", payment_terms)
+        return int(match.group()) if match else None
+
+    @classmethod
+    def _payment_score(cls, payment_terms: str | None, max_net: int | None) -> float:
+        """Score payment terms higher-is-better (longer net-days = more
+        buyer-favorable cash flow); neutral 50 when the terms are unparseable
+        or no offer in the package has parseable terms."""
+        net = cls._net_days(payment_terms)
+        if net is None or not max_net:
+            return _NEUTRAL
+        return round(min(100.0, net / max_net * 100.0), 1)
 
     @staticmethod
     def _band(score: float, thresholds) -> str:
@@ -70,10 +97,25 @@ class ScoringService:
         min_price = min(prices) if prices else None
         deliveries = [o.delivery_weeks for o in offers if o.delivery_weeks and o.delivery_weeks > 0]
         min_delivery = min(deliveries) if deliveries else None
+        nets = [n for n in (self._net_days(o.payment_terms) for o in offers) if n]
+        max_net = max(nets) if nets else None
+
+        # Preload suppliers in one query to avoid an N+1 per-offer db.get.
+        supplier_ids = {o.supplier_id for o in offers}
+        suppliers = (
+            {
+                s.id: s
+                for s in (
+                    await db.execute(select(Supplier).where(Supplier.id.in_(supplier_ids)))
+                ).scalars().all()
+            }
+            if supplier_ids
+            else {}
+        )
 
         scored: list[tuple] = []
         for offer in offers:
-            supplier = await db.get(Supplier, offer.supplier_id)
+            supplier = suppliers.get(offer.supplier_id)
             technical = offer.technical_score
             if technical is None and offer.compliance_analysis:
                 technical = offer.compliance_analysis.get("compliance_score")
@@ -86,7 +128,9 @@ class ScoringService:
                     if supplier and supplier.rating
                     else _NEUTRAL
                 ),
-                "payment_terms": _NEUTRAL,
+                # Longer net-days = better (buyer-favorable); neutral when
+                # unparseable or no offer has parseable terms.
+                "payment_terms": self._payment_score(offer.payment_terms, max_net),
             }
             overall = round(
                 sum(weights.get(k, 0.0) * sub.get(k, 0.0) for k in weights) / wsum, 1
@@ -134,10 +178,22 @@ class ScoringService:
                 )
             ).scalars().all()
         )
+        # Preload suppliers in one query to avoid an N+1 per-offer db.get.
+        supplier_ids = {o.supplier_id for o in offers}
+        suppliers = (
+            {
+                s.id: s
+                for s in (
+                    await db.execute(select(Supplier).where(Supplier.id.in_(supplier_ids)))
+                ).scalars().all()
+            }
+            if supplier_ids
+            else {}
+        )
         rows = []
         prices = []
         for offer in offers:
-            supplier = await db.get(Supplier, offer.supplier_id)
+            supplier = suppliers.get(offer.supplier_id)
             if offer.total_price:
                 prices.append(offer.total_price)
             rows.append(
