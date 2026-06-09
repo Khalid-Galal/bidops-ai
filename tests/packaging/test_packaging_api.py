@@ -150,3 +150,43 @@ async def test_link_documents_and_detail_shows_links(pkg_client, monkeypatch):
         detail = (await client.get(f"/api/projects/{pid}/packages/{concrete['id']}")).json()
         assert any(ld["document_id"] == doc_id for ld in detail["linked_documents"])
         assert detail["linked_documents"][0]["filename"] == "concrete_spec.pdf"
+
+
+async def test_export_and_register_download(pkg_client, monkeypatch, tmp_path):
+    import app.api.packaging as pkg_api
+    from app.services.packaging.package_exporter import PackageExporter
+
+    client, pid = pkg_client
+
+    # Force the exporter to write under a temp root (not data/packages).
+    monkeypatch.setattr(
+        pkg_api, "PackageExporter",
+        lambda: PackageExporter(output_root=tmp_path / "pkgout"),
+    )
+
+    async with client:
+        await client.post(f"/api/projects/{pid}/packages/generate")
+        exp = await client.post(f"/api/projects/{pid}/packages/export")
+        assert exp.status_code == 200, exp.text
+        assert exp.json()["packages_exported"] == 2
+
+        reg = await client.get(f"/api/projects/{pid}/packages/register")
+        assert reg.status_code == 200
+        assert reg.headers["content-type"].startswith(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        assert len(reg.content) > 0
+
+
+async def test_register_download_404_before_export(pkg_client, monkeypatch, tmp_path):
+    import app.api.packaging as pkg_api
+    from app.services.packaging.package_exporter import PackageExporter
+
+    client, pid = pkg_client
+    monkeypatch.setattr(
+        pkg_api, "PackageExporter",
+        lambda: PackageExporter(output_root=tmp_path / "empty"),
+    )
+    async with client:
+        r = await client.get(f"/api/projects/{pid}/packages/register")
+    assert r.status_code == 404

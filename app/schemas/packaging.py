@@ -43,3 +43,10 @@ class DocumentLinkResult(BaseModel):
     project_id: int
     packages: int
     links_created: int
+
+
+class PackageExportResult(BaseModel):
+    project_id: int
+    packages_exported: int
+    register_path: str
+    briefs_pdf: int

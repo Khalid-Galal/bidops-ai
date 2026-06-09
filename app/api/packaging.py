@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,10 +18,12 @@ from app.schemas.packaging import (
     DocumentLinkResult,
     LinkedDocumentResponse,
     PackageDetailResponse,
+    PackageExportResult,
     PackageResponse,
     PackagingResult,
 )
 from app.services.packaging.document_linker import DocumentLinker
+from app.services.packaging.package_exporter import PackageExporter
 from app.services.packaging.packaging_service import PackagingService
 
 router = APIRouter(prefix="/projects/{project_id}/packages", tags=["packaging"])
@@ -46,6 +51,44 @@ async def link_documents(
         raise HTTPException(status_code=404, detail=f"Project {project_id} not found")
     summary = await DocumentLinker().link_all(db, project_id)
     return DocumentLinkResult(**summary)
+
+
+@router.post("/export", response_model=PackageExportResult)
+async def export_packages(
+    project_id: int,
+    db: AsyncSession = Depends(get_db),
+) -> PackageExportResult:
+    """Generate folder structure, BOQ subsets, briefs, and the register on disk."""
+    if await db.get(Project, project_id) is None:
+        raise HTTPException(status_code=404, detail=f"Project {project_id} not found")
+    summary = await PackageExporter().export_project(db, project_id)
+    return PackageExportResult(
+        project_id=summary["project_id"],
+        packages_exported=summary["packages_exported"],
+        register_path=summary["register_path"],
+        briefs_pdf=summary["briefs_pdf"],
+    )
+
+
+@router.get("/register")
+async def download_register(
+    project_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    """Download the master Packages Register.xlsx (run export first)."""
+    if await db.get(Project, project_id) is None:
+        raise HTTPException(status_code=404, detail=f"Project {project_id} not found")
+    register = Path(PackageExporter()._root) / f"project_{project_id}" / "Packages_Register.xlsx"
+    if not register.exists():
+        raise HTTPException(
+            status_code=404,
+            detail="Register not found — run POST /packages/export first.",
+        )
+    return FileResponse(
+        str(register),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        filename=f"Packages_Register_project_{project_id}.xlsx",
+    )
 
 
 @router.get("", response_model=list[PackageResponse])
