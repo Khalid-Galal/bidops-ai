@@ -87,3 +87,68 @@ async def test_populate_rejects_offer_without_line_items(db_session):
 async def test_populate_unknown_offer(db_session):
     with pytest.raises(ValueError):
         await PricingService().populate_from_offer(db_session, 999999)
+
+
+async def test_pricing_summary_markups_and_vat(db_session):
+    package, offer, items = await _seed_priced(db_session)
+    await PricingService().populate_from_offer(db_session, offer.id)
+    summary = await PricingService().pricing_summary(db_session, package.project_id)
+    assert summary["cost_subtotal"] == 22000.0
+    assert summary["priced_items"] == 2
+    assert summary["unpriced_items"] == 1
+    # default markups: overhead .08, profit .10, contingency .05, risk .03 -> total .26
+    assert summary["markups"]["markup_total"] == round(22000.0 * 0.26, 2)
+    assert summary["selling_before_vat"] == round(22000.0 * 1.26, 2)
+    # default vat_rate 0.0
+    assert summary["vat_amount"] == 0.0
+    assert summary["grand_total"] == round(22000.0 * 1.26, 2)
+    assert summary["currency"] == "USD"
+    trades = {t["trade"]: t for t in summary["by_trade"]}
+    assert trades["mep"]["total"] == 22000.0
+
+
+async def test_pricing_summary_respects_rules_vat(db_session):
+    from app.schemas.rules import RulesConfig
+
+    class _FakeRules:
+        def __init__(self):
+            self._cfg = RulesConfig()
+            self._cfg.commercial.vat_rate = 0.10
+            self._cfg.commercial.currency = "EGP"
+
+        def load(self):
+            return self._cfg
+
+    package, offer, items = await _seed_priced(db_session)
+    svc = PricingService(rules_service=_FakeRules())
+    await svc.populate_from_offer(db_session, offer.id)
+    summary = await svc.pricing_summary(db_session, package.project_id)
+    selling = round(22000.0 * 1.26, 2)
+    assert summary["vat_rate"] == 0.10
+    assert summary["vat_amount"] == round(selling * 0.10, 2)
+    assert summary["grand_total"] == round(selling * 1.10, 2)
+    assert summary["currency"] == "EGP"
+
+
+async def test_gaps_report(db_session):
+    package, offer, items = await _seed_priced(db_session)
+    await PricingService().populate_from_offer(db_session, offer.id)
+    # exclude one of the priced items to exercise that bucket
+    items[1].is_excluded = True
+    await db_session.commit()
+    report = await PricingService().gaps_report(db_session, package.project_id)
+    # item[2] (Builders work) was unmatched -> unpriced & needs_review
+    assert report["unpriced_count"] >= 1
+    assert any(g["id"] == items[2].id for g in report["unpriced"])
+    assert report["excluded_count"] == 1
+    assert any(g["id"] == items[1].id for g in report["excluded"])
+
+
+async def test_update_item_price(db_session):
+    package, offer, items = await _seed_priced(db_session)
+    svc = PricingService()
+    updated = await svc.update_item_price(db_session, items[2].id, 450.0, notes="manual")
+    assert updated.unit_rate == 450.0
+    assert updated.total_price == 450.0  # quantity 1
+    assert updated.requires_review is False
+    assert await svc.update_item_price(db_session, 999999, 1.0) is None
