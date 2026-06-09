@@ -31,6 +31,21 @@ class Settings(BaseSettings):
     # NLI citation verification (Phase 3)
     nli_model: str = "cross-encoder/nli-deberta-v3-xsmall"
 
+    # SMTP transport for outbound email (Phase 9). Empty host/user => "not
+    # configured": drafts still work, but POST /send returns 503. Set these in
+    # .env with the BIDOPS_ prefix (e.g. BIDOPS_SMTP_HOST=...) to enable sending.
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_use_tls: bool = True
+
+    # Sender identity (Phase 9). from_address resolution order at send time:
+    # rules.email.from_address -> settings.email_from -> settings.smtp_user.
+    email_from: str = ""
+    email_from_name: str = "BidOps AI"
+    company_name: str = "BidOps"
+
     # Confidence thresholds (Phase 3)
     confidence_high_threshold: float = 0.8
     confidence_low_threshold: float = 0.5
