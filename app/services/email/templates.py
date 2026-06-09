@@ -91,14 +91,44 @@ _REMINDER_AR = """\
 </body></html>
 """
 
+_CLARIFICATION_EN = """\
+<html><body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+<p>Dear {{ contact_name }},</p>
+<p>Thank you for your offer for <strong>{{ package_name }}</strong> ({{ project_name }}).
+After reviewing it we require clarification on the following points:</p>
+<ol>
+{% for item in clarification_items %}<li>{{ item }}</li>
+{% else %}<li>(no items specified)</li>
+{% endfor %}</ol>
+<p>Please respond by <strong>{{ response_deadline }}</strong>.</p>
+<p>Best regards,<br>{{ sender_name }}<br>{{ company_name }}</p>
+</body></html>
+"""
+
+_CLARIFICATION_AR = """\
+<html><body dir="rtl" style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+<p>السادة {{ contact_name }},</p>
+<p>شكرًا لعرضكم الخاص بـ <strong>{{ package_name }}</strong> ({{ project_name }}).
+بعد مراجعته نحتاج إلى توضيح النقاط التالية:</p>
+<ol>
+{% for item in clarification_items %}<li>{{ item }}</li>
+{% else %}<li>(لا توجد بنود)</li>
+{% endfor %}</ol>
+<p>يرجى الرد بحلول <strong>{{ response_deadline }}</strong>.</p>
+<p>مع خالص التحية،<br>{{ sender_name }}<br>{{ company_name }}</p>
+</body></html>
+"""
+
 _TEMPLATES = {
     ("rfq", "en"): _RFQ_EN,
     ("rfq", "ar"): _RFQ_AR,
     ("reminder", "en"): _REMINDER_EN,
     ("reminder", "ar"): _REMINDER_AR,
+    ("clarification", "en"): _CLARIFICATION_EN,
+    ("clarification", "ar"): _CLARIFICATION_AR,
 }
 
-SUPPORTED_TYPES = ("rfq", "reminder")
+SUPPORTED_TYPES = ("rfq", "reminder", "clarification")
 SUPPORTED_LANGS = ("en", "ar")
 
 
@@ -109,7 +139,14 @@ def render_body(email_type: str, language: str, context: dict) -> str:
     if source is None:
         raise ValueError(f"No template for email_type={email_type!r}")
     # attachments is optional; default to empty list for the {% for %} loop.
-    ctx = {"attachments": [], "custom_message": None, "time_remaining": "", **context}
+    ctx = {
+        "attachments": [],
+        "custom_message": None,
+        "time_remaining": "",
+        "clarification_items": [],
+        "response_deadline": "",
+        **context,
+    }
     return _env.from_string(source).render(**ctx)
 
 

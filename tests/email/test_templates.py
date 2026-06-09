@@ -48,3 +48,22 @@ def test_html_to_text_strips_tags():
     txt = html_to_text("<p>Hello&nbsp;<b>World</b></p>")
     assert "Hello" in txt and "World" in txt
     assert "<" not in txt and ">" not in txt
+
+
+def test_render_clarification_lists_items():
+    html = render_body("clarification", "en", {
+        "contact_name": "Sara", "project_name": "Metro", "package_name": "HVAC",
+        "clarification_items": ["Confirm delivery date", "Provide ISO cert"],
+        "response_deadline": "2026-07-01", "sender_name": "BidOps AI", "company_name": "BidOps",
+    })
+    assert "Confirm delivery date" in html and "Provide ISO cert" in html
+    assert "2026-07-01" in html
+
+
+def test_render_clarification_ar_is_rtl():
+    html = render_body("clarification", "ar", {
+        "contact_name": "Sara", "project_name": "Metro", "package_name": "HVAC",
+        "clarification_items": ["بند"], "response_deadline": "2026-07-01",
+        "sender_name": "BidOps", "company_name": "BidOps",
+    })
+    assert 'dir="rtl"' in html

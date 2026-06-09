@@ -165,6 +165,76 @@ class RFQService:
             await db.refresh(d)
         return drafts
 
+    async def create_clarification_drafts(
+        self,
+        db: AsyncSession,
+        offer_id: int,
+        *,
+        items: list[str] | None = None,
+        language: str | None = None,
+        response_days: int = 3,
+    ) -> EmailLog:
+        """Create a DRAFT clarification email for an offer's supplier.
+
+        Draft-only: never sends. Items default to the offer's
+        clarifications_needed. Send later via POST /api/emails/{id}/send.
+        """
+        from datetime import timedelta
+
+        from app.models.supplier import Supplier, SupplierOffer
+
+        offer = await db.get(SupplierOffer, offer_id)
+        if offer is None:
+            raise ValueError(f"Offer {offer_id} not found")
+        supplier = await db.get(Supplier, offer.supplier_id)
+        if supplier is None or not supplier.emails:
+            raise ValueError("Supplier has no email address")
+        package = await db.get(Package, offer.package_id)
+        project = await db.get(Project, package.project_id) if package else None
+
+        rules = self._rules()
+        clar_items = items if items is not None else (offer.clarifications_needed or [])
+        lang = language or supplier.preferred_language or rules.email.default_language or "en"
+        response_deadline = (
+            datetime.now(timezone.utc) + timedelta(days=response_days)
+        ).strftime("%Y-%m-%d")
+        project_name = project.name if project else "Project"
+
+        context = {
+            "contact_name": supplier.contact_name or supplier.name,
+            "project_name": project_name,
+            "package_name": package.name if package else "",
+            "clarification_items": list(clar_items),
+            "response_deadline": response_deadline,
+            "sender_name": get_settings_name(),
+            "company_name": company_name(),
+        }
+        body_html = render_body("clarification", lang, context)
+        subject = _safe_format(
+            rules.email.subject_formats.clarification,
+            project_code=project_name,
+            package_name=package.name if package else "",
+            package_code=package.code if package else "",
+            supplier_name=supplier.name,
+        )
+        email_log = EmailLog(
+            package_id=offer.package_id,
+            supplier_id=supplier.id,
+            offer_id=offer.id,
+            email_type=EmailType.CLARIFICATION.value,
+            status=EmailStatus.DRAFT.value,
+            to=list(supplier.emails),
+            subject=subject,
+            body_html=body_html,
+            body_text=html_to_text(body_html),
+            from_address=self._from_address(rules) or None,
+            reply_to=rules.email.reply_to or None,
+        )
+        db.add(email_log)
+        await db.commit()
+        await db.refresh(email_log)
+        return email_log
+
     async def get_email(self, db: AsyncSession, email_id: int) -> EmailLog | None:
         return await db.get(EmailLog, email_id)
 
