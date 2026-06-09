@@ -267,6 +267,42 @@ class HistoricalService:
             source="feedback",
         )
 
+    async def suggest_for_project(
+        self,
+        db: AsyncSession,
+        project_id: int,
+        *,
+        only_unpriced: bool = True,
+        top_k: int = _DEFAULT_TOP_K,
+        min_score: float = DEFAULT_THRESHOLD,
+    ) -> dict:
+        stmt = select(BOQItem).where(BOQItem.project_id == project_id)
+        if only_unpriced:
+            stmt = stmt.where(BOQItem.unit_rate.is_(None))
+        stmt = stmt.order_by(BOQItem.client_row_index, BOQItem.id)
+        items = list((await db.execute(stmt)).scalars().all())
+
+        suggestions = []
+        for item in items:
+            suggestion = await self.suggest(
+                db,
+                item.description,
+                unit=item.unit,
+                trade=item.trade_category,
+                top_k=top_k,
+                min_score=min_score,
+                exclude_project_id=project_id,
+            )
+            suggestions.append(
+                {
+                    "boq_item_id": item.id,
+                    "line_number": item.line_number,
+                    "description": item.description,
+                    "suggestion": suggestion,
+                }
+            )
+        return {"project_id": project_id, "suggestions": suggestions}
+
 
 def _norm_header(value: object) -> str:
     return str(value or "").lower().strip()

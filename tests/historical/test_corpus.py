@@ -80,3 +80,53 @@ async def test_record_feedback_adds_corpus_record(db_session):
     # feedback immediately participates in suggestions
     out = await svc.suggest(db_session, "Split AC unit", trade="mep")
     assert out["benchmark"]["suggested_rate"] == 1275.0
+
+
+async def test_suggest_for_project_excludes_own_items(db_session):
+    # Project A (the corpus source) and Project B (the one we suggest for).
+    proj_a = Project(name="Past Tender")
+    proj_b = Project(name="Current Tender")
+    db_session.add_all([proj_a, proj_b])
+    await db_session.flush()
+    # Corpus: a record sourced from project A.
+    db_session.add(HistoricalPrice(
+        description="Supply and install split AC unit", unit="no", rate=1200.0,
+        currency="USD", trade_category="mep", source="project:Past Tender",
+        source_project_id=proj_a.id,
+    ))
+    # A record sourced from project B itself (must be excluded from B's suggestions).
+    db_session.add(HistoricalPrice(
+        description="Split AC unit supply and installation", unit="no", rate=9999.0,
+        currency="USD", trade_category="mep", source="project:Current Tender",
+        source_project_id=proj_b.id,
+    ))
+    # Unpriced item in project B that we want a suggestion for.
+    db_session.add(BOQItem(
+        project_id=proj_b.id, line_number="1", description="Split AC unit (supply & install)",
+        unit="no", quantity=5, client_row_index=2, trade_category="mep",
+    ))
+    await db_session.commit()
+
+    out = await HistoricalService().suggest_for_project(db_session, proj_b.id)
+    assert len(out["suggestions"]) == 1
+    sugg = out["suggestions"][0]["suggestion"]
+    # only project A's 1200 is in scope; B's own 9999 is excluded
+    assert sugg["benchmark"]["suggested_rate"] == 1200.0
+    assert all(m["source_project_id"] != proj_b.id for m in sugg["matches"])
+
+
+async def test_suggest_for_project_only_unpriced(db_session):
+    project = Project(name="P")
+    db_session.add(project)
+    await db_session.flush()
+    db_session.add_all([
+        BOQItem(project_id=project.id, line_number="1", description="Priced item",
+                unit="no", quantity=1, client_row_index=2, trade_category="mep",
+                unit_rate=500, total_price=500),
+        BOQItem(project_id=project.id, line_number="2", description="Unpriced item",
+                unit="no", quantity=1, client_row_index=3, trade_category="mep"),
+    ])
+    await db_session.commit()
+    out = await HistoricalService().suggest_for_project(db_session, project.id, only_unpriced=True)
+    assert len(out["suggestions"]) == 1
+    assert out["suggestions"][0]["description"] == "Unpriced item"
