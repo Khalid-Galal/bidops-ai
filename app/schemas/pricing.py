@@ -13,7 +13,6 @@ class PricePopulationResult(BaseModel):
     items_unmatched: int
     total_value: float
     currency: str | None = None
-    markup_applied: bool
 
 
 class TradePricing(BaseModel):

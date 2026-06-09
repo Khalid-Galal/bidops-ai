@@ -28,16 +28,11 @@ class PricingService:
     def _rules(self):
         return self._rules_service.load()
 
-    def _markup_factor(self) -> float:
-        m = self._rules().commercial.markup
-        return 1.0 + (m.overhead + m.profit + m.contingency + m.risk)
-
     async def populate_from_offer(
         self,
         db: AsyncSession,
         offer_id: int,
         *,
-        apply_markup: bool = False,
         threshold: float = DEFAULT_THRESHOLD,
     ) -> dict:
         offer = await db.get(SupplierOffer, offer_id)
@@ -58,8 +53,6 @@ class PricingService:
                 )
             ).scalars().all()
         )
-        factor = self._markup_factor() if apply_markup else 1.0
-
         populated = needs_review = unmatched = 0
         total_value = 0.0
         for item in boq_items:
@@ -78,7 +71,6 @@ class PricingService:
                 item.review_notes = "Matched offer line item has no usable rate"
                 unmatched += 1
                 continue
-            rate *= factor
             item.unit_rate = round(rate, 2)
             item.total_price = round(rate * item.quantity, 2)
             item.currency = offer.currency
@@ -102,7 +94,6 @@ class PricingService:
             "items_unmatched": unmatched,
             "total_value": round(total_value, 2),
             "currency": offer.currency,
-            "markup_applied": apply_markup,
         }
 
     async def pricing_summary(self, db: AsyncSession, project_id: int) -> dict:

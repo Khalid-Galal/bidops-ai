@@ -6,7 +6,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -35,13 +35,10 @@ _MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 @router.post("/offers/{offer_id}/populate-prices", response_model=PricePopulationResult)
 async def populate_prices(
     offer_id: int,
-    apply_markup: bool = Query(default=False),
     db: AsyncSession = Depends(get_db),
 ) -> PricePopulationResult:
     try:
-        result = await PricingService().populate_from_offer(
-            db, offer_id, apply_markup=apply_markup
-        )
+        result = await PricingService().populate_from_offer(db, offer_id)
     except ValueError as exc:
         # "not found" -> 404; business-rule violations -> 409
         msg = str(exc)

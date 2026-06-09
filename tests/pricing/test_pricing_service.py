@@ -62,14 +62,22 @@ async def test_populate_maps_and_prices(db_session):
     assert items[2].requires_review is True
 
 
-async def test_populate_applies_markup(db_session):
+async def test_populate_stores_raw_cost(db_session):
     package, offer, items = await _seed_priced(db_session)
-    result = await PricingService().populate_from_offer(db_session, offer.id, apply_markup=True)
-    assert result["markup_applied"] is True
+    await PricingService().populate_from_offer(db_session, offer.id)
     await db_session.refresh(items[0])
-    # default markup sum = 0.10+0.08+0.05+0.03 = 0.26 -> rate 1200*1.26 = 1512
-    assert items[0].unit_rate == 1512.0
-    assert items[0].total_price == round(1512.0 * 5, 2)
+    # raw cost rate is stored — no markup uplift at population time
+    assert items[0].unit_rate == 1200
+    assert items[0].total_price == 6000
+
+
+async def test_populate_then_summary_applies_markup_once(db_session):
+    package, offer, items = await _seed_priced(db_session)
+    await PricingService().populate_from_offer(db_session, offer.id)
+    summary = await PricingService().pricing_summary(db_session, package.project_id)
+    # populate stored raw cost (22000); summary applies the 0.26 markup exactly
+    # once -> NOT compounded (×1.26²).
+    assert summary["grand_total"] == round(22000.0 * 1.26, 2)
 
 
 async def test_populate_rejects_unselected_offer(db_session):
