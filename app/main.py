@@ -18,6 +18,7 @@ from app.api.extraction import router as extraction_router
 from app.api.health import router as health_router
 from app.api.offers import router as offers_router
 from app.api.packaging import router as packaging_router
+from app.api.pricing import router as pricing_router
 from app.api.projects import router as projects_router
 from app.api.rules import router as rules_router
 from app.api.search import router as search_router
@@ -90,6 +91,7 @@ app.include_router(packaging_router, prefix="/api")
 app.include_router(suppliers_router, prefix="/api")
 app.include_router(emails_router, prefix="/api")
 app.include_router(offers_router, prefix="/api")
+app.include_router(pricing_router, prefix="/api")
 
 # Include page routes (imported here to avoid circular import with templates)
 from app.api.pages import router as pages_router  # noqa: E402
