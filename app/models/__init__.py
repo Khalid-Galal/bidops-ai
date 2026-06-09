@@ -16,6 +16,7 @@ from app.models.base import (
 from app.models.boq import BOQItem
 from app.models.document import Document
 from app.models.email import EmailLog
+from app.models.historical import HistoricalPrice
 from app.models.package import Package, PackageDocument
 from app.models.project import Project
 from app.models.supplier import Supplier, SupplierOffer
@@ -31,6 +32,7 @@ __all__ = [
     "EmailLog",
     "EmailStatus",
     "EmailType",
+    "HistoricalPrice",
     "OfferStatus",
     "Organization",
     "Package",
