@@ -56,3 +56,30 @@ def test_populate_raises_when_no_rate_column(tmp_path):
     wb.save(p)
     with pytest.raises(ValueError):
         populate_template(str(p), str(tmp_path / "o.xlsx"), {2: 10.0})
+
+
+def test_detect_prefers_unit_rate_over_price():
+    # A generic "Price" column and a specific "Unit Rate" column coexist; the
+    # specific alias must win so we never overwrite a Price total formula.
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(["Item", "Description", "Qty", "Price", "Unit Rate"])
+    # Unit Rate is column 5, Price is column 4
+    assert detect_rate_column(ws) == 5
+
+
+def test_populate_skips_formula_cells(tmp_path):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "BOQ"
+    ws.append(["Item", "Description", "Unit", "Qty", "Rate", "Amount"])
+    # row 2's Rate cell already holds a formula — it must NOT be overwritten
+    ws.append([1, "Split AC unit", "no", 5, "=B2*C2", "=D2*E2"])
+    p = tmp_path / "formula.xlsx"
+    wb.save(p)
+    out = str(tmp_path / "o.xlsx")
+    result = populate_template(str(p), out, {2: 1200.0})
+    assert result["skipped_formula"] == 1
+    assert result["written"] == 0
+    written = openpyxl.load_workbook(out)["BOQ"]
+    assert written.cell(row=2, column=5).value == "=B2*C2"  # formula preserved
