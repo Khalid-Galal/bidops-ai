@@ -122,3 +122,13 @@ def test_parser_and_writer_pick_same_sheet(tmp_path):
     src = _make_cover_and_boq(tmp_path / "multi2.xlsx")
     wb = openpyxl.load_workbook(src)
     assert parser_pick(wb).title == writer_pick(wb).title == "BOQ Pricing"
+
+
+def test_template_skips_none_row_index(tmp_path):
+    src = _make_template(tmp_path / "client.xlsx")
+    out = str(tmp_path / "o.xlsx")
+    # a None key (no client row mapping) is skipped; only the real row is written
+    result = populate_template(src, out, {None: 999.0, 2: 1200.0})
+    assert result["written"] == 1
+    written = openpyxl.load_workbook(out)["BOQ"]
+    assert written.cell(row=2, column=5).value == 1200.0

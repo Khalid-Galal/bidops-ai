@@ -48,3 +48,15 @@ def test_best_match_uses_semantic_scorer_when_higher():
         semantic_scorer=lambda a, b: 0.9,
     )
     assert item is not None and score == 0.9
+
+
+def test_best_match_tie_returns_first():
+    # two candidates with identical descriptions (equal score) -> the
+    # first-listed candidate wins (stable, strict >, not >=).
+    candidates = [
+        {"description": "Concrete grade C30", "rate": 100},
+        {"description": "Concrete grade C30", "rate": 200},
+    ]
+    item, score = best_match("Concrete grade C30", candidates, threshold=0.45)
+    assert item["rate"] == 100
+    assert score == 1.0

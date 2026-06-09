@@ -45,6 +45,13 @@ class PricingService:
         *,
         threshold: float = DEFAULT_THRESHOLD,
     ) -> dict:
+        """Price a package's BOQ items from a SELECTED offer's line items.
+
+        Note: the deterministic v1 fuzzy matcher may map MANY BOQ items to ONE
+        offer line item, and the unit of measure is NOT cross-checked between
+        the matched pair. Raw cost rates are stored here; the single
+        cost->selling markup layer is applied later in ``pricing_summary``.
+        """
         offer = await db.get(SupplierOffer, offer_id)
         if offer is None:
             raise ValueError(f"Offer {offer_id} not found")

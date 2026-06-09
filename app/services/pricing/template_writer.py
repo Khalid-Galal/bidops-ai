@@ -62,6 +62,10 @@ def populate_template(
 
     Returns: {"written": int, "rate_column": int, "skipped_formula": int}.
     Raises ValueError if the rate column cannot be determined.
+
+    Fidelity: openpyxl preserves formulas, cell styles, charts and images on
+    round-trip, but NOT pivot tables or VBA macros. .xlsm is therefore rejected
+    upstream (its macros would be silently dropped).
     """
     wb = load_workbook(template_path)  # defaults preserve formulas
     try:
