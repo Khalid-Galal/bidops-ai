@@ -13,6 +13,8 @@ from pathlib import Path
 
 from openpyxl import load_workbook
 
+from app.services.boq.sheet_select import pick_sheet
+
 # Specific header aliases that unambiguously identify a unit-rate column. These
 # are tried FIRST so a generic "Price" column (which is often a total) can never
 # shadow an explicit unit-rate column.
@@ -22,19 +24,11 @@ _SPECIFIC_RATE_ALIASES = (
 )
 # The generic alias, tried only as a second pass when no specific alias matched.
 _GENERIC_RATE_ALIASES = ("price",)
-_SHEET_HINTS = ("boq", "bill", "quantity", "pricing", "boqs")
 _MAX_HEADER_SCAN = 20
 
 
 def _norm(value: object) -> str:
     return str(value).strip().lower() if value is not None else ""
-
-
-def _pick_sheet(wb):
-    for name in wb.sheetnames:
-        if any(h in name.lower() for h in _SHEET_HINTS):
-            return wb[name]
-    return wb[wb.sheetnames[0]]
 
 
 def detect_rate_column(ws) -> int | None:
@@ -71,7 +65,7 @@ def populate_template(
     """
     wb = load_workbook(template_path)  # defaults preserve formulas
     try:
-        ws = _pick_sheet(wb)
+        ws = pick_sheet(wb)
         col = rate_column or detect_rate_column(ws)
         if col is None:
             raise ValueError(

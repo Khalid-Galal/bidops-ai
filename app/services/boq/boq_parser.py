@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from openpyxl import load_workbook
 
 from app.schemas.rules import RulesConfig
+from app.services.boq.sheet_select import pick_sheet
 
 # Header-cell aliases -> canonical column key.
 _COLUMN_ALIASES: dict[str, list[str]] = {
@@ -17,7 +18,6 @@ _COLUMN_ALIASES: dict[str, list[str]] = {
     "section": ["section", "division", "category", "trade", "bill"],
 }
 
-_SHEET_HINTS = ["boq", "bill", "quantity", "pricing", "boqs"]
 _MAX_HEADER_SCAN = 20
 
 
@@ -35,13 +35,6 @@ class ParsedBoqRow:
 
 def _norm(value: object) -> str:
     return str(value).strip().lower() if value is not None else ""
-
-
-def _pick_sheet(wb):
-    for name in wb.sheetnames:
-        if any(h in name.lower() for h in _SHEET_HINTS):
-            return wb[name]
-    return wb[wb.sheetnames[0]]
 
 
 def _find_header(ws) -> tuple[int, dict[int, str]]:
@@ -78,7 +71,7 @@ def parse_boq_workbook(file_path: str, rules: RulesConfig) -> list[ParsedBoqRow]
     """Parse a BOQ workbook into priced rows; section headers propagate down."""
     wb = load_workbook(file_path, read_only=True, data_only=True)
     try:
-        ws = _pick_sheet(wb)
+        ws = pick_sheet(wb)
         header_row, col_map = _find_header(ws)
         if not col_map:
             return []
