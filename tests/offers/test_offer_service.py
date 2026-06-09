@@ -22,6 +22,15 @@ async def _seed(db):
     return package, supplier
 
 
+async def _seed_two_suppliers(db):
+    package, supplier = await _seed(db)
+    supplier2 = Supplier(name="WarmAir", emails=["s@warmair.test"], trade_categories=["mep"])
+    db.add(supplier2)
+    await db.commit()
+    await db.refresh(supplier2)
+    return package, supplier, supplier2
+
+
 async def test_create_offer_increments_stats(db_session):
     package, supplier = await _seed(db_session)
     svc = OfferService()
@@ -69,18 +78,33 @@ async def test_list_offers(db_session):
 
 
 async def test_select_offer_marks_winner_and_unselects_others(db_session):
-    package, supplier = await _seed(db_session)
+    package, s1, s2 = await _seed_two_suppliers(db_session)
     svc = OfferService()
-    o1 = await svc.create_offer(db_session, package.id, supplier.id, [])
-    o2 = await svc.create_offer(db_session, package.id, supplier.id, [])
-    # select o1
+    o1 = await svc.create_offer(db_session, package.id, s1.id, [])
+    o2 = await svc.create_offer(db_session, package.id, s2.id, [])
+    # select o1 (supplier s1's offer)
     sel1 = await svc.select_offer(db_session, o1.id, notes="best price")
     assert sel1.status == OfferStatus.SELECTED.value
     assert sel1.recommendation == "best price"
-    await db_session.refresh(supplier)
-    assert supplier.total_awards == 1
-    # selecting o2 demotes o1 back to evaluated
+    await db_session.refresh(s1)
+    assert s1.total_awards == 1
+    # selecting o2 demotes o1 back to evaluated AND decrements s1's award,
+    # while s2 (the new winner) gains one.
     await svc.select_offer(db_session, o2.id)
     await db_session.refresh(o1)
+    await db_session.refresh(s1)
+    await db_session.refresh(s2)
     assert o1.status == OfferStatus.EVALUATED.value
+    assert s1.total_awards == 0
+    assert s2.total_awards == 1
     assert await svc.select_offer(db_session, 999999) is None
+
+
+async def test_reselect_same_offer_does_not_double_award(db_session):
+    package, supplier = await _seed(db_session)
+    svc = OfferService()
+    o1 = await svc.create_offer(db_session, package.id, supplier.id, [])
+    await svc.select_offer(db_session, o1.id)
+    await svc.select_offer(db_session, o1.id)
+    await db_session.refresh(supplier)
+    assert supplier.total_awards == 1

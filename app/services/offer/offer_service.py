@@ -75,6 +75,23 @@ class OfferService:
         offer = await db.get(SupplierOffer, offer_id)
         if offer is None:
             return None
+        was_selected = offer.status == OfferStatus.SELECTED.value
+        # Decrement the award counter of every OTHER currently-selected offer's
+        # supplier before they are demoted, so a winner switch is award-neutral
+        # for the loser (and never leaves total_awards inflated).
+        demoted = (
+            await db.execute(
+                select(SupplierOffer).where(
+                    SupplierOffer.package_id == offer.package_id,
+                    SupplierOffer.status == OfferStatus.SELECTED.value,
+                    SupplierOffer.id != offer.id,
+                )
+            )
+        ).scalars().all()
+        for prev in demoted:
+            prev_supplier = await db.get(Supplier, prev.supplier_id)
+            if prev_supplier is not None:
+                prev_supplier.total_awards = max(0, (prev_supplier.total_awards or 0) - 1)
         # Demote any previously-selected offer in this package back to evaluated.
         await db.execute(
             update(SupplierOffer)
@@ -88,9 +105,12 @@ class OfferService:
         offer.status = OfferStatus.SELECTED.value
         if notes is not None:
             offer.recommendation = notes
-        supplier = await db.get(Supplier, offer.supplier_id)
-        if supplier is not None:
-            supplier.total_awards = (supplier.total_awards or 0) + 1
+        # Only count a genuine transition into SELECTED; re-selecting the same
+        # offer is idempotent for the award counter.
+        if not was_selected:
+            supplier = await db.get(Supplier, offer.supplier_id)
+            if supplier is not None:
+                supplier.total_awards = (supplier.total_awards or 0) + 1
         await db.commit()
         await db.refresh(offer)
         return offer
