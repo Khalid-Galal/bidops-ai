@@ -5,9 +5,11 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
+from zipfile import BadZipFile
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
+from openpyxl.utils.exceptions import InvalidFileException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.background import BackgroundTask
@@ -30,6 +32,10 @@ router = APIRouter(tags=["pricing"])
 # Cap inbound template uploads (consistent with app/api/suppliers.py and the
 # Phase 9/10 fix — never read an unbounded body fully into memory).
 _MAX_UPLOAD_BYTES = 25 * 1024 * 1024
+
+# Only .xlsx round-trips formulas/styles via openpyxl. .xlsm is rejected because
+# its VBA macros are NOT preserved (see template_writer.populate_template).
+_ALLOWED_TEMPLATE_EXT = {".xlsx"}
 
 
 @router.post("/offers/{offer_id}/populate-prices", response_model=PricePopulationResult)
@@ -104,8 +110,12 @@ async def populate_client_template(
             detail="No priced BOQ items with a client row mapping; populate prices first.",
         )
 
-    suffix = Path(file.filename or "template.xlsx").suffix or ".xlsx"
-    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as src_tmp:
+    # Validate the upload type BEFORE writing any temp file (mirror app/api/boq.py).
+    ext = Path(file.filename or "").suffix.lower()
+    if ext not in _ALLOWED_TEMPLATE_EXT:
+        raise HTTPException(status_code=400, detail="Unsupported template type; upload .xlsx")
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as src_tmp:
         src_path = src_tmp.name
         total = 0
         while chunk := await file.read(1024 * 1024):
@@ -120,9 +130,15 @@ async def populate_client_template(
     out_path = src_path + ".populated.xlsx"
     try:
         populate_template(src_path, out_path, row_rates, rate_column=rate_column)
-    except ValueError as exc:
+    except (ValueError, BadZipFile, InvalidFileException, KeyError) as exc:
+        # Corrupt / non-xlsx / unreadable workbook -> 400, and never leak temps.
         Path(src_path).unlink(missing_ok=True)
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        Path(out_path).unlink(missing_ok=True)
+        raise HTTPException(status_code=400, detail=str(exc) or "Invalid template file") from exc
+    except Exception:
+        Path(src_path).unlink(missing_ok=True)
+        Path(out_path).unlink(missing_ok=True)
+        raise
 
     def _cleanup() -> None:
         Path(src_path).unlink(missing_ok=True)

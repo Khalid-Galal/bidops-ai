@@ -129,3 +129,51 @@ async def test_populate_template_download_preserves_formulas(pricing_client):
     ws2 = out["BOQ"]
     assert ws2.cell(row=2, column=5).value == 1200.0  # rate written
     assert ws2.cell(row=2, column=6).value == "=D2*E2"  # formula preserved
+
+
+async def test_populate_template_409_before_pricing(pricing_client):
+    # No populate-prices first -> no priced rows -> 409.
+    client, ids = pricing_client
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(["Item", "Description", "Unit", "Qty", "Rate", "Amount"])
+    ws.append([1, "Split AC unit", "no", 5, None, "=D2*E2"])
+    buf = io.BytesIO()
+    wb.save(buf)
+    async with client as c:
+        resp = await c.post(
+            f"/api/projects/{ids['project']}/pricing/populate-template",
+            files={"file": ("client.xlsx", buf.getvalue(),
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+        )
+    assert resp.status_code == 409, resp.text
+
+
+async def test_populate_template_rejects_non_xlsx(pricing_client):
+    client, ids = pricing_client
+    async with client as c:
+        await c.post(f"/api/offers/{ids['offer']}/populate-prices")
+        resp = await c.post(
+            f"/api/projects/{ids['project']}/pricing/populate-template",
+            files={"file": ("x.txt", b"not a spreadsheet", "text/plain")},
+        )
+    assert resp.status_code == 400, resp.text
+
+
+async def test_populate_template_400_no_rate_column(pricing_client):
+    client, ids = pricing_client
+    # valid xlsx but header has no rate-like column -> 400 (not 500)
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(["Item", "Description", "Qty"])
+    ws.append([1, "Split AC unit", 5])
+    buf = io.BytesIO()
+    wb.save(buf)
+    async with client as c:
+        await c.post(f"/api/offers/{ids['offer']}/populate-prices")
+        resp = await c.post(
+            f"/api/projects/{ids['project']}/pricing/populate-template",
+            files={"file": ("client.xlsx", buf.getvalue(),
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+        )
+    assert resp.status_code == 400, resp.text
