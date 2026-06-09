@@ -68,6 +68,7 @@ class OfferStatus(str, enum.Enum):
     CLARIFICATION_RECEIVED = "clarification_received"
     COMPLIANT = "compliant"
     NON_COMPLIANT = "non_compliant"
+    EVALUATED = "evaluated"
     SELECTED = "selected"
     REJECTED = "rejected"
 
