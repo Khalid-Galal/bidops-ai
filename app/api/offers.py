@@ -4,6 +4,7 @@ comparison (JSON + Excel), selection, and clarification drafts."""
 from __future__ import annotations
 
 import tempfile
+import uuid
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
@@ -30,6 +31,9 @@ from app.services.offer.offer_service import OfferService
 from app.services.offer.scoring_service import ScoringService
 
 router = APIRouter(tags=["offers"])
+
+# Cap offer-ingest uploads to avoid unbounded reads into memory/disk.
+_MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 
 
 async def _require_package(db: AsyncSession, project_id: int, package_id: int) -> Package:
@@ -80,8 +84,22 @@ async def ingest_offer(
     dest.mkdir(parents=True, exist_ok=True)
     saved: list[str] = []
     for upload in files:
-        target = dest / _safe_filename(upload.filename)
-        target.write_bytes(await upload.read())
+        # uuid prefix guarantees uniqueness across offers and within one request
+        # (same-named files no longer overwrite each other on disk).
+        safe = f"{uuid.uuid4().hex}_{_safe_filename(upload.filename)}"
+        target = dest / safe
+        total = 0
+        with open(target, "wb") as out:
+            while chunk := await upload.read(1024 * 1024):
+                total += len(chunk)
+                if total > _MAX_UPLOAD_BYTES:
+                    out.close()
+                    target.unlink(missing_ok=True)
+                    raise HTTPException(
+                        status_code=413,
+                        detail="Upload exceeds the maximum allowed size",
+                    )
+                out.write(chunk)
         saved.append(str(target))
     offer = await OfferService().create_offer(db, package_id, supplier_id, saved)
     return OfferResponse.model_validate(offer)

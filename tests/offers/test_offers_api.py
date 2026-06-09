@@ -141,3 +141,57 @@ async def test_score_404_missing_package(offers_client):
     async with client as c:
         r = await c.post(f"/api/projects/{ids['project']}/packages/999999/offers/score")
     assert r.status_code == 404
+
+
+async def test_ingest_multiple_files(offers_client):
+    client, ids = offers_client
+    base = f"/api/projects/{ids['project']}/packages/{ids['package']}/offers"
+    async with client as c:
+        up = await c.post(
+            base,
+            data={"supplier_id": str(ids["supplier"])},
+            files=[
+                ("files", ("a.txt", b"x", "text/plain")),
+                ("files", ("b.txt", b"y", "text/plain")),
+            ],
+        )
+        assert up.status_code == 201, up.text
+        detail = await c.get(f"/api/offers/{up.json()['id']}")
+        paths = detail.json()["file_paths"]
+        assert len(paths) == 2
+        assert paths[0] != paths[1]
+
+
+async def test_ingest_duplicate_filenames_no_overwrite(offers_client):
+    client, ids = offers_client
+    base = f"/api/projects/{ids['project']}/packages/{ids['package']}/offers"
+    async with client as c:
+        up = await c.post(
+            base,
+            data={"supplier_id": str(ids["supplier"])},
+            files=[
+                ("files", ("quote.txt", b"first", "text/plain")),
+                ("files", ("quote.txt", b"second", "text/plain")),
+            ],
+        )
+        assert up.status_code == 201, up.text
+        detail = await c.get(f"/api/offers/{up.json()['id']}")
+        paths = detail.json()["file_paths"]
+        assert len(paths) == 2
+        assert paths[0] != paths[1]
+        from pathlib import Path
+        contents = sorted(Path(p).read_bytes() for p in paths)
+        assert contents == [b"first", b"second"]
+
+
+async def test_ingest_oversized_returns_413(offers_client, monkeypatch):
+    client, ids = offers_client
+    monkeypatch.setattr("app.api.offers._MAX_UPLOAD_BYTES", 10)
+    base = f"/api/projects/{ids['project']}/packages/{ids['package']}/offers"
+    async with client as c:
+        up = await c.post(
+            base,
+            data={"supplier_id": str(ids["supplier"])},
+            files={"files": ("big.txt", b"0123456789ABCDEF", "text/plain")},
+        )
+        assert up.status_code == 413, up.text
