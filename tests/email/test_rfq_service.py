@@ -258,3 +258,21 @@ async def test_clarification_uses_explicit_items_and_subject(db_session):
     assert "Clarify scope of HVAC" in draft.body_html
     # default rules subject: "[{project_code}] Clarification Request - {supplier_name}"
     assert draft.subject == "[Metro Line 3] Clarification Request - CoolAir"
+
+
+async def test_clarification_language_override_ar(db_session):
+    from app.models.supplier import SupplierOffer
+
+    # sup_en prefers English; an explicit 'ar' override must produce an RTL body.
+    _, package, sup_en, *_ = await _seed(db_session)
+    offer = SupplierOffer(package_id=package.id, supplier_id=sup_en.id,
+                          status="received", file_paths=[],
+                          clarifications_needed=["Confirm lead time"])
+    db_session.add(offer)
+    await db_session.commit()
+    await db_session.refresh(offer)
+
+    draft = await RFQService().create_clarification_drafts(
+        db_session, offer.id, language="ar"
+    )
+    assert 'dir="rtl"' in draft.body_html

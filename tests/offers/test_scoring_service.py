@@ -163,3 +163,48 @@ async def test_payment_terms_scored_from_net_days(db_session):
     assert by_id[o30.id]["subscores"]["payment_terms"] == 50.0
 
 
+async def test_compare_currency_fallback_to_rules_default(db_session):
+    project = Project(name="P")
+    db_session.add(project)
+    await db_session.flush()
+    package = Package(project_id=project.id, name="X", code="C", trade_category="mep")
+    db_session.add(package)
+    supplier = Supplier(name="S", emails=[], trade_categories=["mep"])
+    db_session.add(supplier)
+    await db_session.flush()
+    # Offer carries no currency -> compare() falls back to rules.commercial.currency.
+    o = SupplierOffer(package_id=package.id, supplier_id=supplier.id,
+                      status=OfferStatus.RECEIVED.value, file_paths=[], total_price=100.0)
+    db_session.add(o)
+    await db_session.commit()
+    cfg = RulesConfig()
+    cfg.commercial.currency = "EGP"
+    result = await ScoringService(rules_service=_FakeRules(cfg)).compare(
+        db_session, package.id
+    )
+    assert result["currency"] == "EGP"
+
+
+async def test_compare_offer_currency_wins_over_rules_default(db_session):
+    project = Project(name="P")
+    db_session.add(project)
+    await db_session.flush()
+    package = Package(project_id=project.id, name="X", code="C", trade_category="mep")
+    db_session.add(package)
+    supplier = Supplier(name="S", emails=[], trade_categories=["mep"])
+    db_session.add(supplier)
+    await db_session.flush()
+    o = SupplierOffer(package_id=package.id, supplier_id=supplier.id,
+                      status=OfferStatus.RECEIVED.value, file_paths=[],
+                      total_price=100.0, currency="GBP")
+    db_session.add(o)
+    await db_session.commit()
+    cfg = RulesConfig()
+    cfg.commercial.currency = "EGP"
+    result = await ScoringService(rules_service=_FakeRules(cfg)).compare(
+        db_session, package.id
+    )
+    # An offer's own currency takes precedence over the rules default.
+    assert result["currency"] == "GBP"
+
+

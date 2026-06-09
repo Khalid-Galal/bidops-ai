@@ -90,6 +90,8 @@ async def test_score_compare_and_xlsx(offers_client):
         assert cmp.status_code == 200
         assert cmp.json()["total_offers"] == 2
         assert cmp.json()["price_min"] == 100000
+        # Offers carry no currency -> falls back to rules default (USD).
+        assert cmp.json()["currency"] == "USD"
 
         xlsx = await c.get(f"{base}/comparison.xlsx")
         assert xlsx.status_code == 200

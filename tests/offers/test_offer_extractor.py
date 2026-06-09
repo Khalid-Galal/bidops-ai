@@ -86,6 +86,32 @@ async def test_compliance_compliant_status(db_session, tmp_path):
     assert offer.status == OfferStatus.COMPLIANT.value
 
 
+async def test_compliance_partial_status(db_session, tmp_path):
+    offer = await _seed_offer(db_session, tmp_path,
+                              checklist={"requirements": [], "submission_documents": [],
+                                         "eligibility_criteria": []})
+    fake = ComplianceAnalysis(overall_compliance="PARTIAL", compliance_score=70)
+    ex = OfferExtractor(llm_service=_FakeLLM(fake))
+    await ex.check_compliance(db_session, offer.id)
+    await db_session.refresh(offer)
+    assert offer.status == OfferStatus.UNDER_REVIEW.value
+
+
+async def test_compliance_empty_deviations_preserves_existing(db_session, tmp_path):
+    offer = await _seed_offer(db_session, tmp_path,
+                              checklist={"requirements": [], "submission_documents": [],
+                                         "eligibility_criteria": []})
+    offer.deviations = ["pre-existing deviation"]
+    await db_session.commit()
+    # Compliance result reports no deviations -> the prior ones must survive.
+    fake = ComplianceAnalysis(overall_compliance="COMPLIANT", compliance_score=95,
+                              deviations=[])
+    ex = OfferExtractor(llm_service=_FakeLLM(fake))
+    await ex.check_compliance(db_session, offer.id)
+    await db_session.refresh(offer)
+    assert offer.deviations == ["pre-existing deviation"]
+
+
 async def test_extract_raises_when_llm_unavailable(db_session, tmp_path, monkeypatch):
     offer = await _seed_offer(db_session, tmp_path)
     ex = OfferExtractor()
