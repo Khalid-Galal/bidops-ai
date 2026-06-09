@@ -115,3 +115,12 @@ async def test_export_missing_linked_file_is_graceful(db_session, tmp_path):
     assert not (pkg_dir / "Documents" / "gone.pdf").exists()
     manifest = (pkg_dir / "Documents" / "linked_manifest.txt").read_text(encoding="utf-8")
     assert "gone.pdf" in manifest and "MISSING" in manifest.upper()
+
+
+def test_safe_name_blocks_traversal():
+    from app.services.packaging.package_exporter import _safe_name
+    for evil in ("..", "../..", "  ../  ", ".", "/etc/passwd", "..\\..\\x"):
+        out = _safe_name(evil)
+        assert out not in ("", ".", "..")
+        assert "/" not in out and "\\" not in out
+        assert out != ".."

@@ -24,8 +24,11 @@ _SUBFOLDERS = ("BOQ", "Documents", "Offers", "Clarifications")
 
 
 def _safe_name(name: str) -> str:
-    """Filesystem-safe folder/file component."""
-    return re.sub(r"[^A-Za-z0-9._-]+", "_", name).strip("_") or "package"
+    """Filesystem-safe folder/file component (blocks path traversal)."""
+    cleaned = re.sub(r"[^A-Za-z0-9._-]+", "_", name or "").strip("._")
+    if cleaned in ("", ".", ".."):
+        return "package"
+    return cleaned
 
 
 class PackageExporter:
@@ -33,6 +36,10 @@ class PackageExporter:
 
     def __init__(self, output_root: Path | str = "data/packages") -> None:
         self._root = Path(output_root)
+
+    def register_path(self, project_id: int) -> Path:
+        """Canonical on-disk location of a project's master register."""
+        return self._root / f"project_{project_id}" / "Packages_Register.xlsx"
 
     async def export_project(self, db: AsyncSession, project_id: int) -> dict:
         packages = (
@@ -52,7 +59,7 @@ class PackageExporter:
             if info["brief_pdf"]:
                 briefs_pdf += 1
 
-        register_path = self._write_register(project_dir, packages)
+        register_path = self._write_register(project_id, packages)
         await db.commit()  # persist folder_path/brief_path set on packages
 
         return {
@@ -120,6 +127,11 @@ class PackageExporter:
         wb.save(path)
 
     def _attach_documents(self, docs_dir: Path, links: list) -> None:
+        # Prune previously-copied files (manifest + prior copies) so a re-export
+        # with changed linked documents doesn't leave stale files behind.
+        for existing in docs_dir.iterdir():
+            if existing.is_file():
+                existing.unlink()
         lines = ["Linked documents for this package", "=" * 40, ""]
         for pd, doc in links:
             src = Path(doc.file_path)
@@ -181,7 +193,7 @@ td,th{{border:1px solid #999;padding:4px;text-align:left}}h1{{font-size:1.4em}}<
             logger.info("Package brief PDF skipped (WeasyPrint unavailable): %s", exc)
             return None
 
-    def _write_register(self, project_dir: Path, packages: list[Package]) -> Path:
+    def _write_register(self, project_id: int, packages: list[Package]) -> Path:
         wb = Workbook()
         ws = wb.active
         ws.title = "Packages Register"
@@ -196,6 +208,6 @@ td,th{{border:1px solid #999;padding:4px;text-align:left}}h1{{font-size:1.4em}}<
             ])
         for col, width in {"A": 22, "B": 28, "C": 16, "D": 8, "E": 12, "F": 40, "G": 40}.items():
             ws.column_dimensions[col].width = width
-        path = project_dir / "Packages_Register.xlsx"
+        path = self.register_path(project_id)
         wb.save(path)
         return path

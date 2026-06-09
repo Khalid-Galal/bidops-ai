@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 from sqlalchemy import select
@@ -78,7 +76,7 @@ async def download_register(
     """Download the master Packages Register.xlsx (run export first)."""
     if await db.get(Project, project_id) is None:
         raise HTTPException(status_code=404, detail=f"Project {project_id} not found")
-    register = Path(PackageExporter()._root) / f"project_{project_id}" / "Packages_Register.xlsx"
+    register = PackageExporter().register_path(project_id)
     if not register.exists():
         raise HTTPException(
             status_code=404,
