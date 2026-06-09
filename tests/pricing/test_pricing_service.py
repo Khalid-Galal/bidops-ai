@@ -115,6 +115,24 @@ async def test_pricing_summary_markups_and_vat(db_session):
     assert trades["mep"]["total"] == 22000.0
 
 
+async def test_excluded_item_not_in_summary(db_session):
+    package, offer, items = await _seed_priced(db_session)
+    await PricingService().populate_from_offer(db_session, offer.id)
+    before = await PricingService().pricing_summary(db_session, package.project_id)
+    # items[1] (VRF) is priced at 8000*2 = 16000; exclude it
+    await db_session.refresh(items[1])
+    excluded_total = items[1].total_price
+    assert excluded_total == 16000
+    items[1].is_excluded = True
+    await db_session.commit()
+    after = await PricingService().pricing_summary(db_session, package.project_id)
+    expected_subtotal = round(before["cost_subtotal"] - excluded_total, 2)
+    assert after["cost_subtotal"] == expected_subtotal
+    # default vat_rate is 0.0, so grand_total == subtotal * 1.26
+    assert after["grand_total"] == round(expected_subtotal * 1.26, 2)
+    assert after["priced_items"] == before["priced_items"] - 1
+
+
 async def test_pricing_summary_respects_rules_vat(db_session):
     from app.schemas.rules import RulesConfig
 

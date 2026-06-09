@@ -56,6 +56,8 @@ class PricingService:
         populated = needs_review = unmatched = 0
         total_value = 0.0
         for item in boq_items:
+            if item.is_excluded:
+                continue
             match, score = best_match(
                 item.description, line_items,
                 threshold=threshold, semantic_scorer=self._semantic_scorer,
@@ -103,7 +105,7 @@ class PricingService:
             ).scalars().all()
         )
         rules = self._rules()
-        priced = [i for i in items if i.total_price]
+        priced = [i for i in items if i.total_price is not None and not i.is_excluded]
         cost_subtotal = round(sum(i.total_price for i in priced), 2)
 
         m = rules.commercial.markup

@@ -93,6 +93,7 @@ async def populate_client_template(
                 BOQItem.project_id == project_id,
                 BOQItem.unit_rate.is_not(None),
                 BOQItem.client_row_index.is_not(None),
+                BOQItem.is_excluded.is_(False),
             )
         )
     ).all()
