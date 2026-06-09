@@ -8,7 +8,8 @@ from app.models.supplier import Supplier, SupplierOffer
 from app.services.pricing.pricing_service import PricingService
 
 
-async def _seed_priced(db, *, offer_status=OfferStatus.SELECTED.value, line_items=None):
+async def _seed_priced(db, *, offer_status=OfferStatus.SELECTED.value, line_items=None,
+                       currency="USD"):
     project = Project(name="Metro")
     db.add(project)
     await db.flush()
@@ -32,7 +33,7 @@ async def _seed_priced(db, *, offer_status=OfferStatus.SELECTED.value, line_item
     await db.flush()
     offer = SupplierOffer(
         package_id=package.id, supplier_id=supplier.id, status=offer_status,
-        file_paths=[], currency="USD",
+        file_paths=[], currency=currency,
         line_items=line_items if line_items is not None else [
             {"description": "Supply and install split AC unit", "rate": 1200, "unit": "no"},
             {"description": "VRF outdoor condensing unit", "rate": 8000, "unit": "no"},
@@ -145,7 +146,9 @@ async def test_pricing_summary_respects_rules_vat(db_session):
         def load(self):
             return self._cfg
 
-    package, offer, items = await _seed_priced(db_session)
+    # Offer priced in EGP and rules' commercial currency also EGP -> the labeled
+    # currency is consistent with the numbers (which carry no FX conversion).
+    package, offer, items = await _seed_priced(db_session, currency="EGP")
     svc = PricingService(rules_service=_FakeRules())
     await svc.populate_from_offer(db_session, offer.id)
     summary = await svc.pricing_summary(db_session, package.project_id)
@@ -154,6 +157,57 @@ async def test_pricing_summary_respects_rules_vat(db_session):
     assert summary["vat_amount"] == round(selling * 0.10, 2)
     assert summary["grand_total"] == round(selling * 1.10, 2)
     assert summary["currency"] == "EGP"
+
+
+async def test_summary_currency_falls_back_when_no_priced_items(db_session):
+    # No priced items at all -> currency must fall back to the rules currency
+    # (default "USD") without crashing.
+    project = Project(name="Empty")
+    db_session.add(project)
+    await db_session.commit()
+    summary = await PricingService().pricing_summary(db_session, project.id)
+    assert summary["currency"] == "USD"
+    assert summary["priced_items"] == 0
+
+
+async def test_zero_price_counts_as_priced(db_session):
+    package, offer, items = await _seed_priced(db_session)
+    svc = PricingService()
+    # A deliberate zero price is a real price, not a gap. Only items[2] gets a
+    # price (0.0); the other two stay unpriced.
+    await svc.update_item_price(db_session, items[2].id, 0.0)
+    await db_session.refresh(items[2])
+    assert items[2].total_price == 0.0
+
+    gaps = await svc.gaps_report(db_session, package.project_id)
+    assert not any(g["id"] == items[2].id for g in gaps["unpriced"])
+
+    summary = await svc.pricing_summary(db_session, package.project_id)
+    # the zero-priced item is the only one counted among priced items
+    assert summary["priced_items"] == 1
+
+
+async def test_repopulate_clears_stale_price(db_session):
+    package, offer, items = await _seed_priced(db_session)
+    svc = PricingService()
+    await svc.populate_from_offer(db_session, offer.id)
+    await db_session.refresh(items[0])
+    assert items[0].unit_rate == 1200  # priced from offer A
+
+    # Mutate the offer so its line items no longer match items[0]'s description.
+    offer.line_items = [
+        {"description": "Completely unrelated plumbing fixture", "rate": 50},
+    ]
+    await db_session.commit()
+    await svc.populate_from_offer(db_session, offer.id)
+    await db_session.refresh(items[0])
+    assert items[0].unit_rate is None
+    assert items[0].total_price is None
+    assert items[0].currency is None
+    assert items[0].selected_offer_id is None
+
+    gaps = await svc.gaps_report(db_session, package.project_id)
+    assert any(g["id"] == items[0].id for g in gaps["unpriced"])
 
 
 async def test_gaps_report(db_session):

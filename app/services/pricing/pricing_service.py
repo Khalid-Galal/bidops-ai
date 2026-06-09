@@ -28,6 +28,16 @@ class PricingService:
     def _rules(self):
         return self._rules_service.load()
 
+    @staticmethod
+    def _clear_pricing(item: BOQItem) -> None:
+        """Drop any stale price so a re-population that no longer matches an
+        item leaves it cleanly unpriced rather than keeping the old value."""
+        item.unit_rate = None
+        item.total_price = None
+        item.currency = None
+        item.selected_offer_id = None
+        item.mapping_confidence = None
+
     async def populate_from_offer(
         self,
         db: AsyncSession,
@@ -63,12 +73,14 @@ class PricingService:
                 threshold=threshold, semantic_scorer=self._semantic_scorer,
             )
             if match is None:
+                self._clear_pricing(item)
                 item.requires_review = True
                 item.review_notes = "No offer line item matched this BOQ item"
                 unmatched += 1
                 continue
             rate = float(match.get("rate") or match.get("unit_rate") or 0.0)
             if rate <= 0:
+                self._clear_pricing(item)
                 item.requires_review = True
                 item.review_notes = "Matched offer line item has no usable rate"
                 unmatched += 1
@@ -135,13 +147,13 @@ class PricingService:
             for trade, data in sorted(by_trade.items(), key=lambda kv: -kv[1]["total"])
         ]
 
-        # The summary reports the commercial/selling currency from rules
-        # (markups + VAT are applied per the rules' commercial config). The
-        # per-item currency is the supplier offer's cost currency and is only a
-        # fallback when rules carry no commercial currency.
-        currency = rules.commercial.currency or next(
+        # The summary numbers are in the offer/cost currency (no FX conversion
+        # is performed), so they must be LABELED with that currency. Prefer the
+        # priced items' currency; fall back to the rules' commercial currency,
+        # then a guaranteed non-null default so the field is never None.
+        currency = next(
             (i.currency for i in priced if i.currency), None
-        )
+        ) or rules.commercial.currency or "USD"
         return {
             "project_id": project_id,
             "currency": currency,
@@ -180,7 +192,7 @@ class PricingService:
                 "reason": reason,
             }
 
-        unpriced = [gap(i, i.review_notes or "No price") for i in items if not i.total_price and not i.is_excluded]
+        unpriced = [gap(i, i.review_notes or "No price") for i in items if i.total_price is None and not i.is_excluded]
         needs_review = [
             gap(i, i.review_notes or f"Low-confidence mapping ({i.mapping_confidence})")
             for i in items if i.requires_review and not i.is_excluded
