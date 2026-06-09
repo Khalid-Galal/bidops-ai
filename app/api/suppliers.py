@@ -8,6 +8,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.background import BackgroundTask
 
 from app.database import get_db
 from app.schemas.supplier import (
@@ -20,6 +21,9 @@ from app.schemas.supplier import (
 from app.services.supplier.supplier_service import SupplierService
 
 router = APIRouter(prefix="/suppliers", tags=["suppliers"])
+
+# Cap supplier-import uploads to avoid unbounded reads into a temp file.
+_MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 
 
 @router.post("", response_model=SupplierResponse, status_code=201)
@@ -55,12 +59,15 @@ async def list_suppliers(
 
 @router.get("/export")
 async def export_suppliers(db: AsyncSession = Depends(get_db)):
-    out = Path(tempfile.gettempdir()) / "bidops_suppliers_export.xlsx"
-    await SupplierService().export_excel(db, str(out))
+    # Unique per-request path so concurrent downloads don't corrupt each other.
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp:
+        out = tmp.name
+    await SupplierService().export_excel(db, out)
     return FileResponse(
-        str(out),
+        out,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         filename="suppliers.xlsx",
+        background=BackgroundTask(lambda: Path(out).unlink(missing_ok=True)),
     )
 
 
@@ -104,8 +111,18 @@ async def import_suppliers(
 ) -> SupplierImportResult:
     suffix = Path(file.filename or "upload.xlsx").suffix or ".xlsx"
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-        tmp.write(await file.read())
         tmp_path = tmp.name
+        total = 0
+        while chunk := await file.read(1024 * 1024):
+            total += len(chunk)
+            if total > _MAX_UPLOAD_BYTES:
+                tmp.close()
+                Path(tmp_path).unlink(missing_ok=True)
+                raise HTTPException(
+                    status_code=413,
+                    detail="Upload exceeds the maximum allowed size",
+                )
+            tmp.write(chunk)
     try:
         result = await SupplierService().import_excel(
             db, tmp_path, update_existing=update_existing

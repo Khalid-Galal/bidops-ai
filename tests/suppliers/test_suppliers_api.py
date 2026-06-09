@@ -90,3 +90,17 @@ async def test_import_malformed_returns_400(api_client):
                             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
         )
         assert up.status_code == 400, up.text
+
+
+async def test_import_oversized_returns_413(api_client, monkeypatch):
+    monkeypatch.setattr("app.api.suppliers._MAX_UPLOAD_BYTES", 10)
+    wb = openpyxl.Workbook(); ws = wb.active
+    ws.append(["Name", "Email", "Trade"]); ws.append(["Acme", "a@x.test", "MEP"])
+    buf = io.BytesIO(); wb.save(buf); buf.seek(0)
+    async with api_client as c:
+        up = await c.post(
+            "/api/suppliers/import",
+            files={"file": ("sup.xlsx", buf.getvalue(),
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+        )
+        assert up.status_code == 413, up.text
