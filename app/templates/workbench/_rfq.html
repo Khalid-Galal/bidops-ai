@@ -1,0 +1,82 @@
+<section id="tab-rfq" class="wb-tab" data-label="RFQ" style="display:none">
+  <div class="card">
+    <h3>Create RFQ drafts</h3>
+    <label>Package: <select id="rfq-pkg"></select></label>
+    <button class="btn btn-secondary" onclick="loadSuggested()">Suggested suppliers</button>
+    <div id="rfq-suggested"></div>
+    <button class="btn btn-primary" onclick="createRfq()">Create drafts for checked suppliers</button>
+  </div>
+  <div class="card">
+    <h3>Email log</h3>
+    <button class="btn btn-secondary" onclick="loadEmails()">Reload</button>
+    <div id="email-table"></div>
+  </div>
+  <div class="card" id="email-preview" style="display:none">
+    <h3 id="email-subject"></h3>
+    <div id="email-body"></div>
+  </div>
+</section>
+<script>
+window.load_rfq = async function () {
+  const pkgs = await api('/api/projects/' + PID + '/packages');
+  const sel = document.getElementById('rfq-pkg');
+  sel.innerHTML = pkgs.map(function (p) {
+    return '<option value="' + p.id + '">' + esc(p.code) + ' — ' + esc(p.name) + '</option>';
+  }).join('');
+  await loadEmails();
+};
+
+async function loadSuggested() {
+  const pkgId = document.getElementById('rfq-pkg').value;
+  if (!pkgId) { alert('Generate packages first'); return; }
+  const sups = await api('/api/projects/' + PID + '/packages/' + pkgId + '/suggested-suppliers');
+  document.getElementById('rfq-suggested').innerHTML = sups.length
+    ? sups.map(function (s) {
+        return '<label style="display:block"><input type="checkbox" class="rfq-sup" value="' + s.id + '"> '
+          + esc(s.name) + ' (' + esc((s.emails || []).join(', ')) + ')</label>';
+      }).join('')
+    : '<p>No matching suppliers — add some on the Suppliers page.</p>';
+}
+
+async function createRfq() {
+  const pkgId = document.getElementById('rfq-pkg').value;
+  const ids = Array.from(document.querySelectorAll('.rfq-sup:checked')).map(function (c) {
+    return parseInt(c.value, 10);
+  });
+  if (!pkgId || !ids.length) { alert('Pick a package and at least one supplier'); return; }
+  const r = await postJSON('/api/projects/' + PID + '/packages/' + pkgId + '/rfq',
+    { supplier_ids: ids });
+  alert('Drafts created: ' + r.drafts_created
+    + (r.skipped.length ? ('; skipped: ' + r.skipped.join('; ')) : ''));
+  loadEmails();
+}
+
+async function loadEmails() {
+  const pkgId = document.getElementById('rfq-pkg').value;
+  const qs = pkgId ? ('?package_id=' + pkgId) : '';
+  const emails = await api('/api/emails' + qs);
+  document.getElementById('email-table').innerHTML = tbl(
+    ['ID', 'Type', 'Status', 'To', 'Subject', ''],
+    emails.map(function (m) {
+      return [m.id, m.email_type, m.status, (m.to || []).join(', '), m.subject,
+        '!html:<button class="btn btn-secondary" onclick="previewEmail(' + m.id + ')">Preview</button> '
+        + '<button class="btn btn-primary" onclick="sendEmail(' + m.id + ')">Send</button>'];
+    })
+  );
+}
+
+async function previewEmail(id) {
+  const m = await api('/api/emails/' + id);
+  document.getElementById('email-subject').textContent = m.subject + ' → ' + (m.to || []).join(', ');
+  /* body_html is server-generated template output; render it in the preview pane */
+  document.getElementById('email-body').innerHTML = m.body_html;
+  document.getElementById('email-preview').style.display = '';
+}
+
+async function sendEmail(id) {
+  if (!confirm('Send this email now via SMTP?')) return;
+  const r = await postJSON('/api/emails/' + id + '/send');
+  alert('Status: ' + r.status + (r.error ? (' — ' + r.error) : ''));
+  loadEmails();
+}
+</script>

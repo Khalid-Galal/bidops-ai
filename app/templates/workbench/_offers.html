@@ -1,0 +1,95 @@
+<section id="tab-offers" class="wb-tab" data-label="Offers" style="display:none">
+  <div class="card">
+    <h3>Ingest offer</h3>
+    <form id="offer-ingest-form">
+      <label>Package: <select id="offer-pkg"></select></label>
+      <input name="supplier_id" placeholder="Supplier ID" required size="10">
+      <input type="file" name="files" multiple required>
+      <button class="btn btn-primary" type="submit">Upload offer</button>
+    </form>
+  </div>
+  <div class="card">
+    <h3>Offers
+      <button class="btn btn-secondary" onclick="loadOffers()">Reload</button>
+      <button class="btn btn-primary" onclick="scoreOffers()">Score + rank</button>
+      <button class="btn btn-secondary" onclick="loadComparison()">Comparison</button>
+      <a class="btn btn-secondary" id="cmp-xlsx" href="#">Comparison.xlsx</a>
+    </h3>
+    <div id="offer-table"></div>
+    <div id="cmp-table"></div>
+  </div>
+</section>
+<script>
+window.load_offers = async function () {
+  const pkgs = await api('/api/projects/' + PID + '/packages');
+  const sel = document.getElementById('offer-pkg');
+  sel.innerHTML = pkgs.map(function (p) {
+    return '<option value="' + p.id + '">' + esc(p.code) + '</option>';
+  }).join('');
+  sel.onchange = loadOffers;
+  if (pkgs.length) await loadOffers();
+};
+
+function offerPkgId() { return document.getElementById('offer-pkg').value; }
+
+async function loadOffers() {
+  const pkgId = offerPkgId();
+  if (!pkgId) return;
+  document.getElementById('cmp-xlsx').href =
+    '/api/projects/' + PID + '/packages/' + pkgId + '/offers/comparison.xlsx';
+  const offers = await api('/api/projects/' + PID + '/packages/' + pkgId + '/offers');
+  document.getElementById('offer-table').innerHTML = tbl(
+    ['ID', 'Supplier', 'Status', 'Price', 'Ccy', 'Score', 'Rank', ''],
+    offers.map(function (o) {
+      return [o.id, o.supplier_id, o.status, o.total_price, o.currency,
+        o.overall_score, o.rank,
+        '!html:'
+        + '<button class="btn btn-secondary" onclick="offerAct(' + o.id + ',\'extract\')">Extract</button> '
+        + '<button class="btn btn-secondary" onclick="offerAct(' + o.id + ',\'check-compliance\')">Compliance</button> '
+        + '<button class="btn btn-primary" onclick="offerAct(' + o.id + ',\'select\')">Select</button> '
+        + '<button class="btn btn-secondary" onclick="clarify(' + o.id + ')">Clarify</button>'];
+    })
+  );
+}
+
+async function offerAct(id, action) {
+  const r = await postJSON('/api/offers/' + id + '/' + action);
+  alert(action + ': ' + (r.status || 'ok'));
+  loadOffers();
+}
+
+async function clarify(id) {
+  const item = prompt('Clarification item (one line)?');
+  if (!item) return;
+  await postJSON('/api/offers/' + id + '/clarification', { items: [item] });
+  alert('Clarification draft created — see RFQ tab email log.');
+}
+
+async function scoreOffers() {
+  const r = await postJSON('/api/projects/' + PID + '/packages/' + offerPkgId() + '/offers/score');
+  alert('Scored ' + r.offers_scored + ' offers');
+  loadOffers();
+}
+
+async function loadComparison() {
+  const c = await api('/api/projects/' + PID + '/packages/' + offerPkgId() + '/offers/comparison');
+  document.getElementById('cmp-table').innerHTML =
+    '<h4>' + esc(c.package_name) + ' — ' + c.total_offers + ' offers, min '
+    + esc(c.price_min) + ' ' + esc(c.currency) + '</h4>'
+    + tbl(['Rank', 'Supplier', 'Price', 'Validity', 'Delivery', 'Overall'],
+        c.offers.map(function (o) {
+          return [o.rank, o.supplier_name, o.total_price, o.validity_days,
+            o.delivery_weeks, o.overall_score];
+        }));
+}
+
+document.getElementById('offer-ingest-form').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const fd = new FormData();
+  fd.append('supplier_id', e.target.supplier_id.value);
+  for (const f of e.target.files.files) fd.append('files', f);
+  await api('/api/projects/' + PID + '/packages/' + offerPkgId() + '/offers',
+    { method: 'POST', body: fd });
+  loadOffers();
+});
+</script>

@@ -73,3 +73,11 @@ async def test_workbench_404_missing_project(ui_client):
     async with client as c:
         r = await c.get("/projects/999999/workbench")
     assert r.status_code == 404
+
+
+async def test_workbench_has_rfq_and_offers_tabs(ui_client):
+    client, pid = ui_client
+    async with client as c:
+        r = await c.get(f"/projects/{pid}/workbench")
+        assert 'id="tab-rfq"' in r.text
+        assert 'id="tab-offers"' in r.text
