@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, DocumentStatus
@@ -34,6 +34,24 @@ class Document(Base):
     metadata_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     processing_time_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Classification + versioning (Phase 7C). category holds a DocumentCategory
+    # value string; supersede_reason values starting with "auto:" are owned by
+    # VersioningService.analyze() and reset on re-analysis — any other reason is
+    # a manual mark and survives.
+    category: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="unknown", server_default="unknown"
+    )
+    content_hash: Mapped[str | None] = mapped_column(
+        String(64), nullable=True, index=True
+    )
+    is_superseded: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="0"
+    )
+    superseded_by_id: Mapped[int | None] = mapped_column(
+        Integer, nullable=True, index=True
+    )
+    version_label: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    supersede_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now()
     )

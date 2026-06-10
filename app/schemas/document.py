@@ -17,6 +17,11 @@ class DocumentResponse(BaseModel):
     page_count: int | None
     processing_time_ms: int | None
     error_message: str | None
+    category: str = "unknown"
+    is_superseded: bool = False
+    superseded_by_id: int | None = None
+    version_label: str | None = None
+    supersede_reason: str | None = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
