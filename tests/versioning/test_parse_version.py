@@ -33,3 +33,12 @@ def test_no_token_rank_zero():
 
 def test_unrelated_names_do_not_collide():
     assert parse_version("BOQ_v2.xlsx")[0] != parse_version("Drawings_v2.pdf")[0]
+
+
+def test_v_token_only_at_stem_end():
+    # Bare 'v' token is a revision only when the digits terminate the stem.
+    assert parse_version("MEP_Spec_V1.pdf")[1] == 1
+    # Building/unit designators ("Villa Type V1 ...", "V1 Tower ...") are NOT
+    # revisions — the version digits do not end the stem.
+    assert parse_version("Villa Type V1 Drawings.pdf")[1] == 0
+    assert parse_version("V1 Tower BOQ.xlsx")[1] == 0

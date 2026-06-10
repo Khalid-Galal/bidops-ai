@@ -24,7 +24,7 @@ from app.services.versioning.doc_classifier import classify_document
 # Filename version tokens, tried in order. Each yields (rank, label).
 _VERSION_PATTERNS = (
     ("rev", re.compile(r"(?:^|[\s_\-.])rev(?:ision)?[\s_\-.]*([a-z]|\d{1,3})(?=[\s_\-.)(]|$)", re.I)),
-    ("v", re.compile(r"(?:^|[\s_\-.])v(?:er(?:sion)?)?[\s_\-.]*(\d{1,3})(?=[\s_\-.)(]|$)", re.I)),
+    ("v", re.compile(r"(?:^|[\s_\-.])v(?:er(?:sion)?)?[\s_\-.]*(\d{1,3})\s*$", re.I)),
     ("issue", re.compile(r"(?:^|[\s_\-.])issue[\s_\-.]*(\d{1,3})(?=[\s_\-.)(]|$)", re.I)),
 )
 
@@ -125,20 +125,34 @@ class VersioningService:
 
         # 3) Revision chains by (base_key, file_type) — newest rank wins.
         superseded = 0
-        chains: dict[tuple[str, str], list[tuple[Document, int]]] = defaultdict(list)
+        chains: dict[tuple[str, str], list[tuple[Document, int, str | None]]] = defaultdict(list)
         for doc in candidates:
             if doc.id in duplicate_ids:
                 continue
-            base, rank, _label = parse_version(doc.filename)
-            chains[(base, doc.file_type)].append((doc, rank))
+            # Cumulative docs (addenda, correspondence) are NOT filename-revision
+            # superseded — they remain eligible for dedup and manual marks only.
+            if doc.category in ("addendum", "correspondence"):
+                continue
+            base, rank, label = parse_version(doc.filename)
+            # Token kind classifies the revision label: alpha (Rev A) vs numeric
+            # (Rev 1). A chain that mixes both is ambiguous (building/spec phase
+            # mash-up) and must not be auto-resolved.
+            token = label.split()[-1] if label else None
+            kind = "alpha" if (token and token.isalpha()) else ("numeric" if token else None)
+            chains[(base, doc.file_type)].append((doc, rank, kind))
         for members in chains.values():
-            if len(members) < 2 or not any(rank > 0 for _d, rank in members):
+            if len(members) < 2 or not any(rank > 0 for _d, rank, _k in members):
                 continue  # need 2+ docs and at least one explicit version token
+            # Never auto-supersede a chain that mixes alpha and numeric rev tokens
+            # — leave it for the manual endpoint.
+            kinds = {k for _d, r, k in members if r > 0 and k}
+            if "alpha" in kinds and "numeric" in kinds:
+                continue
             # id encodes upload order (created_at can be None pre-commit and
             # mixing datetime/int in a sort key raises TypeError).
             members.sort(key=lambda dr: (dr[1], dr[0].id))
             keeper = members[-1][0]
-            for doc, _rank in members[:-1]:
+            for doc, _rank, _kind in members[:-1]:
                 doc.is_superseded = True
                 doc.superseded_by_id = keeper.id
                 doc.supersede_reason = f"auto:superseded by #{keeper.id} (newer revision)"

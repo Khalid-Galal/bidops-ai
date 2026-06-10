@@ -107,6 +107,48 @@ async def test_analyze_is_idempotent_and_preserves_manual_marks(db_session):
     assert result2["superseded"] == 1
 
 
+async def test_analyze_does_not_supersede_unit_designators(db_session):
+    pid = await _seed_project(db_session)
+    a = _doc(pid, "Villa Type V1 Drawings.pdf", text="villa one drawings")
+    b = _doc(pid, "Villa Type V2 Drawings.pdf", text="villa two drawings")
+    db_session.add_all([a, b])
+    await db_session.commit()
+    result = await VersioningService().analyze(db_session, pid)
+    await db_session.refresh(a)
+    await db_session.refresh(b)
+    assert a.is_superseded is False
+    assert b.is_superseded is False
+    assert result["superseded"] == 0
+
+
+async def test_analyze_skips_mixed_alpha_numeric_chain(db_session):
+    pid = await _seed_project(db_session)
+    a = _doc(pid, "Spec Rev A.pdf", text="spec rev a")
+    b = _doc(pid, "Spec Rev 1.pdf", text="spec rev 1")
+    db_session.add_all([a, b])
+    await db_session.commit()
+    await VersioningService().analyze(db_session, pid)
+    await db_session.refresh(a)
+    await db_session.refresh(b)
+    assert a.is_superseded is False
+    assert b.is_superseded is False
+
+
+async def test_analyze_exempts_addendum_chain(db_session):
+    pid = await _seed_project(db_session)
+    a = _doc(pid, "Addendum v1.pdf", text="addendum one to the tender")
+    b = _doc(pid, "Addendum v2.pdf", text="addendum two to the tender")
+    db_session.add_all([a, b])
+    await db_session.commit()
+    await VersioningService().analyze(db_session, pid)
+    await db_session.refresh(a)
+    await db_session.refresh(b)
+    assert a.category == "addendum"
+    assert b.category == "addendum"
+    assert a.is_superseded is False
+    assert b.is_superseded is False
+
+
 async def test_unmark_superseded(db_session):
     pid = await _seed_project(db_session)
     d = _doc(pid, "Doc.pdf")
