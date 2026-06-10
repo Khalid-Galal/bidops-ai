@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{{ d.project.name }} — Dashboard | BidOps AI{% endblock %}
+{% block content %}
+<h1>Dashboard — {{ d.project.name }}</h1>
+<p>
+  Status: <strong>{{ d.project.status }}</strong>
+  {% if d.project.extraction_status %} · Extraction: {{ d.project.extraction_status }}{% endif %}
+  {% if d.project.checklist_status %} · Checklist: {{ d.project.checklist_status }}{% endif %}
+</p>
+
+<h2>Pricing</h2>
+<table border="1" cellpadding="6">
+  <tr><th>Direct cost</th><th>Grand total</th><th>Currency</th><th>Completion</th><th>Priced</th><th>Unpriced</th></tr>
+  <tr>
+    <td>{{ d.pricing.cost_subtotal }}</td>
+    <td>{{ d.pricing.grand_total }}</td>
+    <td>{{ d.pricing.currency }}</td>
+    <td>{{ d.pricing.completion_rate }}%</td>
+    <td>{{ d.pricing.priced_items }}</td>
+    <td>{{ d.pricing.unpriced_items }}</td>
+  </tr>
+</table>
+
+<h2>Counts</h2>
+<table border="1" cellpadding="6">
+  <tr><th>Documents</th><th>BOQ items</th><th>BOQ priced</th><th>Packages</th><th>Offers</th><th>Emails</th><th>Suppliers</th><th>Historical records</th></tr>
+  <tr>
+    <td>{{ d.documents.total }}</td>
+    <td>{{ d.boq.total }}</td>
+    <td>{{ d.boq.priced }}</td>
+    <td>{{ d.packages | length }}</td>
+    <td>{{ d.offers.total }}</td>
+    <td>{{ d.emails.total }}</td>
+    <td>{{ d.suppliers.total }}</td>
+    <td>{{ d.historical.corpus_records }}</td>
+  </tr>
+</table>
+
+<h2>Packages</h2>
+{% if d.packages %}
+<table border="1" cellpadding="6">
+  <tr><th>Code</th><th>Name</th><th>Trade</th><th>Status</th><th>Items</th><th>Offers</th><th>Evaluated</th></tr>
+  {% for p in d.packages %}
+  <tr>
+    <td>{{ p.code }}</td><td>{{ p.name }}</td><td>{{ p.trade_category }}</td>
+    <td>{{ p.status }}</td><td>{{ p.total_items }}</td>
+    <td>{{ p.offers_received }}</td><td>{{ p.offers_evaluated }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}<p>No packages yet.</p>{% endif %}
+
+<h2>Gaps</h2>
+<p>Unpriced: {{ d.gaps.unpriced }} · Needs review: {{ d.gaps.needs_review }} · Excluded: {{ d.gaps.excluded }}</p>
+{% endblock %}

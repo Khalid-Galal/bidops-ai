@@ -78,3 +78,25 @@ async def project_page(
         "project.html",
         {"request": request, "project": project, "documents": documents},
     )
+
+
+@router.get("/projects/{project_id}/dashboard")
+async def dashboard_page(
+    request: Request,
+    project_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    """Render the project status dashboard page."""
+    from app.services.dashboard.dashboard_service import DashboardService
+
+    try:
+        data = await DashboardService().project_dashboard(db, project_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
+        )
+    return templates.TemplateResponse(
+        request,
+        "dashboard.html",
+        {"d": data},
+    )
