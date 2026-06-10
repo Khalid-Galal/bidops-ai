@@ -1,0 +1,23 @@
+<section id="tab-deliverables" class="wb-tab" data-label="Deliverables" style="display:none">
+  <div class="card">
+    <h3>Build submission bundle</h3>
+    <label>Duration (months): <input id="deliv-months" type="number" min="0" value="0" size="6"></label>
+    <label>Location: <input id="deliv-location" value="default" size="12"></label>
+    <button class="btn btn-primary" onclick="buildDeliverables()">Build</button>
+    <a class="btn btn-secondary" href="/api/projects/{{ project.id }}/deliverables/download">Download zip</a>
+    <div id="deliv-files"></div>
+  </div>
+</section>
+<script>
+window.load_deliverables = async function () { /* built on demand */ };
+
+async function buildDeliverables() {
+  const months = document.getElementById('deliv-months').value || 0;
+  const loc = document.getElementById('deliv-location').value || 'default';
+  const r = await postJSON('/api/projects/' + PID + '/deliverables/build?duration_months='
+    + encodeURIComponent(months) + '&location=' + encodeURIComponent(loc));
+  document.getElementById('deliv-files').innerHTML =
+    '<p>' + r.files.length + ' files (' + r.comparisons + ' comparisons, '
+    + r.briefs + ' briefs):</p>' + tbl(['File'], r.files.map(function (f) { return [f]; }));
+}
+</script>

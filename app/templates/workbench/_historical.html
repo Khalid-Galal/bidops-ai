@@ -1,0 +1,65 @@
+<section id="tab-historical" class="wb-tab" data-label="Historical" style="display:none">
+  <p class="action-bar">
+    <button class="btn btn-secondary" onclick="indexProject()">Index this project's prices</button>
+    <button class="btn btn-primary" onclick="loadSuggestions()">Suggest prices for unpriced items</button>
+  </p>
+  <div class="card">
+    <h3>Import historical rate sheet</h3>
+    <form id="hist-import-form">
+      <input type="file" name="file" accept=".xlsx" required>
+      <button class="btn btn-secondary" type="submit">Import</button>
+      <span id="hist-import-result"></span>
+    </form>
+  </div>
+  <div class="card">
+    <h3>Suggestions</h3>
+    <div id="hist-suggestions"></div>
+  </div>
+</section>
+<script>
+window.load_historical = async function () { /* loads on demand via buttons */ };
+
+async function indexProject() {
+  const r = await postJSON('/api/projects/' + PID + '/historical/index');
+  alert('Indexed ' + r.indexed + ' priced items into the corpus');
+}
+
+async function loadSuggestions() {
+  const s = await api('/api/projects/' + PID + '/historical/suggestions?only_unpriced=true');
+  document.getElementById('hist-suggestions').innerHTML = tbl(
+    ['#', 'Description', 'Suggested', 'Range', 'Matches', ''],
+    s.suggestions.map(function (it) {
+      const b = it.suggestion.benchmark;
+      const apply = b.suggested_rate === null ? '' :
+        '!html:<button class="btn btn-primary" onclick="applySuggestion('
+        + it.boq_item_id + ',' + b.suggested_rate + ',\''
+        + encodeURIComponent(it.description) + '\')">Apply ' + b.suggested_rate + '</button>';
+      return [it.line_number, it.description,
+        b.suggested_rate === null ? '—' : (b.suggested_rate + ' ' + (b.currency || '')),
+        b.count ? (b.min + ' – ' + b.max) : 'no match',
+        b.count, apply];
+    })
+  );
+}
+
+async function applySuggestion(itemId, rate, encDesc) {
+  await api('/api/boq-items/' + itemId + '/price', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ unit_rate: rate, notes: 'historical suggestion accepted' }),
+  });
+  /* feedback loop: the accepted rate re-enters the corpus */
+  await postJSON('/api/historical/feedback',
+    { description: decodeURIComponent(encDesc), accepted_rate: rate });
+  alert('Applied ' + rate + ' and recorded feedback');
+  loadSuggestions();
+}
+
+document.getElementById('hist-import-form').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const r = await api('/api/historical/import', { method: 'POST', body: fd });
+  document.getElementById('hist-import-result').textContent =
+    'imported ' + r.imported + ', skipped ' + r.skipped;
+});
+</script>
