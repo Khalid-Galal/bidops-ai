@@ -93,3 +93,19 @@ async def test_benchmark_uses_dominant_currency(db_session):
     assert out["benchmark"]["suggested_rate"] == 1250.0
     # ...but every candidate still shows up in matches for full traceability.
     assert len(out["matches"]) == 3
+
+
+async def test_unit_mismatch_demotes(db_session):
+    db_session.add_all([
+        HistoricalPrice(description="excavation works", unit="m3", rate=50.0,
+                        trade_category="civil", source="import:d"),
+        HistoricalPrice(description="excavation works", unit="no", rate=5.0,
+                        trade_category="civil", source="import:d"),
+    ])
+    await db_session.commit()
+    svc = HistoricalService()
+    # The unit-matching row ranks first whichever unit the query asks for.
+    out_m3 = await svc.suggest(db_session, "excavation works", unit="m3")
+    assert out_m3["matches"][0]["unit"] == "m3"
+    out_no = await svc.suggest(db_session, "excavation works", unit="no")
+    assert out_no["matches"][0]["unit"] == "no"

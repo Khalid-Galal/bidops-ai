@@ -24,6 +24,10 @@ from app.services.pricing.line_item_matcher import DEFAULT_THRESHOLD, match_scor
 
 _DEFAULT_TOP_K = 5
 
+# Soft penalty applied when the query unit and a candidate's unit both exist
+# and differ — demotes (and can drop below threshold) unit-mismatched rows.
+_UNIT_MISMATCH_PENALTY = 0.5
+
 # Editable corpus fields shared by add/import (keeps DRY).
 _SETTABLE = (
     "description", "description_ar", "unit", "rate", "currency", "trade_category",
@@ -116,6 +120,8 @@ class HistoricalService:
             score = match_score(description, rec.description)
             if self._semantic_scorer is not None:
                 score = max(score, float(self._semantic_scorer(description, rec.description)))
+            if unit and rec.unit and unit.strip().lower() != rec.unit.strip().lower():
+                score *= _UNIT_MISMATCH_PENALTY
             if score >= min_score:
                 scored.append((rec, round(score, 4)))
         # Total order: highest score first, then lowest id -> deterministic
