@@ -81,3 +81,11 @@ async def test_workbench_has_rfq_and_offers_tabs(ui_client):
         r = await c.get(f"/projects/{pid}/workbench")
         assert 'id="tab-rfq"' in r.text
         assert 'id="tab-offers"' in r.text
+
+
+async def test_workbench_has_pricing_and_cost_tabs(ui_client):
+    client, pid = ui_client
+    async with client as c:
+        r = await c.get(f"/projects/{pid}/workbench")
+        assert 'id="tab-pricing"' in r.text
+        assert 'id="tab-cost"' in r.text

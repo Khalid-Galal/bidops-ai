@@ -1,0 +1,42 @@
+<section id="tab-cost" class="wb-tab" data-label="Cost" style="display:none">
+  <div class="card">
+    <h3>Project cost rollup</h3>
+    <label>Duration (months): <input id="cost-months" type="number" min="0" value="0" size="6"></label>
+    <label>Location: <input id="cost-location" value="default" size="12"></label>
+    <button class="btn btn-primary" onclick="window.load_cost()">Compute</button>
+    <div id="cost-summary"></div>
+  </div>
+  <div class="card">
+    <h3>Fill client indirects template (formula-preserving)</h3>
+    <form id="ind-template-form" method="post" enctype="multipart/form-data" action="#">
+      <input type="file" name="file" accept=".xlsx" required>
+      <button class="btn btn-primary" type="submit">Fill + download</button>
+    </form>
+  </div>
+</section>
+<script>
+window.load_cost = async function () {
+  const months = document.getElementById('cost-months').value || 0;
+  const loc = document.getElementById('cost-location').value || 'default';
+  const c = await api('/api/projects/' + PID + '/cost-summary?duration_months='
+    + encodeURIComponent(months) + '&location=' + encodeURIComponent(loc));
+  const ind = c.indirects;
+  let breakdown = Object.entries(ind.percentage_based)
+    .concat(Object.entries(ind.duration_based))
+    .map(function (kv) { return [kv[0].replace(/_/g, ' '), kv[1]]; });
+  document.getElementById('cost-summary').innerHTML = tbl(
+    ['Direct', 'Indirects', 'Cost base', 'Markups', 'Selling', 'VAT', 'GRAND TOTAL', 'Ccy'],
+    [[c.direct_cost, ind.total_indirects, c.total_cost_base, c.markups.markup_total,
+      c.selling_before_vat, c.vat_amount, c.grand_total, c.currency]]
+  ) + '<h4>Indirects breakdown (×' + ind.location_factor + ' location factor)</h4>'
+    + tbl(['Component', 'Amount'], breakdown);
+};
+
+document.getElementById('ind-template-form').addEventListener('submit', function (e) {
+  /* set query params from the inputs at submit time, then let the browser POST */
+  const months = document.getElementById('cost-months').value || 0;
+  const loc = document.getElementById('cost-location').value || 'default';
+  e.target.action = '/api/projects/' + PID + '/indirects/populate-template?duration_months='
+    + encodeURIComponent(months) + '&location=' + encodeURIComponent(loc);
+});
+</script>

@@ -1,0 +1,54 @@
+<section id="tab-pricing" class="wb-tab" data-label="Pricing" style="display:none">
+  <div class="card">
+    <h3>Populate prices from a selected offer</h3>
+    <input id="pop-offer-id" placeholder="Offer ID (must be Selected)" size="14">
+    <button class="btn btn-primary" onclick="populatePrices()">Populate</button>
+    <span id="pop-result"></span>
+  </div>
+  <div class="card">
+    <h3>Pricing summary <button class="btn btn-secondary" onclick="window.load_pricing()">Reload</button></h3>
+    <div id="pricing-summary"></div>
+  </div>
+  <div class="card">
+    <h3>Gaps</h3>
+    <div id="pricing-gaps"></div>
+  </div>
+  <div class="card">
+    <h3>Fill client BOQ template (formula-preserving)</h3>
+    <form method="post" enctype="multipart/form-data"
+          action="/api/projects/{{ project.id }}/pricing/populate-template">
+      <input type="file" name="file" accept=".xlsx" required>
+      <button class="btn btn-primary" type="submit">Fill + download</button>
+    </form>
+  </div>
+</section>
+<script>
+window.load_pricing = async function () {
+  const s = await api('/api/projects/' + PID + '/pricing/summary');
+  document.getElementById('pricing-summary').innerHTML = tbl(
+    ['Direct cost', 'Markup total', 'Selling', 'VAT', 'Grand total', 'Ccy', 'Done'],
+    [[s.cost_subtotal, s.markups.markup_total, s.selling_before_vat,
+      s.vat_amount, s.grand_total, s.currency, s.completion_rate + '%']]
+  ) + '<h4>By trade</h4>' + tbl(['Trade', 'Items', 'Total', '%'],
+    s.by_trade.map(function (t) { return [t.trade, t.count, t.total, t.percentage]; }));
+
+  const g = await api('/api/projects/' + PID + '/pricing/gaps');
+  document.getElementById('pricing-gaps').innerHTML =
+    '<p>Unpriced: ' + g.unpriced_count + ' · Needs review: ' + g.needs_review_count
+    + ' · Excluded: ' + g.excluded_count + '</p>'
+    + tbl(['#', 'Description', 'Reason'],
+        g.unpriced.concat(g.needs_review).map(function (i) {
+          return [i.line_number, i.description, i.reason];
+        }));
+};
+
+async function populatePrices() {
+  const id = document.getElementById('pop-offer-id').value;
+  if (!id) return;
+  const r = await postJSON('/api/offers/' + id + '/populate-prices');
+  document.getElementById('pop-result').textContent =
+    r.items_populated + ' priced, ' + r.items_unmatched + ' unmatched ('
+    + r.items_needs_review + ' need review)';
+  window.load_pricing();
+}
+</script>
