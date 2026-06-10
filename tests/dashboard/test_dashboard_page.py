@@ -48,3 +48,22 @@ async def test_dashboard_page_404(page_client):
     async with client as c:
         r = await c.get("/projects/999999/dashboard")
     assert r.status_code == 404
+
+
+async def test_index_page_renders(page_client):
+    # Regression: legacy TemplateResponse style crashed with TypeError on the
+    # installed Starlette; the v1 pages must keep working.
+    client, _ = page_client
+    async with client as c:
+        r = await c.get("/")
+        assert r.status_code == 200
+        assert r.headers["content-type"].startswith("text/html")
+        assert "Metro Page" in r.text
+
+
+async def test_project_page_renders(page_client):
+    client, pid = page_client
+    async with client as c:
+        r = await c.get(f"/projects/{pid}")
+        assert r.status_code == 200
+        assert "Metro Page" in r.text

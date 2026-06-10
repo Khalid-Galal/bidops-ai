@@ -36,8 +36,7 @@ async def index_page(
     )
     projects = result.scalars().all()
     return templates.TemplateResponse(
-        "index.html",
-        {"request": request, "projects": projects},
+        request, "index.html", {"projects": projects}
     )
 
 
@@ -75,8 +74,7 @@ async def project_page(
     documents = result.scalars().all()
 
     return templates.TemplateResponse(
-        "project.html",
-        {"request": request, "project": project, "documents": documents},
+        request, "project.html", {"project": project, "documents": documents}
     )
 
 
