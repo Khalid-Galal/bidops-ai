@@ -109,11 +109,18 @@ class Indirects(BaseModel):
     )
 
 
+class Classification(BaseModel):
+    """Keyword → document-category mapping. Dict order = match precedence."""
+
+    document_categories: dict[str, list[str]] = Field(default_factory=dict)
+
+
 class RulesConfig(BaseModel):
     """Complete business-rules configuration. All sections default-constructible."""
 
     scoring: Scoring = Field(default_factory=Scoring)
     keywords: Keywords = Field(default_factory=Keywords)
+    classification: Classification = Field(default_factory=Classification)
     packaging: Packaging = Field(default_factory=Packaging)
     email: EmailRules = Field(default_factory=EmailRules)
     naming: Naming = Field(default_factory=Naming)

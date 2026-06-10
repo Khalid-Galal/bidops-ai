@@ -15,6 +15,19 @@
     "bond": ["tender bond", "bid bond", "bank guarantee", "performance bond", "ضمان العطاء"],
     "payment": ["advance payment", "retention", "milestone", "interim payment", "دفعة مقدمة"]
   },
+  "classification": {
+    "document_categories": {
+      "addendum": ["addendum", "addenda", "amendment", "bulletin", "ملحق"],
+      "boq": ["boq", "bill of quantities", "bills of quantities", "pricing schedule", "جداول الكميات"],
+      "drawings": ["drawing", "drawings", "dwg", "plan layout", "المخططات"],
+      "contract": ["contract", "agreement", "conditions of contract", "العقد"],
+      "itt": ["itt", "invitation to tender", "instructions to tenderers", "instruction to bidders", "rfp"],
+      "schedule": ["programme", "program of works", "schedule of works", "primavera", "gantt"],
+      "hse": ["hse", "health and safety", "safety plan", "environmental plan"],
+      "correspondence": ["letter", "correspondence", "minutes of meeting", "mom", "email"],
+      "specs": ["specification", "specifications", "specs", "technical requirements", "المواصفات"]
+    }
+  },
   "packaging": {
     "min_items_per_package": 5,
     "max_items_per_package": 100,
