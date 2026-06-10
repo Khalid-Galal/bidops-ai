@@ -8,6 +8,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.boq import BOQItem
+from app.models.document import Document
 from app.models.package import Package, PackageDocument
 
 logger = logging.getLogger(__name__)
@@ -71,11 +72,26 @@ class DocumentLinker:
             )
             hits = []
 
+        # Never link superseded/duplicate documents — pricing must flow from
+        # the latest revision only (Phase 7C).
+        superseded_ids = set(
+            (
+                await db.execute(
+                    select(Document.id).where(
+                        Document.project_id == package.project_id,
+                        Document.is_superseded.is_(True),
+                    )
+                )
+            ).scalars().all()
+        )
+
         # Aggregate hits per document: keep max score + its best excerpt/page.
         best: dict[int, dict] = {}
         for h in hits:
             doc_id = getattr(h, "document_id", None)
             if doc_id is None:
+                continue
+            if doc_id in superseded_ids:
                 continue
             score = float(getattr(h, "score", 0.0) or 0.0)
             cur = best.get(doc_id)

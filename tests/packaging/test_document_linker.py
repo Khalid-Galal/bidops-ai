@@ -113,3 +113,50 @@ async def test_link_all_links_every_package(db_session):
     result = await DocumentLinker(search_service=search).link_all(db_session, pid)
     assert result["packages"] == 1
     assert result["links_created"] == 1
+
+
+async def test_link_package_skips_superseded_documents(db_session):
+    from dataclasses import dataclass
+
+    from app.models.boq import BOQItem
+    from app.models.document import Document
+    from app.models.package import Package, PackageDocument
+    from app.models.project import Project
+    from app.services.packaging.document_linker import DocumentLinker
+    from sqlalchemy import select
+
+    project = Project(name="P")
+    db_session.add(project)
+    await db_session.flush()
+    package = Package(project_id=project.id, name="HVAC", code="PKG-1", trade_category="mep")
+    db_session.add(package)
+    live = Document(project_id=project.id, filename="Spec_RevB.pdf", file_path="/m",
+                    file_type="pdf", file_size=1)
+    stale = Document(project_id=project.id, filename="Spec_RevA.pdf", file_path="/m",
+                     file_type="pdf", file_size=1, is_superseded=True,
+                     supersede_reason="auto:superseded by newer revision")
+    db_session.add_all([live, stale])
+    await db_session.flush()
+    db_session.add(BOQItem(project_id=project.id, package_id=package.id, line_number="1",
+                           description="AC unit", unit="no", quantity=1,
+                           client_row_index=2, trade_category="mep"))
+    await db_session.commit()
+
+    @dataclass
+    class Hit:
+        document_id: int
+        score: float
+        text: str
+        page_number: int = 1
+
+    class FakeSearch:
+        def search(self, project_id, query, top_k=10, mode="hybrid"):
+            return [Hit(live.id, 0.9, "live spec"), Hit(stale.id, 0.95, "stale spec")]
+
+    linker = DocumentLinker(search_service=FakeSearch())
+    created = await linker.link_package(db_session, package)
+    assert created == 1
+    links = (await db_session.execute(
+        select(PackageDocument).where(PackageDocument.package_id == package.id)
+    )).scalars().all()
+    assert [l.document_id for l in links] == [live.id]  # stale doc excluded
