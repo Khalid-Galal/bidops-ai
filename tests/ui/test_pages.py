@@ -127,6 +127,36 @@ async def test_offers_tab_has_manual_entry_and_supplier_select(ui_client):
         assert "editEmail" in r.text               # draft edit before send
 
 
+async def test_documents_table_renders_versioning(ui_client):
+    from app.database import get_db
+    from app.main import app as fastapi_app
+    from app.models.document import Document
+
+    client, pid = ui_client
+    # Seed a superseded document with a reason that contains a double quote so we
+    # can verify the title attribute is HTML-escaped.
+    override = fastapi_app.dependency_overrides[get_db]
+    agen = override()
+    session = await agen.__anext__()
+    session.add(Document(
+        project_id=pid, filename="Mechanical_Spec_RevB.pdf", file_path="/m",
+        file_type="pdf", file_size=1024, category="specs", version_label="rev B",
+        is_superseded=True, supersede_reason='replaced by "rev C"',
+    ))
+    await session.commit()
+    await agen.aclose()
+
+    async with client as c:
+        r = await c.get(f"/projects/{pid}")
+    assert r.status_code == 200
+    body = r.text
+    assert "superseded" in body          # badge present
+    assert "rev B" in body               # version label rendered
+    # The quote in the reason must be HTML-escaped inside the title attribute.
+    assert ("&quot;rev C&quot;" in body) or ("&#34;rev C&#34;" in body)
+    assert 'title="replaced by "rev C""' not in body  # not a raw, broken attribute
+
+
 async def test_project_page_has_versioning_controls(ui_client):
     client, pid = ui_client
     async with client as c:

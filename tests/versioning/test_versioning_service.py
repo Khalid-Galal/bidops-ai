@@ -177,6 +177,58 @@ async def test_analyze_prunes_superseded_links(db_session):
     assert rows == []  # superseded doc's link was pruned
 
 
+async def test_duplicate_also_in_chain(db_session, tmp_path):
+    # A revision pair whose files are BYTE-IDENTICAL: dedup runs first and keeps
+    # the earliest copy, so exactly one document remains live.
+    pid = await _seed_project(db_session)
+    f1 = tmp_path / "a.pdf"; f1.write_bytes(b"IDENTICAL SPEC BYTES")
+    f2 = tmp_path / "b.pdf"; f2.write_bytes(b"IDENTICAL SPEC BYTES")
+    a = _doc(pid, "Spec_RevA.pdf", str(f1))
+    b = _doc(pid, "Spec_RevB.pdf", str(f2))
+    db_session.add_all([a, b])
+    await db_session.commit()
+    result = await VersioningService().analyze(db_session, pid)
+    await db_session.refresh(a)
+    await db_session.refresh(b)
+    live = [d for d in (a, b) if not d.is_superseded]
+    assert len(live) == 1
+    # Dedup keeps the earliest (RevA); RevB is the duplicate. Chain does not
+    # double-mark (RevB already in dedup set).
+    assert a.is_superseded is False
+    assert b.is_superseded is True
+    assert b.supersede_reason.startswith("auto:duplicate")
+    assert result["duplicates"] == 1
+    assert result["superseded"] == 0
+
+
+async def test_rank_zero_base_grouping(db_session):
+    # Positive: an un-versioned base + an explicit Rev A (same base+type) form a
+    # chain; the base (rank 0) is superseded, RevA (rank 1) is the keeper.
+    pid = await _seed_project(db_session)
+    base = _doc(pid, "Specifications.pdf", text="specification base")
+    rev = _doc(pid, "Specifications Rev A.pdf", text="specification rev a")
+    db_session.add_all([base, rev])
+    await db_session.commit()
+    await VersioningService().analyze(db_session, pid)
+    await db_session.refresh(base)
+    await db_session.refresh(rev)
+    assert base.is_superseded is True
+    assert rev.is_superseded is False
+    assert base.superseded_by_id == rev.id
+
+    # Negative: same base text but DIFFERENT file_type — not the same chain.
+    pid2 = await _seed_project(db_session)
+    p = _doc(pid2, "BOQ.pdf", text="boq pdf")
+    x = _doc(pid2, "BOQ rev 2.xlsx", text="boq xlsx")
+    db_session.add_all([p, x])
+    await db_session.commit()
+    await VersioningService().analyze(db_session, pid2)
+    await db_session.refresh(p)
+    await db_session.refresh(x)
+    assert p.is_superseded is False
+    assert x.is_superseded is False
+
+
 async def test_unmark_superseded(db_session):
     pid = await _seed_project(db_session)
     d = _doc(pid, "Doc.pdf")

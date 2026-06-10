@@ -115,6 +115,54 @@ async def test_link_all_links_every_package(db_session):
     assert result["links_created"] == 1
 
 
+async def test_analyze_then_linker_excludes(db_session):
+    """End-to-end: VersioningService.analyze() marks the older revision, then the
+    linker (given hits for BOTH) links only the surviving revision."""
+    from sqlalchemy import select
+
+    from app.models.boq import BOQItem
+    from app.models.document import Document
+    from app.models.package import Package, PackageDocument
+    from app.models.project import Project
+    from app.services.packaging.document_linker import DocumentLinker
+    from app.services.versioning.versioning_service import VersioningService
+
+    project = Project(name="P")
+    db_session.add(project)
+    await db_session.flush()
+    rev_a = Document(project_id=project.id, filename="Spec_RevA.pdf", file_path="/m",
+                     file_type="pdf", file_size=1, extracted_text="spec rev a")
+    rev_b = Document(project_id=project.id, filename="Spec_RevB.pdf", file_path="/m",
+                     file_type="pdf", file_size=1, extracted_text="spec rev b")
+    db_session.add_all([rev_a, rev_b])
+    await db_session.flush()
+    pkg = Package(project_id=project.id, name="Specs", code="PKG-1",
+                  trade_category="specs", total_items=1)
+    db_session.add(pkg)
+    await db_session.flush()
+    db_session.add(BOQItem(project_id=project.id, package_id=pkg.id, line_number="1",
+                           description="Technical specification clause", unit="no",
+                           quantity=1, client_row_index=1, trade_category="specs"))
+    await db_session.commit()
+
+    await VersioningService().analyze(db_session, project.id)
+    await db_session.refresh(rev_a)
+    await db_session.refresh(rev_b)
+    assert rev_a.is_superseded is True
+    assert rev_b.is_superseded is False
+
+    search = FakeSearch([
+        FakeHit(rev_a.id, 0.95, "spec rev a section", 1, "Spec_RevA.pdf"),
+        FakeHit(rev_b.id, 0.90, "spec rev b section", 1, "Spec_RevB.pdf"),
+    ])
+    created = await DocumentLinker(search_service=search).link_package(db_session, pkg)
+    assert created == 1
+    links = (await db_session.execute(
+        select(PackageDocument).where(PackageDocument.package_id == pkg.id)
+    )).scalars().all()
+    assert [l.document_id for l in links] == [rev_b.id]  # only the live revision
+
+
 async def test_link_package_skips_superseded_documents(db_session):
     from dataclasses import dataclass
 
