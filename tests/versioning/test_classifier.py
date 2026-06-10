@@ -39,6 +39,16 @@ def test_no_match_returns_general():
     assert conf == 0.0
 
 
+def test_short_keyword_word_boundaries():
+    rules = _rules()
+    # "itt" must not match inside "Submittal" (sub-MITT-al) / "Transmittal".
+    assert classify_document("Submittal_Schedule.pdf", "", rules)[0] != "itt"
+    # "mom" must not match inside "Moment".
+    assert classify_document("Moment_Connections.pdf", "", rules)[0] == "general"
+    # "letter" must not match inside "Newsletter".
+    assert classify_document("Newsletter_2.pdf", "", rules)[0] == "general"
+
+
 def test_keywords_are_configurable():
     cfg = RulesConfig()
     cfg.classification.document_categories = {"hse": ["safety dossier"]}
