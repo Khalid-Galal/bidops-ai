@@ -117,6 +117,53 @@ async def test_export_missing_linked_file_is_graceful(db_session, tmp_path):
     assert "gone.pdf" in manifest and "MISSING" in manifest.upper()
 
 
+async def test_exporter_excludes_superseded(db_session, tmp_path):
+    """A superseded document linked to a package must not appear in the export
+    (no copied file, absent from the manifest and brief)."""
+    from app.models.project import Project
+    from app.models.document import Document
+    from app.models.package import Package, PackageDocument
+    from app.services.packaging.package_exporter import PackageExporter
+
+    project = Project(name="P")
+    db_session.add(project)
+    await db_session.flush()
+
+    live_src = tmp_path / "live.pdf"
+    live_src.write_bytes(b"%PDF live")
+    stale_src = tmp_path / "stale.pdf"
+    stale_src.write_bytes(b"%PDF stale")
+    live = Document(project_id=project.id, filename="live.pdf",
+                    file_path=str(live_src), file_type=".pdf", file_size=8)
+    stale = Document(project_id=project.id, filename="stale.pdf",
+                     file_path=str(stale_src), file_type=".pdf", file_size=9,
+                     is_superseded=True,
+                     supersede_reason="auto:superseded by newer revision")
+    db_session.add_all([live, stale])
+    await db_session.flush()
+    pkg = Package(project_id=project.id, name="MEP", code="PKG-1",
+                  trade_category="mep", total_items=0)
+    db_session.add(pkg)
+    await db_session.flush()
+    db_session.add_all([
+        PackageDocument(package_id=pkg.id, document_id=live.id, relevance_score=0.9),
+        PackageDocument(package_id=pkg.id, document_id=stale.id, relevance_score=0.95),
+    ])
+    await db_session.commit()
+
+    result = await PackageExporter(output_root=tmp_path / "o").export_project(
+        db_session, project.id
+    )
+    pkg_dir = Path(result["packages"][0]["folder_path"])
+    assert (pkg_dir / "Documents" / "live.pdf").exists()
+    assert not (pkg_dir / "Documents" / "stale.pdf").exists()
+    manifest = (pkg_dir / "Documents" / "linked_manifest.txt").read_text(encoding="utf-8")
+    assert "live.pdf" in manifest
+    assert "stale.pdf" not in manifest
+    brief = (pkg_dir / "Package_Brief.html").read_text(encoding="utf-8")
+    assert "stale.pdf" not in brief
+
+
 def test_safe_name_blocks_traversal():
     from app.services.packaging.package_exporter import _safe_name
     for evil in ("..", "../..", "  ../  ", ".", "/etc/passwd", "..\\..\\x"):

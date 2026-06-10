@@ -149,6 +149,34 @@ async def test_analyze_exempts_addendum_chain(db_session):
     assert b.is_superseded is False
 
 
+async def test_analyze_prunes_superseded_links(db_session):
+    from app.models.package import Package, PackageDocument
+
+    pid = await _seed_project(db_session)
+    a = _doc(pid, "Spec_RevA.pdf", text="spec rev a")
+    b = _doc(pid, "Spec_RevB.pdf", text="spec rev b")
+    db_session.add_all([a, b])
+    await db_session.flush()
+    pkg = Package(project_id=pid, name="Specs", code="PKG-1",
+                  trade_category="specs", total_items=0)
+    db_session.add(pkg)
+    await db_session.flush()
+    # Link RevA (which will become superseded) to the package directly.
+    db_session.add(PackageDocument(package_id=pkg.id, document_id=a.id))
+    await db_session.commit()
+
+    await VersioningService().analyze(db_session, pid)
+    await db_session.refresh(a)
+    assert a.is_superseded is True
+
+    rows = (
+        await db_session.execute(
+            select(PackageDocument).where(PackageDocument.document_id == a.id)
+        )
+    ).scalars().all()
+    assert rows == []  # superseded doc's link was pruned
+
+
 async def test_unmark_superseded(db_session):
     pid = await _seed_project(db_session)
     d = _doc(pid, "Doc.pdf")

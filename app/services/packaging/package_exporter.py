@@ -91,7 +91,10 @@ class PackageExporter:
             await db.execute(
                 select(PackageDocument, Document)
                 .join(Document, Document.id == PackageDocument.document_id)
-                .where(PackageDocument.package_id == pkg.id)
+                .where(
+                    PackageDocument.package_id == pkg.id,
+                    Document.is_superseded.is_(False),
+                )
                 .order_by(PackageDocument.relevance_score.desc())
             )
         ).all()

@@ -14,10 +14,11 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
-from sqlalchemy import select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.document import Document
+from app.models.package import PackageDocument
 from app.services.rules.rules_service import RulesService
 from app.services.versioning.doc_classifier import classify_document
 
@@ -164,6 +165,17 @@ class VersioningService:
                 doc.superseded_by_id = keeper.id
                 doc.supersede_reason = f"auto:superseded by #{keeper.id} (newer revision)"
                 superseded += 1
+
+        # Package links must reflect supersede: a superseded document (dedup or
+        # chain) must never stay linked, or pricing would flow from a stale
+        # revision. Prune those links before committing.
+        superseded_ids = {doc.id for doc in docs if doc.is_superseded}
+        if superseded_ids:
+            await db.execute(
+                delete(PackageDocument).where(
+                    PackageDocument.document_id.in_(superseded_ids)
+                )
+            )
 
         await db.commit()
         return {

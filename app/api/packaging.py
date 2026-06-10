@@ -117,7 +117,10 @@ async def package_detail(
         await db.execute(
             select(PackageDocument, Document.filename)
             .join(Document, Document.id == PackageDocument.document_id)
-            .where(PackageDocument.package_id == package_id)
+            .where(
+                PackageDocument.package_id == package_id,
+                Document.is_superseded.is_(False),
+            )
             .order_by(PackageDocument.relevance_score.desc())
         )
     ).all()
