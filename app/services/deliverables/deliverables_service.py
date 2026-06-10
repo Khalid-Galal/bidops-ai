@@ -33,13 +33,34 @@ def _safe_name(text: str) -> str:
 
 
 class DeliverablesService:
-    def __init__(self, output_root: Path | str = "data/deliverables") -> None:
+    def __init__(
+        self,
+        output_root: Path | str = "data/deliverables",
+        package_exporter: PackageExporter | None = None,
+    ) -> None:
         self._root = Path(output_root)
+        self._package_exporter = package_exporter
 
     def project_dir(self, project_id: int) -> Path:
         return self._root / f"project_{project_id}"
 
-    async def build(self, db: AsyncSession, project_id: int) -> dict:
+    async def build(
+        self,
+        db: AsyncSession,
+        project_id: int,
+        *,
+        duration_months: int = 0,
+        location: str = "default",
+    ) -> dict:
+        """Assemble the deliverables bundle for a project.
+
+        duration_months/location feed the indirects rollup that drives
+        Pricing_Summary.xlsx and the manifest grand_total.
+
+        Note: the Packages Register is copied AS-IS from the packaging export
+        and may predate re-generated packages — re-run the packaging export to
+        refresh it before building deliverables.
+        """
         project = await db.get(Project, project_id)
         if project is None:
             raise ValueError(f"Project {project_id} not found")
@@ -53,7 +74,9 @@ class DeliverablesService:
 
         pricing_svc = PricingService()
         pricing = await pricing_svc.pricing_summary(db, project_id)
-        cost = await IndirectsService().project_cost_summary(db, project_id)
+        cost = await IndirectsService().project_cost_summary(
+            db, project_id, duration_months=duration_months, location=location
+        )
         self._write_pricing_workbook(cost, pricing, dest / "Pricing_Summary.xlsx")
         files.append("Pricing_Summary.xlsx")
 
@@ -81,7 +104,8 @@ class DeliverablesService:
             files.append(name)
             comparisons += 1
 
-        register = PackageExporter().register_path(project_id)
+        exporter = self._package_exporter or PackageExporter()
+        register = exporter.register_path(project_id)
         if register.exists():
             shutil.copy2(register, dest / "Packages_Register.xlsx")
             files.append("Packages_Register.xlsx")
@@ -107,6 +131,8 @@ class DeliverablesService:
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "grand_total": cost["grand_total"],
             "currency": cost["currency"],
+            "duration_months": duration_months,
+            "location": location,
             "files": sorted(files),
             "comparisons": comparisons,
             "briefs": briefs,

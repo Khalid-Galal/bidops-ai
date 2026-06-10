@@ -51,7 +51,7 @@ async def deliv_client(tmp_path, monkeypatch):
 async def test_build_then_download_zip(deliv_client):
     client, pid = deliv_client
     async with client as c:
-        b = await c.post(f"/api/projects/{pid}/deliverables/build")
+        b = await c.post(f"/api/projects/{pid}/deliverables/build?duration_months=0")
         assert b.status_code == 200, b.text
         assert "Pricing_Summary.xlsx" in b.json()["files"]
 

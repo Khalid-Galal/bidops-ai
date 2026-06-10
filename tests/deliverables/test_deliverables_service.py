@@ -68,6 +68,58 @@ async def test_build_unknown_project(db_session, tmp_path):
         await DeliverablesService(output_root=tmp_path).build(db_session, 999999)
 
 
+async def test_register_copied_when_present(db_session, tmp_path):
+    import openpyxl
+
+    from app.services.packaging.package_exporter import PackageExporter
+
+    pid = await _seed(db_session, tmp_path)
+    exporter = PackageExporter(output_root=tmp_path / "pkgs")
+    register = exporter.register_path(pid)
+    register.parent.mkdir(parents=True)
+    wb = openpyxl.Workbook()
+    wb.active.append(["Code", "Name"])
+    wb.save(register)
+
+    svc = DeliverablesService(
+        output_root=tmp_path / "deliv", package_exporter=exporter
+    )
+    result = await svc.build(db_session, pid)
+    assert "Packages_Register.xlsx" in result["files"]
+    assert (Path(result["folder"]) / "Packages_Register.xlsx").exists()
+
+
+async def test_build_duration_plumbs_through(db_session, tmp_path, monkeypatch):
+    import app.services.deliverables.deliverables_service as ds_mod
+    from app.schemas.rules import DurationBasedRole, RulesConfig
+    from app.services.indirects.indirects_service import IndirectsService
+
+    pid = await _seed(db_session, tmp_path)
+
+    rules = RulesConfig()  # percentage_based defaults to {}
+    rules.indirects.duration_based = {
+        "project_manager": DurationBasedRole(monthly_rate=5000)
+    }
+
+    class _FakeRulesService:
+        def load(self):
+            return rules
+
+    monkeypatch.setattr(
+        ds_mod, "IndirectsService",
+        lambda: IndirectsService(rules_service=_FakeRulesService()),
+    )
+
+    svc = DeliverablesService(output_root=tmp_path / "deliv")
+    result = await svc.build(db_session, pid, duration_months=6)
+    manifest = json.loads(
+        (Path(result["folder"]) / "manifest.json").read_text(encoding="utf-8")
+    )
+    # direct 6000 + duration indirects 6*5000=30000 -> base 36000 -> *1.26
+    assert manifest["grand_total"] == 45360.0
+    assert manifest["duration_months"] == 6
+
+
 async def test_briefs_do_not_collide(db_session, tmp_path):
     """Two packages whose brief files share a basename must BOTH survive the
     flatten into Briefs/ (regression: the second copy silently overwrote the

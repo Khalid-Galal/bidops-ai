@@ -20,6 +20,12 @@ from app.services.pricing.pricing_service import PricingService
 
 class DashboardService:
     async def project_dashboard(self, db: AsyncSession, project_id: int) -> dict:
+        """Aggregate project status counts for the dashboard.
+
+        Note: email/offer counts are scoped to the CURRENT packages — emails
+        tied to packages that were deleted or regenerated are not attributable
+        (EmailLog has no project_id; schema change deferred).
+        """
         project = await db.get(Project, project_id)
         if project is None:
             raise ValueError(f"Project {project_id} not found")

@@ -6,7 +6,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.background import BackgroundTask
@@ -19,10 +19,15 @@ router = APIRouter(tags=["deliverables"])
 
 @router.post("/projects/{project_id}/deliverables/build")
 async def build_deliverables(
-    project_id: int, db: AsyncSession = Depends(get_db)
+    project_id: int,
+    duration_months: int = Query(default=0, ge=0),
+    location: str = Query(default="default"),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
     try:
-        return await DeliverablesService().build(db, project_id)
+        return await DeliverablesService().build(
+            db, project_id, duration_months=duration_months, location=location
+        )
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
@@ -40,7 +45,12 @@ async def download_deliverables(project_id: int):
     base = tmp.name
     tmp.close()
     Path(base).unlink(missing_ok=True)
-    zip_path = shutil.make_archive(base, "zip", root_dir=str(folder))
+    try:
+        zip_path = shutil.make_archive(base, "zip", root_dir=str(folder))
+    except Exception:
+        # Never leak a partial archive when zipping fails mid-write.
+        Path(base + ".zip").unlink(missing_ok=True)
+        raise
     return FileResponse(
         zip_path,
         media_type="application/zip",
