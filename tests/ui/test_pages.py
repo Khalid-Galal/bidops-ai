@@ -97,3 +97,31 @@ async def test_workbench_has_historical_and_deliverables_tabs(ui_client):
         r = await c.get(f"/projects/{pid}/workbench")
         assert 'id="tab-historical"' in r.text
         assert 'id="tab-deliverables"' in r.text
+
+
+async def test_settings_page_renders(ui_client):
+    client, _ = ui_client
+    async with client as c:
+        r = await c.get("/settings")
+        assert r.status_code == 200
+        assert "rules-json" in r.text
+        assert 'href="/settings"' in r.text  # nav link present
+
+
+async def test_suppliers_page_has_status_and_update_controls(ui_client):
+    client, _ = ui_client
+    async with client as c:
+        r = await c.get("/suppliers")
+        assert 'id="status-filter"' in r.text
+        assert 'id="import-update"' in r.text
+
+
+async def test_offers_tab_has_manual_entry_and_supplier_select(ui_client):
+    client, pid = ui_client
+    async with client as c:
+        r = await c.get(f"/projects/{pid}/workbench")
+        assert "editCommercial" in r.text          # manual no-LLM entry path
+        assert 'id="offer-supplier"' in r.text     # supplier picker (no raw IDs)
+        assert "offerDetail" in r.text             # compliance detail view
+        assert 'id="rfq-lang"' in r.text           # RFQ language override
+        assert "editEmail" in r.text               # draft edit before send

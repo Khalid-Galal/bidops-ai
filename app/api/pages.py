@@ -105,6 +105,12 @@ async def suppliers_page(request: Request):
     return templates.TemplateResponse(request, "suppliers.html", {})
 
 
+@router.get("/settings")
+async def settings_page(request: Request):
+    """Render the business-rules settings page (GET/PUT /api/rules as JSON)."""
+    return templates.TemplateResponse(request, "settings.html", {})
+
+
 @router.get("/projects/{project_id}/workbench")
 async def workbench_page(
     request: Request,

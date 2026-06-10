@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Settings | BidOps AI{% endblock %}
+{% block content %}
+<h1>Settings — Business Rules</h1>
+<p>The full rules configuration (currency, VAT, markups, scoring weights, trade
+categories, indirects factors, email identity/subjects) as editable JSON.
+Changes apply immediately to all pricing/scoring/RFQ behavior.</p>
+<div class="card">
+  <textarea id="rules-json" rows="34" style="width:100%;font-family:monospace"></textarea>
+  <p class="action-bar">
+    <button class="btn btn-primary" id="rules-save" type="button">Save</button>
+    <button class="btn btn-secondary" id="rules-reload" type="button">Reload</button>
+    <span id="rules-status"></span>
+  </p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function api(path, opts) {
+  const resp = await fetch(path, opts || {});
+  if (!resp.ok) {
+    let detail = resp.status;
+    try { detail = JSON.stringify((await resp.json()).detail) || detail; } catch (e) {}
+    alert('Error: ' + detail);
+    throw new Error(String(detail));
+  }
+  return resp.json();
+}
+
+async function loadRules() {
+  const rules = await api('/api/rules');
+  document.getElementById('rules-json').value = JSON.stringify(rules, null, 2);
+  document.getElementById('rules-status').textContent = '';
+}
+
+document.getElementById('rules-save').addEventListener('click', async function () {
+  let parsed;
+  try {
+    parsed = JSON.parse(document.getElementById('rules-json').value);
+  } catch (e) {
+    alert('Invalid JSON: ' + e.message);
+    return;
+  }
+  await api('/api/rules', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(parsed),
+  });
+  document.getElementById('rules-status').textContent = 'Saved.';
+});
+
+document.getElementById('rules-reload').addEventListener('click', loadRules);
+loadRules();
+</script>
+{% endblock %}

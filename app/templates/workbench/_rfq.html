@@ -2,8 +2,16 @@
   <div class="card">
     <h3>Create RFQ drafts</h3>
     <label>Package: <select id="rfq-pkg"></select></label>
+    <label>Language:
+      <select id="rfq-lang">
+        <option value="">Supplier preference</option>
+        <option value="en">English</option>
+        <option value="ar">Arabic</option>
+      </select>
+    </label>
     <button class="btn btn-secondary" onclick="loadSuggested()">Suggested suppliers</button>
     <div id="rfq-suggested"></div>
+    <input id="rfq-note" placeholder="Optional custom message for the RFQ body" size="60">
     <button class="btn btn-primary" onclick="createRfq()">Create drafts for checked suppliers</button>
   </div>
   <div class="card">
@@ -44,8 +52,12 @@ async function createRfq() {
     return parseInt(c.value, 10);
   });
   if (!pkgId || !ids.length) { alert('Pick a package and at least one supplier'); return; }
-  const r = await postJSON('/api/projects/' + PID + '/packages/' + pkgId + '/rfq',
-    { supplier_ids: ids });
+  const body = { supplier_ids: ids };
+  const lang = document.getElementById('rfq-lang').value;
+  if (lang) body.language = lang;
+  const note = document.getElementById('rfq-note').value.trim();
+  if (note) body.custom_message = note;
+  const r = await postJSON('/api/projects/' + PID + '/packages/' + pkgId + '/rfq', body);
   alert('Drafts created: ' + r.drafts_created
     + (r.skipped.length ? ('; skipped: ' + r.skipped.join('; ')) : ''));
   loadEmails();
@@ -53,16 +65,42 @@ async function createRfq() {
 
 async function loadEmails() {
   const pkgId = document.getElementById('rfq-pkg').value;
-  const qs = pkgId ? ('?package_id=' + pkgId) : '';
-  const emails = await api('/api/emails' + qs);
+  if (!pkgId) {
+    /* never fetch unfiltered: that would list every project's emails here */
+    document.getElementById('email-table').innerHTML =
+      '<p>Generate packages first — emails are listed per package.</p>';
+    return;
+  }
+  const emails = await api('/api/emails?package_id=' + pkgId);
   document.getElementById('email-table').innerHTML = tbl(
     ['ID', 'Type', 'Status', 'To', 'Subject', ''],
     emails.map(function (m) {
       return [m.id, m.email_type, m.status, (m.to || []).join(', '), m.subject,
         '!html:<button class="btn btn-secondary" onclick="previewEmail(' + m.id + ')">Preview</button> '
+        + '<button class="btn btn-secondary" onclick="editEmail(' + m.id + ')">Edit</button> '
         + '<button class="btn btn-primary" onclick="sendEmail(' + m.id + ')">Send</button>'];
     })
   );
+}
+
+/* Edit a DRAFT before sending (mandatory-review design): subject + recipients. */
+async function editEmail(id) {
+  const m = await api('/api/emails/' + id);
+  const body = {};
+  const subject = prompt('Subject:', m.subject);
+  if (subject && subject !== m.subject) body.subject = subject;
+  const to = prompt('To (comma-separated):', (m.to || []).join(', '));
+  if (to !== null) {
+    const list = to.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+    if (list.length && list.join(',') !== (m.to || []).join(',')) body.to = list;
+  }
+  if (!Object.keys(body).length) return;
+  await api('/api/emails/' + id, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  loadEmails();
 }
 
 async function previewEmail(id) {

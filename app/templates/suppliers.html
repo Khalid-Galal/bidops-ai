@@ -21,6 +21,7 @@
   <h3>Import from Excel</h3>
   <form id="supplier-import-form">
     <input type="file" name="file" accept=".xlsx" required>
+    <label><input type="checkbox" id="import-update"> update existing</label>
     <button class="btn btn-secondary" type="submit">Import</button>
     <span id="import-result"></span>
   </form>
@@ -29,6 +30,10 @@
 <div class="card">
   <h3>Supplier list</h3>
   <input id="trade-filter" placeholder="Filter by trade (e.g. mep)">
+  <select id="status-filter">
+    <option value="true">Active</option>
+    <option value="false">Inactive / blacklisted</option>
+  </select>
   <button class="btn btn-secondary" id="reload-btn" type="button">Reload</button>
   <div id="supplier-table"></div>
 </div>
@@ -54,30 +59,68 @@ async function api(path, opts) {
 
 async function loadSuppliers() {
   const trade = document.getElementById('trade-filter').value.trim();
-  const qs = trade ? ('?trade=' + encodeURIComponent(trade)) : '';
+  const active = document.getElementById('status-filter').value;
+  let qs = '?is_active=' + active;
+  if (trade) qs += '&trade=' + encodeURIComponent(trade);
   const rows = await api('/api/suppliers' + qs);
-  let html = '<table><tr><th>Code</th><th>Name</th><th>Emails</th><th>Trades</th>'
-    + '<th>Rating</th><th>RFQs</th><th>Offers</th><th></th></tr>';
+  let html = '<table><tr><th>ID</th><th>Code</th><th>Name</th><th>Emails</th><th>Trades</th>'
+    + '<th>Rating</th><th>RFQs</th><th>Offers</th><th>Status</th><th></th></tr>';
   for (const s of rows) {
-    html += '<tr><td>' + esc(s.code) + '</td><td>' + esc(s.name) + '</td><td>'
+    const status = s.is_blacklisted ? 'blacklisted' : (s.is_active ? 'active' : 'inactive');
+    const actions = '<button class="btn btn-secondary" onclick="editSupplier(' + s.id + ')">Edit</button> '
+      + (s.is_active
+          ? '<button class="btn btn-secondary" onclick="blacklistSupplier(' + s.id + ')">Blacklist</button>'
+          : '<button class="btn btn-primary" onclick="restoreSupplier(' + s.id + ')">Restore</button>');
+    html += '<tr><td>' + s.id + '</td><td>' + esc(s.code) + '</td><td>' + esc(s.name) + '</td><td>'
       + esc((s.emails || []).join(', ')) + '</td><td>'
       + esc((s.trade_categories || []).join(', ')) + '</td><td>'
       + esc(s.rating) + '</td><td>' + esc(s.total_rfqs_sent) + '</td><td>'
-      + esc(s.total_offers_received) + '</td><td>'
-      + '<button class="btn btn-secondary" onclick="blacklistSupplier(' + s.id + ')">Blacklist</button>'
-      + '</td></tr>';
+      + esc(s.total_offers_received) + '</td><td>' + status + '</td><td>'
+      + actions + '</td></tr>';
   }
   html += '</table>';
   document.getElementById('supplier-table').innerHTML = html;
 }
 
 async function blacklistSupplier(id) {
-  const reason = prompt('Blacklist reason?');
+  const reason = prompt('Blacklist reason? (NOTE: blacklisting also deactivates; restore only reactivates — the blacklist flag itself is permanent)');
   if (!reason) return;
   await api('/api/suppliers/' + id + '/blacklist', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ reason: reason }),
+  });
+  loadSuppliers();
+}
+
+async function restoreSupplier(id) {
+  await api('/api/suppliers/' + id, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ is_active: true }),
+  });
+  loadSuppliers();
+}
+
+/* Edit basics — blank prompt = keep current value. */
+async function editSupplier(id) {
+  const s = await api('/api/suppliers/' + id);
+  const body = {};
+  const emails = prompt('Emails (comma-separated):', (s.emails || []).join(', '));
+  if (emails !== null && emails.trim()) {
+    body.emails = emails.split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+  }
+  const trades = prompt('Trades (comma-separated):', (s.trade_categories || []).join(', '));
+  if (trades !== null && trades.trim()) {
+    body.trade_categories = trades.split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+  }
+  const rating = prompt('Rating 1-5:', s.rating === null ? '' : s.rating);
+  if (rating) body.rating = parseFloat(rating);
+  if (!Object.keys(body).length) return;
+  await api('/api/suppliers/' + id, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
   });
   loadSuppliers();
 }
@@ -102,13 +145,15 @@ document.getElementById('supplier-add-form').addEventListener('submit', async fu
 document.getElementById('supplier-import-form').addEventListener('submit', async function (e) {
   e.preventDefault();
   const fd = new FormData(e.target);
-  const result = await api('/api/suppliers/import', { method: 'POST', body: fd });
+  const upd = document.getElementById('import-update').checked ? '?update_existing=true' : '';
+  const result = await api('/api/suppliers/import' + upd, { method: 'POST', body: fd });
   document.getElementById('import-result').textContent =
     'imported ' + result.imported + ', updated ' + result.updated + ', skipped ' + result.skipped;
   loadSuppliers();
 });
 
 document.getElementById('reload-btn').addEventListener('click', loadSuppliers);
+document.getElementById('status-filter').addEventListener('change', loadSuppliers);
 loadSuppliers();
 </script>
 {% endblock %}

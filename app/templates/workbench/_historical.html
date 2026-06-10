@@ -15,6 +15,17 @@
     <h3>Suggestions</h3>
     <div id="hist-suggestions"></div>
   </div>
+  <div class="card">
+    <h3>Ad-hoc benchmark ("what did we pay for X?")</h3>
+    <input id="adhoc-desc" placeholder="Item description" size="40">
+    <input id="adhoc-trade" placeholder="Trade (optional)" size="12">
+    <button class="btn btn-secondary" onclick="adhocSuggest()">Suggest</button>
+    <div id="adhoc-result"></div>
+  </div>
+  <div class="card">
+    <h3>Corpus <button class="btn btn-secondary" onclick="browseCorpus()">Browse</button></h3>
+    <div id="hist-corpus"></div>
+  </div>
 </section>
 <script>
 window.load_historical = async function () { /* loads on demand via buttons */ };
@@ -53,6 +64,32 @@ async function applySuggestion(itemId, rate, encDesc) {
     { description: decodeURIComponent(encDesc), accepted_rate: rate });
   alert('Applied ' + rate + ' and recorded feedback');
   loadSuggestions();
+}
+
+async function adhocSuggest() {
+  const desc = document.getElementById('adhoc-desc').value.trim();
+  if (!desc) return;
+  const trade = document.getElementById('adhoc-trade').value.trim();
+  let url = '/api/historical/suggest?description=' + encodeURIComponent(desc);
+  if (trade) url += '&trade=' + encodeURIComponent(trade);
+  const s = await api(url);
+  const b = s.benchmark;
+  document.getElementById('adhoc-result').innerHTML = b.count
+    ? tbl(['Matches', 'Min', 'Median', 'Max', 'Suggested', 'Ccy'],
+        [[b.count, b.min, b.median, b.max, b.suggested_rate, b.currency]])
+      + tbl(['Matched description', 'Rate', 'Source', 'Similarity'],
+          s.matches.map(function (m) { return [m.description, m.rate, m.source, m.similarity]; }))
+    : '<p>No historical match.</p>';
+}
+
+async function browseCorpus() {
+  const recs = await api('/api/historical');
+  document.getElementById('hist-corpus').innerHTML = tbl(
+    ['Description', 'Unit', 'Rate', 'Ccy', 'Trade', 'Source'],
+    recs.map(function (r) {
+      return [r.description, r.unit, r.rate, r.currency, r.trade_category, r.source];
+    })
+  );
 }
 
 document.getElementById('hist-import-form').addEventListener('submit', async function (e) {

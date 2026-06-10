@@ -3,7 +3,7 @@
     <h3>Ingest offer</h3>
     <form id="offer-ingest-form">
       <label>Package: <select id="offer-pkg"></select></label>
-      <input name="supplier_id" placeholder="Supplier ID" required size="10">
+      <label>Supplier: <select id="offer-supplier" required></select></label>
       <input type="file" name="files" multiple required>
       <button class="btn btn-primary" type="submit">Upload offer</button>
     </form>
@@ -18,6 +18,10 @@
     <div id="offer-table"></div>
     <div id="cmp-table"></div>
   </div>
+  <div class="card" id="offer-detail" style="display:none">
+    <h3 id="offer-detail-title"></h3>
+    <div id="offer-detail-body"></div>
+  </div>
 </section>
 <script>
 window.load_offers = async function () {
@@ -27,6 +31,11 @@ window.load_offers = async function () {
     return '<option value="' + p.id + '">' + esc(p.code) + '</option>';
   }).join('');
   sel.onchange = loadOffers;
+  /* supplier dropdown: ids are never shown anywhere else, so offer a picker */
+  const sups = await api('/api/suppliers');
+  document.getElementById('offer-supplier').innerHTML = sups.map(function (s) {
+    return '<option value="' + s.id + '">#' + s.id + ' ' + esc(s.name) + '</option>';
+  }).join('');
   if (pkgs.length) await loadOffers();
 };
 
@@ -44,6 +53,8 @@ async function loadOffers() {
       return [o.id, o.supplier_id, o.status, o.total_price, o.currency,
         o.overall_score, o.rank,
         '!html:'
+        + '<button class="btn btn-secondary" onclick="offerDetail(' + o.id + ')">Detail</button> '
+        + '<button class="btn btn-primary" onclick="editCommercial(' + o.id + ')">Edit commercial</button> '
         + '<button class="btn btn-secondary" onclick="offerAct(' + o.id + ',\'extract\')">Extract</button> '
         + '<button class="btn btn-secondary" onclick="offerAct(' + o.id + ',\'check-compliance\')">Compliance</button> '
         + '<button class="btn btn-primary" onclick="offerAct(' + o.id + ',\'select\')">Select</button> '
@@ -58,10 +69,60 @@ async function offerAct(id, action) {
   loadOffers();
 }
 
+/* Manual commercial entry — the no-LLM path. Blank prompt = keep current. */
+async function editCommercial(id) {
+  const body = {};
+  const price = prompt('Total price? (blank = keep)');
+  if (price) body.total_price = parseFloat(price);
+  const ccy = prompt('Currency? (blank = keep)');
+  if (ccy) body.currency = ccy;
+  const validity = prompt('Validity days? (blank = keep)');
+  if (validity) body.validity_days = parseInt(validity, 10);
+  const weeks = prompt('Delivery weeks? (blank = keep)');
+  if (weeks) body.delivery_weeks = parseInt(weeks, 10);
+  const tech = prompt('Technical score 0-100? (blank = keep)');
+  if (tech) body.technical_score = parseFloat(tech);
+  if (!Object.keys(body).length) return;
+  await api('/api/offers/' + id, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  loadOffers();
+}
+
+async function offerDetail(id) {
+  const d = await api('/api/offers/' + id);
+  function list(title, items) {
+    if (!items || !items.length) return '';
+    return '<h4>' + title + '</h4><ul>'
+      + items.map(function (x) { return '<li>' + esc(typeof x === 'string' ? x : JSON.stringify(x)) + '</li>'; }).join('')
+      + '</ul>';
+  }
+  document.getElementById('offer-detail-title').textContent =
+    'Offer #' + d.id + ' — ' + (d.supplier_name || d.supplier_id) + ' (' + d.status + ')';
+  document.getElementById('offer-detail-body').innerHTML =
+    tbl(['Price', 'Ccy', 'Validity', 'Delivery wks', 'Payment terms', 'Tech', 'Comm.', 'Overall'],
+      [[d.total_price, d.currency, d.validity_days, d.delivery_weeks, d.payment_terms,
+        d.technical_score, d.commercial_score, d.overall_score]])
+    + list('Exclusions', d.exclusions)
+    + list('Deviations', d.deviations)
+    + list('Missing items', d.missing_items)
+    + list('Clarifications needed', d.clarifications_needed)
+    + (d.recommendation ? '<h4>Recommendation</h4><p>' + esc(d.recommendation) + '</p>' : '')
+    + (d.line_items && d.line_items.length
+        ? '<p>' + d.line_items.length + ' priced line items extracted.</p>' : '');
+  document.getElementById('offer-detail').style.display = '';
+}
+
 async function clarify(id) {
-  const item = prompt('Clarification item (one line)?');
-  if (!item) return;
-  await postJSON('/api/offers/' + id + '/clarification', { items: [item] });
+  if (confirm('Use the clarification items detected by compliance analysis? (Cancel = type your own)')) {
+    await postJSON('/api/offers/' + id + '/clarification', {});
+  } else {
+    const item = prompt('Clarification item (one line)?');
+    if (!item) return;
+    await postJSON('/api/offers/' + id + '/clarification', { items: [item] });
+  }
   alert('Clarification draft created — see RFQ tab email log.');
 }
 
@@ -86,7 +147,7 @@ async function loadComparison() {
 document.getElementById('offer-ingest-form').addEventListener('submit', async function (e) {
   e.preventDefault();
   const fd = new FormData();
-  fd.append('supplier_id', e.target.supplier_id.value);
+  fd.append('supplier_id', document.getElementById('offer-supplier').value);
   for (const f of e.target.files.files) fd.append('files', f);
   await api('/api/projects/' + PID + '/packages/' + offerPkgId() + '/offers',
     { method: 'POST', body: fd });

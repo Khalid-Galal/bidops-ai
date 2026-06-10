@@ -66,3 +66,28 @@ async def test_parse_and_list_boq(boq_client):
         items = lst.json()
         assert len(items) == 2
         assert {i["trade_category"] for i in items} == {"concrete", "mep"}
+
+
+async def test_boq_list_exposes_pricing_fields(boq_client):
+    # Regression (Phase 6C review JSAPI-1): the workbench BOQ table renders
+    # unit_rate/total_price — the response schema must not strip them.
+    client, project_id = boq_client
+    async with client:
+        files = {"file": ("boq.xlsx", _boq_bytes(),
+                          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+        await client.post(f"/api/projects/{project_id}/boq/parse", files=files)
+        items = (await client.get(f"/api/projects/{project_id}/boq")).json()
+        item_id = items[0]["id"]
+        # all pricing keys present (null before pricing)
+        for key in ("unit_rate", "total_price", "currency", "mapping_confidence"):
+            assert key in items[0]
+        assert items[0]["unit_rate"] is None
+
+        # set a manual rate, then the list must show it
+        patched = await client.patch(f"/api/boq-items/{item_id}/price",
+                                     json={"unit_rate": 123.5})
+        assert patched.status_code == 200
+        items2 = (await client.get(f"/api/projects/{project_id}/boq")).json()
+        priced = next(i for i in items2 if i["id"] == item_id)
+        assert priced["unit_rate"] == 123.5
+        assert priced["total_price"] == round(123.5 * priced["quantity"], 2)

@@ -15,6 +15,13 @@ class BOQItemResponse(BaseModel):
     trade_category: str | None
     classification_confidence: float | None
     requires_review: bool
+    # Pricing fields (Phase 11 pricing / manual override). Without these the
+    # workbench BOQ table could never display rates — response_model filtering
+    # strips anything not declared here.
+    unit_rate: float | None = None
+    total_price: float | None = None
+    currency: str | None = None
+    mapping_confidence: float | None = None
 
     model_config = {"from_attributes": True}
 
