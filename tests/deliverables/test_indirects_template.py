@@ -272,6 +272,87 @@ async def test_populate_template_409_nothing_matched(ind_client):
     assert "No template rows matched" in r.json()["detail"]
 
 
+async def test_populate_template_oversized_413(ind_client, monkeypatch):
+    import app.api.indirects as ind_api
+
+    monkeypatch.setattr(ind_api, "_MAX_UPLOAD_BYTES", 10)
+    client, pid = ind_client
+    async with client as c:
+        r = await c.post(
+            f"/api/projects/{pid}/indirects/populate-template",
+            files={"file": ("ind.xlsx", _template_bytes(),
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+        )
+    assert r.status_code == 413
+
+
+async def test_populate_template_409_no_components(ind_client):
+    """A project with no priced items and duration_months=0 has no indirect
+    amounts at all -> 409 before the template is even opened."""
+    client, _ = ind_client
+    async with client as c:
+        created = await c.post("/api/projects", json={"name": "Empty"})
+        assert created.status_code == 201, created.text
+        empty_pid = created.json()["id"]
+        r = await c.post(
+            f"/api/projects/{empty_pid}/indirects/populate-template",
+            files={"file": ("ind.xlsx", _template_bytes(),
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+        )
+    assert r.status_code == 409
+    assert "No indirect amounts" in r.json()["detail"]
+
+
+async def test_populate_template_400_corrupt_xlsx(ind_client):
+    client, pid = ind_client
+    async with client as c:
+        r = await c.post(
+            f"/api/projects/{pid}/indirects/populate-template",
+            files={"file": ("bad.xlsx", b"not a zip",
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+        )
+    assert r.status_code == 400
+
+
+async def test_populate_template_duration_months(ind_client, monkeypatch):
+    import app.api.indirects as ind_api
+    from app.schemas.rules import DurationBasedRole, RulesConfig
+    from app.services.indirects.indirects_service import IndirectsService
+
+    rules = RulesConfig()  # percentage_based defaults to {}
+    rules.indirects.duration_based = {
+        "project_manager": DurationBasedRole(monthly_rate=5000)
+    }
+
+    class _FakeRulesService:
+        def load(self):
+            return rules
+
+    monkeypatch.setattr(
+        ind_api, "IndirectsService",
+        lambda: IndirectsService(rules_service=_FakeRulesService()),
+    )
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(["Description", "Amount"])
+    ws.append(["Project Manager", None])
+    buf = io.BytesIO()
+    wb.save(buf)
+
+    client, pid = ind_client
+    async with client as c:
+        r = await c.post(
+            f"/api/projects/{pid}/indirects/populate-template?duration_months=6",
+            files={"file": ("ind.xlsx", buf.getvalue(),
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+        )
+        assert r.status_code == 200, r.text
+        out = openpyxl.load_workbook(io.BytesIO(r.content))
+        ws2 = out[out.sheetnames[0]]
+        assert ws2.cell(row=2, column=2).value == 30000.0  # 6 * 5000
+
+
 async def test_populate_template_rejects_non_xlsx(ind_client):
     client, pid = ind_client
     async with client as c:

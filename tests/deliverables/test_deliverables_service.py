@@ -68,6 +68,40 @@ async def test_build_unknown_project(db_session, tmp_path):
         await DeliverablesService(output_root=tmp_path).build(db_session, 999999)
 
 
+async def test_zero_offer_package_skips_comparison(db_session, tmp_path):
+    pid = await _seed(db_session, tmp_path)
+    db_session.add(Package(project_id=pid, name="Civil Works", code="PKG-002-CIV",
+                           trade_category="civil"))
+    await db_session.commit()
+
+    svc = DeliverablesService(output_root=tmp_path / "deliv")
+    result = await svc.build(db_session, pid)
+    assert result["comparisons"] == 1
+    assert "Comparison_PKG-001-MEP.xlsx" in result["files"]
+    assert "Comparison_PKG-002-CIV.xlsx" not in result["files"]
+    assert not (Path(result["folder"]) / "Comparison_PKG-002-CIV.xlsx").exists()
+
+
+async def test_pricing_summary_workbook_money(db_session, tmp_path):
+    import openpyxl
+
+    pid = await _seed(db_session, tmp_path)
+    svc = DeliverablesService(output_root=tmp_path / "deliv")
+    result = await svc.build(db_session, pid)
+    folder = Path(result["folder"])
+
+    wb = openpyxl.load_workbook(folder / "Pricing_Summary.xlsx")
+    ws = wb["Cost Summary"]
+    values = {ws.cell(row=r, column=1).value: ws.cell(row=r, column=2).value
+              for r in range(1, ws.max_row + 1)}
+    assert values["Direct Cost"] == 6000.0
+    assert values["Total Indirects"] == 510.0  # 0.085 * 6000 (default rules)
+    assert values["GRAND TOTAL"] == 8202.6     # round(6510 * 1.26, 2)
+
+    manifest = json.loads((folder / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["grand_total"] == 8202.6
+
+
 async def test_register_copied_when_present(db_session, tmp_path):
     import openpyxl
 
