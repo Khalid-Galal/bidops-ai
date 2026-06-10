@@ -2,6 +2,10 @@
 {% block title %}{{ d.project.name }} — Dashboard | BidOps AI{% endblock %}
 {% block content %}
 <h1>Dashboard — {{ d.project.name }}</h1>
+<p class="action-bar">
+  <a class="btn btn-secondary" href="/projects/{{ d.project.id }}">Documents</a>
+  <a class="btn btn-secondary" href="/projects/{{ d.project.id }}/workbench">Workbench</a>
+</p>
 <p>
   Status: <strong>{{ d.project.status }}</strong>
   {% if d.project.extraction_status %} · Extraction: {{ d.project.extraction_status }}{% endif %}

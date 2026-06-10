@@ -97,3 +97,24 @@ async def dashboard_page(
         "dashboard.html",
         {"d": data},
     )
+
+
+@router.get("/suppliers")
+async def suppliers_page(request: Request):
+    """Render the global supplier database page (data loads via the JSON API)."""
+    return templates.TemplateResponse(request, "suppliers.html", {})
+
+
+@router.get("/projects/{project_id}/workbench")
+async def workbench_page(
+    request: Request,
+    project_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    """Render the tabbed v2 workbench for one project."""
+    project = await db.get(Project, project_id)
+    if project is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
+        )
+    return templates.TemplateResponse(request, "workbench.html", {"project": project})

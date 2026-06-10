@@ -3,6 +3,10 @@
 {% block title %}{{ project.name }} - BidOps AI{% endblock %}
 
 {% block content %}
+<p class="action-bar">
+  <a class="btn btn-secondary" href="/projects/{{ project.id }}/dashboard">Dashboard</a>
+  <a class="btn btn-secondary" href="/projects/{{ project.id }}/workbench">Workbench</a>
+</p>
 <h2 class="page-title">{{ project.name }}</h2>
 
 <!-- Project Info -->

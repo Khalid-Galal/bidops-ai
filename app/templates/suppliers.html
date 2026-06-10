@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Suppliers | BidOps AI{% endblock %}
+{% block content %}
+<h1>Suppliers</h1>
+<p class="action-bar">
+  <a class="btn btn-secondary" href="/api/suppliers/export">Export Excel</a>
+</p>
+
+<div class="card">
+  <h3>Add supplier</h3>
+  <form id="supplier-add-form">
+    <input name="name" placeholder="Name" required>
+    <input name="emails" placeholder="Emails (comma-separated)">
+    <input name="trades" placeholder="Trades (comma-separated, e.g. mep,civil)">
+    <input name="contact_name" placeholder="Contact name">
+    <button class="btn btn-primary" type="submit">Add</button>
+  </form>
+</div>
+
+<div class="card">
+  <h3>Import from Excel</h3>
+  <form id="supplier-import-form">
+    <input type="file" name="file" accept=".xlsx" required>
+    <button class="btn btn-secondary" type="submit">Import</button>
+    <span id="import-result"></span>
+  </form>
+</div>
+
+<div class="card">
+  <h3>Supplier list</h3>
+  <input id="trade-filter" placeholder="Filter by trade (e.g. mep)">
+  <button class="btn btn-secondary" id="reload-btn" type="button">Reload</button>
+  <div id="supplier-table"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function esc(s) {
+  return String(s === null || s === undefined ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+async function api(path, opts) {
+  const resp = await fetch(path, opts || {});
+  if (!resp.ok) {
+    let detail = resp.status;
+    try { detail = (await resp.json()).detail || detail; } catch (e) {}
+    alert('Error: ' + detail);
+    throw new Error(String(detail));
+  }
+  return resp.status === 204 ? null : resp.json();
+}
+
+async function loadSuppliers() {
+  const trade = document.getElementById('trade-filter').value.trim();
+  const qs = trade ? ('?trade=' + encodeURIComponent(trade)) : '';
+  const rows = await api('/api/suppliers' + qs);
+  let html = '<table><tr><th>Code</th><th>Name</th><th>Emails</th><th>Trades</th>'
+    + '<th>Rating</th><th>RFQs</th><th>Offers</th><th></th></tr>';
+  for (const s of rows) {
+    html += '<tr><td>' + esc(s.code) + '</td><td>' + esc(s.name) + '</td><td>'
+      + esc((s.emails || []).join(', ')) + '</td><td>'
+      + esc((s.trade_categories || []).join(', ')) + '</td><td>'
+      + esc(s.rating) + '</td><td>' + esc(s.total_rfqs_sent) + '</td><td>'
+      + esc(s.total_offers_received) + '</td><td>'
+      + '<button class="btn btn-secondary" onclick="blacklistSupplier(' + s.id + ')">Blacklist</button>'
+      + '</td></tr>';
+  }
+  html += '</table>';
+  document.getElementById('supplier-table').innerHTML = html;
+}
+
+async function blacklistSupplier(id) {
+  const reason = prompt('Blacklist reason?');
+  if (!reason) return;
+  await api('/api/suppliers/' + id + '/blacklist', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reason: reason }),
+  });
+  loadSuppliers();
+}
+
+document.getElementById('supplier-add-form').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const f = e.target;
+  await api('/api/suppliers', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: f.name.value,
+      emails: f.emails.value.split(',').map(s => s.trim()).filter(Boolean),
+      trade_categories: f.trades.value.split(',').map(s => s.trim()).filter(Boolean),
+      contact_name: f.contact_name.value || null,
+    }),
+  });
+  f.reset();
+  loadSuppliers();
+});
+
+document.getElementById('supplier-import-form').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const result = await api('/api/suppliers/import', { method: 'POST', body: fd });
+  document.getElementById('import-result').textContent =
+    'imported ' + result.imported + ', updated ' + result.updated + ', skipped ' + result.skipped;
+  loadSuppliers();
+});
+
+document.getElementById('reload-btn').addEventListener('click', loadSuppliers);
+loadSuppliers();
+</script>
+{% endblock %}
