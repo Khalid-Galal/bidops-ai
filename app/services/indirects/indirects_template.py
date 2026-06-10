@@ -31,10 +31,11 @@ def _norm(value: object) -> str:
     return str(value).strip().lower() if value is not None else ""
 
 
-def detect_columns(ws) -> tuple[int | None, int | None]:
-    """Return (label_col, amount_col) from the first header row that names an
-    amount-like column. Aliases are matched in PRIORITY order (not column
-    order); label falls back to column 1."""
+def detect_columns(ws) -> tuple[int | None, int | None, int | None]:
+    """Return (label_col, amount_col, header_row) from the first header row
+    that names an amount-like column. Aliases are matched in PRIORITY order
+    (not column order); label falls back to column 1. header_row is the row
+    where the amount alias was found, or None when nothing was detected."""
     for r in range(1, min(ws.max_row, _MAX_HEADER_SCAN) + 1):
         headers: dict[str, int] = {}
         for c in range(1, ws.max_column + 1):
@@ -44,8 +45,18 @@ def detect_columns(ws) -> tuple[int | None, int | None]:
         amount_col = next((headers[a] for a in _AMOUNT_ALIASES if a in headers), None)
         if amount_col is not None:
             label_col = next((headers[a] for a in _LABEL_ALIASES if a in headers), None)
-            return (label_col or 1), amount_col
-    return None, None
+            return (label_col or 1), amount_col, r
+    return None, None, None
+
+
+def _pick_indirects_sheet(wb):
+    """Prefer a sheet explicitly named for indirects; else reuse the BOQ
+    heuristic (whose hints would otherwise miss e.g. ["Summary", "Indirects"]
+    and fall back to the first sheet)."""
+    for name in wb.sheetnames:
+        if "indirect" in name.lower():
+            return wb[name]
+    return pick_sheet(wb)
 
 
 def populate_indirects_template(
@@ -58,14 +69,17 @@ def populate_indirects_template(
 ) -> dict:
     """Write each component amount next to its best-matching row label.
 
-    Each component is written at most once (best-scoring unused component per
-    row, rows scanned top-down). Formula cells are never overwritten.
+    Components are assigned via GLOBAL best matching: every (row, component)
+    candidate scoring >= threshold is ranked by score, so an exact later row
+    cannot be starved by a generic earlier one. Each component is written at
+    most once; the detected header row and any row whose label IS a header
+    alias are never written. Formula cells are never overwritten.
     Raises ValueError if no amount column can be determined.
     """
     wb = load_workbook(template_path)  # defaults preserve formulas
     try:
-        ws = pick_sheet(wb)
-        det_label, det_amount = detect_columns(ws)
+        ws = _pick_indirects_sheet(wb)
+        det_label, det_amount, header_row = detect_columns(ws)
         label_col = label_column or det_label or 1
         amount_col = amount_column or det_amount
         if amount_col is None:
@@ -74,30 +88,45 @@ def populate_indirects_template(
                 "pass amount_column explicitly"
             )
 
-        remaining = dict(components)
-        written = skipped_formula = 0
-        for r in range(1, ws.max_row + 1):
-            if not remaining:
-                break
+        # Collect every candidate (row, component) pairing above the threshold.
+        start_row = (header_row + 1) if header_row is not None else 1
+        candidates: list[tuple[float, int, str]] = []
+        for r in range(start_row, ws.max_row + 1):
             label = ws.cell(row=r, column=label_col).value
             if label is None or str(label).strip() == "":
                 continue
             label_text = str(label)
-            best_name: str | None = None
-            best_score = 0.0
-            for name in remaining:
+            # Defense for the explicit-override path (header row unknown):
+            # never treat a literal header label as a data row.
+            if _norm(label_text) in _LABEL_ALIASES or _norm(label_text) in _AMOUNT_ALIASES:
+                continue
+            for name in components:
                 # underscores are word chars to the matcher: normalize to spaces
                 score = match_score(label_text, name.replace("_", " "))
-                if score > best_score:
-                    best_name, best_score = name, score
-            if best_name is None or best_score < _MATCH_THRESHOLD:
+                if score >= _MATCH_THRESHOLD:
+                    candidates.append((score, r, name))
+
+        # Global best assignment: highest score first (row, then name break ties
+        # deterministically); each row and each component used at most once.
+        candidates.sort(key=lambda c: (-c[0], c[1], c[2]))
+        assignments: dict[int, str] = {}
+        used_components: set[str] = set()
+        for score, r, name in candidates:
+            if r in assignments or name in used_components:
                 continue
+            assignments[r] = name
+            used_components.add(name)
+
+        remaining = dict(components)
+        written = skipped_formula = 0
+        for r in sorted(assignments):
+            name = assignments[r]
             target = ws.cell(row=r, column=amount_col)
             if isinstance(target.value, str) and target.value.startswith("="):
                 skipped_formula += 1
-                remaining.pop(best_name)  # row exists but is formula-driven
+                remaining.pop(name)  # row exists but is formula-driven
                 continue
-            target.value = round(remaining.pop(best_name), 2)
+            target.value = round(remaining.pop(name), 2)
             written += 1
 
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)

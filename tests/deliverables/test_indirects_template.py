@@ -24,9 +24,111 @@ def test_detect_columns():
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.append(["Item", "Description", "Amount"])
-    label_col, amount_col = detect_columns(ws)
+    label_col, amount_col, header_row = detect_columns(ws)
     assert amount_col == 3
     assert label_col == 2
+    assert header_row == 1
+
+
+def test_header_row_not_overwritten(tmp_path):
+    """A header like 'Indirects | Amount' fuzzy-matches component names; the
+    populate loop must start BELOW the header, never writing into it."""
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(["Indirects", "Amount"])        # row 1: header
+    ws.append(["Total Indirects", None])      # row 2: data
+    src = tmp_path / "hdr.xlsx"
+    wb.save(src)
+    result = populate_indirects_template(
+        str(src), str(tmp_path / "out.xlsx"), {"total_indirects": 510.0}
+    )
+    assert result["written"] == 1
+    out = openpyxl.load_workbook(tmp_path / "out.xlsx")
+    ws2 = out[out.sheetnames[0]]
+    assert ws2.cell(row=1, column=2).value == "Amount"  # header intact
+    assert ws2.cell(row=2, column=2).value == 510.0
+
+
+def test_specific_label_wins_over_generic(tmp_path):
+    """Global best assignment: 'Safety Officer' (exact, later row) must not be
+    stolen by the generic 'Safety' row above it."""
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(["Description", "Amount"])
+    ws.append(["Safety", None])           # row 2
+    ws.append(["Safety Officer", None])   # row 3
+    src = tmp_path / "spec.xlsx"
+    wb.save(src)
+    result = populate_indirects_template(
+        str(src), str(tmp_path / "out.xlsx"),
+        {"safety": 100.0, "safety_officer": 30000.0},
+    )
+    assert result["written"] == 2
+    out = openpyxl.load_workbook(tmp_path / "out.xlsx")
+    ws2 = out[out.sheetnames[0]]
+    assert ws2.cell(row=2, column=2).value == 100.0
+    assert ws2.cell(row=3, column=2).value == 30000.0
+
+    # Asymmetric case: only safety_officer present -> must land on ITS row (3).
+    result = populate_indirects_template(
+        str(src), str(tmp_path / "out2.xlsx"), {"safety_officer": 30000.0}
+    )
+    assert result["written"] == 1
+    out = openpyxl.load_workbook(tmp_path / "out2.xlsx")
+    ws3 = out[out.sheetnames[0]]
+    assert ws3.cell(row=2, column=2).value is None
+    assert ws3.cell(row=3, column=2).value == 30000.0
+
+
+def test_detect_amount_beats_total():
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(["Description", "Total", "Amount"])
+    label_col, amount_col, header_row = detect_columns(ws)
+    assert amount_col == 3  # "amount" outranks "total" regardless of column order
+    assert label_col == 1
+    assert header_row == 1
+
+
+def test_header_below_row_one(tmp_path):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(["ACME Constructions - Indirect Costs Template"])  # row 1: title junk
+    ws.append([])                                                # row 2: blank
+    ws.append(["Description", "Amount"])                         # row 3: real header
+    ws.append(["Site Supervision", None])                        # row 4: data
+    src = tmp_path / "deep.xlsx"
+    wb.save(src)
+    label_col, amount_col, header_row = detect_columns(ws)
+    assert (label_col, amount_col, header_row) == (1, 2, 3)
+    result = populate_indirects_template(
+        str(src), str(tmp_path / "out.xlsx"), {"site_supervision": 180.0}
+    )
+    assert result["written"] == 1
+    out = openpyxl.load_workbook(tmp_path / "out.xlsx")
+    ws2 = out[out.sheetnames[0]]
+    assert ws2.cell(row=4, column=2).value == 180.0
+
+
+def test_picks_indirects_sheet(tmp_path):
+    wb = openpyxl.Workbook()
+    summary = wb.active
+    summary.title = "Summary"
+    summary.append(["Some summary text"])
+    ind = wb.create_sheet("Indirects")
+    ind.append(["Description", "Amount"])
+    ind.append(["Site Supervision", None])
+    src = tmp_path / "multi.xlsx"
+    wb.save(src)
+    result = populate_indirects_template(
+        str(src), str(tmp_path / "out.xlsx"), {"site_supervision": 180.0}
+    )
+    assert result["written"] == 1
+    out = openpyxl.load_workbook(tmp_path / "out.xlsx")
+    assert out["Indirects"].cell(row=2, column=2).value == 180.0
+    assert all(c.value is None for row in out["Summary"].iter_rows() for c in row
+               if c.value == 180.0)  # Summary untouched by the write
+    assert out["Summary"].cell(row=1, column=1).value == "Some summary text"
 
 
 def test_populate_matches_labels_and_preserves_formula(tmp_path):
