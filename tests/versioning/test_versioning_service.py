@@ -161,4 +161,24 @@ async def test_unmark_superseded(db_session):
     await svc.unmark_superseded(db_session, d.id)
     await db_session.refresh(d)
     assert d.is_superseded is False
-    assert d.supersede_reason is None
+    # unmark installs a durable pin sentinel so re-analysis never re-marks it.
+    assert d.supersede_reason == "manual:keep"
+
+
+async def test_undo_survives_reanalyze(db_session):
+    pid = await _seed_project(db_session)
+    a = _doc(pid, "Spec_RevA.pdf", text="spec rev a")
+    b = _doc(pid, "Spec_RevB.pdf", text="spec rev b")
+    db_session.add_all([a, b])
+    await db_session.commit()
+    svc = VersioningService()
+    await svc.analyze(db_session, pid)
+    await db_session.refresh(a)
+    assert a.is_superseded is True  # auto-superseded by RevB
+    # User undoes the auto mark — installs the durable pin.
+    await svc.unmark_superseded(db_session, a.id)
+    # Re-analyze: the pin must hold, RevA stays live.
+    await svc.analyze(db_session, pid)
+    await db_session.refresh(a)
+    assert a.is_superseded is False
+    assert a.supersede_reason == "manual:keep"

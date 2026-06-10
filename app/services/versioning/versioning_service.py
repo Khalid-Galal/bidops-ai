@@ -97,11 +97,18 @@ class VersioningService:
             _base, _rank, label = parse_version(doc.filename)
             doc.version_label = label
 
-        manual_superseded = {
-            d.id for d in docs
-            if d.is_superseded and not (d.supersede_reason or "").startswith("auto:")
-        }
-        candidates = [d for d in docs if d.id not in manual_superseded]
+        # A doc is "manual-owned" when the user has touched its supersede state:
+        # any reason in the manual: namespace, OR a non-auto: mark. Manual-owned
+        # docs are excluded from candidates entirely — never auto-marked, never
+        # used as chain keepers. The auto:%-only reset above already preserves
+        # manual:keep pins through re-analysis.
+        def _manual_owned(d: Document) -> bool:
+            reason = d.supersede_reason or ""
+            return reason.startswith("manual:") or (
+                d.is_superseded and not reason.startswith("auto:")
+            )
+
+        candidates = [d for d in docs if not _manual_owned(d)]
 
         # 2) Exact duplicates by content hash — keep the EARLIEST copy.
         duplicates = 0
@@ -178,9 +185,14 @@ class VersioningService:
         doc = await db.get(Document, document_id)
         if doc is None:
             return None
+        reason = reason or "manually superseded"
+        # User input must never enter the machine-owned auto: namespace, or
+        # re-analysis would reset/overwrite the manual mark.
+        if reason.startswith("auto:"):
+            reason = "manual: " + reason
         doc.is_superseded = True
         doc.superseded_by_id = superseded_by_id
-        doc.supersede_reason = reason or "manually superseded"
+        doc.supersede_reason = reason
         await db.commit()
         await db.refresh(doc)
         return doc
@@ -191,7 +203,9 @@ class VersioningService:
             return None
         doc.is_superseded = False
         doc.superseded_by_id = None
-        doc.supersede_reason = None
+        # Durable pin sentinel (NOT None): excludes the doc from auto-marking on
+        # subsequent analyze() runs so the user's "keep this" decision survives.
+        doc.supersede_reason = "manual:keep"
         await db.commit()
         await db.refresh(doc)
         return doc
