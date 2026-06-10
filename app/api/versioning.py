@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.models.document import Document
 from app.models.project import Project
 from app.schemas.document import DocumentResponse
 from app.services.versioning.versioning_service import VersioningService
@@ -49,12 +50,31 @@ async def supersede_document(
     svc = VersioningService()
     if payload.undo:
         doc = await svc.unmark_superseded(db, document_id)
-    else:
-        doc = await svc.mark_superseded(
-            db, document_id,
-            superseded_by_id=payload.superseded_by_id,
-            reason=payload.reason or "manually superseded",
-        )
+        if doc is None:
+            raise HTTPException(status_code=404, detail=f"Document {document_id} not found")
+        return DocumentResponse.model_validate(doc)
+
+    target = await db.get(Document, document_id)
+    if target is None:
+        raise HTTPException(status_code=404, detail=f"Document {document_id} not found")
+
+    if payload.superseded_by_id is not None:
+        if payload.superseded_by_id == document_id:
+            raise HTTPException(
+                status_code=422, detail="A document cannot supersede itself."
+            )
+        replacement = await db.get(Document, payload.superseded_by_id)
+        if replacement is None or replacement.project_id != target.project_id:
+            raise HTTPException(
+                status_code=422,
+                detail="superseded_by_id must be a document in the same project.",
+            )
+
+    doc = await svc.mark_superseded(
+        db, document_id,
+        superseded_by_id=payload.superseded_by_id,
+        reason=payload.reason or "manually superseded",
+    )
     if doc is None:
         raise HTTPException(status_code=404, detail=f"Document {document_id} not found")
     return DocumentResponse.model_validate(doc)

@@ -64,6 +64,45 @@ async def test_analyze_404_missing_project(ver_client):
     assert r.status_code == 404
 
 
+async def test_supersede_rejects_self(ver_client):
+    client, pid = ver_client
+    async with client as c:
+        docs = (await c.get(f"/api/projects/{pid}/documents")).json()
+        target = docs[0]["id"]
+        r = await c.patch(f"/api/documents/{target}/supersede",
+                          json={"superseded_by_id": target})
+    assert r.status_code == 422
+
+
+async def test_supersede_rejects_cross_project(ver_client):
+    from app.database import get_db
+    from app.main import app as fastapi_app
+    from app.models.document import Document
+    from app.models.project import Project
+
+    client, pid = ver_client
+    # Create a document in a DIFFERENT project via the same overridden session.
+    override = fastapi_app.dependency_overrides[get_db]
+    agen = override()
+    session = await agen.__anext__()
+    other_project = Project(name="Other")
+    session.add(other_project)
+    await session.flush()
+    other_doc = Document(project_id=other_project.id, filename="Foreign.pdf",
+                         file_path="/m", file_type="pdf", file_size=1)
+    session.add(other_doc)
+    await session.commit()
+    other_doc_id = other_doc.id
+    await agen.aclose()
+
+    async with client as c:
+        docs = (await c.get(f"/api/projects/{pid}/documents")).json()
+        target = docs[0]["id"]
+        r = await c.patch(f"/api/documents/{target}/supersede",
+                          json={"superseded_by_id": other_doc_id})
+    assert r.status_code == 422
+
+
 async def test_manual_supersede_and_undo(ver_client):
     client, pid = ver_client
     async with client as c:
