@@ -8,6 +8,7 @@ into the default/tested path). Pure logic — no Gemini key.
 
 from __future__ import annotations
 
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from statistics import mean, median
@@ -122,8 +123,14 @@ class HistoricalService:
         scored.sort(key=lambda rs: (-rs[1], rs[0].id))
         top = scored[:top_k]
 
-        rates = [rec.rate for rec, _ in top]
-        currency = next((rec.currency for rec, _ in top if rec.currency), None)
+        # The benchmark aggregates only the dominant-currency bucket (no
+        # cross-currency blending); `matches` below still lists every candidate.
+        ccy_counts = Counter(rec.currency for rec, _ in top if rec.currency)
+        currency = ccy_counts.most_common(1)[0][0] if ccy_counts else None
+        if currency is not None:
+            bench_rates = [rec.rate for rec, _ in top if rec.currency == currency]
+        else:
+            bench_rates = [rec.rate for rec, _ in top]
         matches = [
             {
                 "historical_id": rec.id,
@@ -140,7 +147,7 @@ class HistoricalService:
         return {
             "query": description,
             "trade": trade,
-            "benchmark": self._benchmark(rates, currency),
+            "benchmark": self._benchmark(bench_rates, currency),
             "matches": matches,
         }
 

@@ -72,3 +72,24 @@ async def test_suggest_respects_top_k(db_session):
     # by id survive -> rates 10.0, 11.0, 12.0 (median 11.0), every run.
     assert [m["rate"] for m in out["matches"]] == [10.0, 11.0, 12.0]
     assert out["benchmark"]["median"] == 11.0
+
+
+async def test_benchmark_uses_dominant_currency(db_session):
+    db_session.add_all([
+        HistoricalPrice(description="Supply and install split AC unit", unit="no",
+                        rate=1200.0, currency="USD", trade_category="mep", source="import:c"),
+        HistoricalPrice(description="Supply and install split AC unit", unit="no",
+                        rate=1300.0, currency="USD", trade_category="mep", source="import:c"),
+        HistoricalPrice(description="Supply and install split AC unit", unit="no",
+                        rate=40000.0, currency="EGP", trade_category="mep", source="import:c"),
+    ])
+    await db_session.commit()
+    out = await HistoricalService().suggest(
+        db_session, "Supply and install split AC unit", trade="mep"
+    )
+    # Benchmark covers only the dominant (USD) bucket; the EGP outlier is excluded.
+    assert out["benchmark"]["currency"] == "USD"
+    assert out["benchmark"]["count"] == 2
+    assert out["benchmark"]["suggested_rate"] == 1250.0
+    # ...but every candidate still shows up in matches for full traceability.
+    assert len(out["matches"]) == 3
