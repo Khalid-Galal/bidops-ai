@@ -1,0 +1,49 @@
+<section id="tab-boq" class="wb-tab" data-label="BOQ" style="display:none">
+  <div class="card">
+    <h3>Parse BOQ workbook</h3>
+    <form id="boq-parse-form">
+      <input type="file" name="file" accept=".xlsx,.xls" required>
+      <button class="btn btn-primary" type="submit">Parse + classify</button>
+      <span id="boq-parse-result"></span>
+    </form>
+  </div>
+  <div class="card">
+    <h3>BOQ items</h3>
+    <div id="boq-table"></div>
+  </div>
+</section>
+<script>
+window.load_boq = async function () {
+  const items = await api('/api/projects/' + PID + '/boq');
+  document.getElementById('boq-table').innerHTML = tbl(
+    ['#', 'Description', 'Unit', 'Qty', 'Trade', 'Conf.', 'Rate', 'Total', ''],
+    items.map(function (i) {
+      return [i.line_number, i.description, i.unit, i.quantity, i.trade_category,
+        i.classification_confidence,
+        i.unit_rate === undefined ? '' : i.unit_rate,
+        i.total_price === undefined ? '' : i.total_price,
+        '!html:<button class="btn btn-secondary" onclick="setRate(' + i.id + ')">Set rate</button>'];
+    })
+  );
+};
+
+async function setRate(itemId) {
+  const rate = prompt('Unit rate?');
+  if (!rate) return;
+  await api('/api/boq-items/' + itemId + '/price', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ unit_rate: parseFloat(rate), notes: 'manual via workbench' }),
+  });
+  window.load_boq();
+}
+
+document.getElementById('boq-parse-form').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const r = await api('/api/projects/' + PID + '/boq/parse', { method: 'POST', body: fd });
+  document.getElementById('boq-parse-result').textContent =
+    r.total + ' rows, ' + r.classified + ' classified, ' + r.uncategorized + ' uncategorized';
+  window.load_boq();
+});
+</script>

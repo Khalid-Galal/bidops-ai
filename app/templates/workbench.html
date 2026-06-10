@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}{{ project.name }} — Workbench | BidOps AI{% endblock %}
+{% block content %}
+<h1>Workbench — {{ project.name }}</h1>
+<p class="action-bar">
+  <a class="btn btn-secondary" href="/projects/{{ project.id }}">Documents</a>
+  <a class="btn btn-secondary" href="/projects/{{ project.id }}/dashboard">Dashboard</a>
+</p>
+
+<div id="wb-nav" class="action-bar"></div>
+
+{% include "workbench/_boq.html" %}
+{% include "workbench/_packages.html" %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+const PID = {{ project.id }};
+
+function esc(s) {
+  return String(s === null || s === undefined ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+async function api(path, opts) {
+  const resp = await fetch(path, opts || {});
+  if (!resp.ok) {
+    let detail = resp.status;
+    try { detail = (await resp.json()).detail || detail; } catch (e) {}
+    alert('Error: ' + detail);
+    throw new Error(String(detail));
+  }
+  return resp.status === 204 ? null : resp.json();
+}
+
+function postJSON(path, body) {
+  return api(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body || {}),
+  });
+}
+
+/* tbl(['H1','H2'], [[a,b],[c,d]]) -> escaped HTML table string */
+function tbl(headers, rows) {
+  let html = '<table><tr>';
+  for (const h of headers) html += '<th>' + esc(h) + '</th>';
+  html += '</tr>';
+  for (const row of rows) {
+    html += '<tr>';
+    for (const cell of row) {
+      /* cells beginning with !html: are trusted button markup built locally */
+      if (typeof cell === 'string' && cell.indexOf('!html:') === 0) {
+        html += '<td>' + cell.slice(6) + '</td>';
+      } else {
+        html += '<td>' + esc(cell) + '</td>';
+      }
+    }
+    html += '</tr>';
+  }
+  return html + '</table>';
+}
+
+function showTab(name) {
+  document.querySelectorAll('.wb-tab').forEach(function (s) {
+    s.style.display = (s.id === 'tab-' + name) ? '' : 'none';
+  });
+  document.querySelectorAll('#wb-nav button').forEach(function (b) {
+    b.className = (b.dataset.tab === name) ? 'btn btn-primary' : 'btn btn-secondary';
+  });
+  location.hash = name;
+  const loader = window['load_' + name];
+  if (typeof loader === 'function') loader().catch(function () {});
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  const nav = document.getElementById('wb-nav');
+  document.querySelectorAll('.wb-tab').forEach(function (s) {
+    const name = s.id.replace('tab-', '');
+    const b = document.createElement('button');
+    b.dataset.tab = name;
+    b.textContent = s.dataset.label || name;
+    b.className = 'btn btn-secondary';
+    b.addEventListener('click', function () { showTab(name); });
+    nav.appendChild(b);
+  });
+  const initial = (location.hash || '#boq').slice(1);
+  showTab(document.getElementById('tab-' + initial) ? initial : 'boq');
+});
+</script>
+{% endblock %}

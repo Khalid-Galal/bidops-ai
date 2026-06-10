@@ -1,0 +1,45 @@
+<section id="tab-packages" class="wb-tab" data-label="Packages" style="display:none">
+  <p class="action-bar">
+    <button class="btn btn-primary" onclick="pkgAction('generate')">Generate packages</button>
+    <button class="btn btn-secondary" onclick="pkgAction('link-documents')">Link documents</button>
+    <button class="btn btn-secondary" onclick="pkgAction('export')">Export folders + register</button>
+    <a class="btn btn-secondary" href="/api/projects/{{ project.id }}/packages/register">Download register</a>
+  </p>
+  <div class="card">
+    <h3>Packages</h3>
+    <div id="pkg-table"></div>
+  </div>
+  <div class="card" id="pkg-detail" style="display:none">
+    <h3 id="pkg-detail-title"></h3>
+    <div id="pkg-detail-body"></div>
+  </div>
+</section>
+<script>
+window.load_packages = async function () {
+  const pkgs = await api('/api/projects/' + PID + '/packages');
+  document.getElementById('pkg-table').innerHTML = tbl(
+    ['Code', 'Name', 'Trade', 'Status', 'Items', ''],
+    pkgs.map(function (p) {
+      return [p.code, p.name, p.trade_category, p.status, p.total_items,
+        '!html:<button class="btn btn-secondary" onclick="pkgDetail(' + p.id + ')">Detail</button>'];
+    })
+  );
+};
+
+async function pkgAction(action) {
+  const r = await postJSON('/api/projects/' + PID + '/packages/' + action);
+  alert(JSON.stringify(r));
+  window.load_packages();
+}
+
+async function pkgDetail(pkgId) {
+  const d = await api('/api/projects/' + PID + '/packages/' + pkgId);
+  document.getElementById('pkg-detail-title').textContent = d.code + ' — ' + d.name;
+  document.getElementById('pkg-detail-body').innerHTML =
+    '<h4>Items</h4>' + tbl(['#', 'Description', 'Unit', 'Qty'],
+      d.items.map(function (i) { return [i.line_number, i.description, i.unit, i.quantity]; }))
+    + '<h4>Linked documents</h4>' + tbl(['Document', 'Score', 'Reason'],
+      d.linked_documents.map(function (l) { return [l.filename, l.relevance_score, l.relevance_reason]; }));
+  document.getElementById('pkg-detail').style.display = '';
+}
+</script>

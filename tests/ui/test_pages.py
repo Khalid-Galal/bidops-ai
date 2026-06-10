@@ -56,3 +56,20 @@ async def test_project_page_links_to_workbench(ui_client):
         r = await c.get(f"/projects/{pid}")
         assert f'href="/projects/{pid}/workbench"' in r.text
         assert f'href="/projects/{pid}/dashboard"' in r.text
+
+
+async def test_workbench_renders_with_tabs(ui_client):
+    client, pid = ui_client
+    async with client as c:
+        r = await c.get(f"/projects/{pid}/workbench")
+        assert r.status_code == 200
+        assert "Metro UI" in r.text
+        assert 'id="tab-boq"' in r.text
+        assert 'id="tab-packages"' in r.text
+
+
+async def test_workbench_404_missing_project(ui_client):
+    client, _ = ui_client
+    async with client as c:
+        r = await c.get("/projects/999999/workbench")
+    assert r.status_code == 404
