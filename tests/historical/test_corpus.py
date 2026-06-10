@@ -18,6 +18,31 @@ def _make_rate_sheet(path, rows, headers=("Description", "Unit", "Rate", "Trade"
     return str(path)
 
 
+async def test_trade_filter_normalizes_casing(db_session, tmp_path):
+    svc = HistoricalService()
+    # One row added via add() with a differently-cased trade ("MEP" -> "mep").
+    await svc.add(db_session, description="Split AC unit", rate=1200.0,
+                  unit="no", currency="USD", trade_category="MEP")
+    # One row imported as the canonical "mep" token.
+    f = _make_rate_sheet(tmp_path / "mep.xlsx", [
+        ("Split AC unit", "no", 1300, "mep", "USD"),
+    ])
+    await svc.import_excel(db_session, f)
+    # A single suggest with the canonical token aggregates BOTH rows
+    # (they share the canonical "mep" key after normalization).
+    out = await svc.suggest(db_session, "Split AC unit", trade="mep")
+    assert out["benchmark"]["count"] == 2
+
+    # A spaced/cased trade label round-trips: importing "MEP Works" and
+    # querying "MEP Works" both normalize to "mep_works" and match.
+    g = _make_rate_sheet(tmp_path / "mepworks.xlsx", [
+        ("Cable tray 200mm", "m", 25, "MEP Works", "USD"),
+    ])
+    await svc.import_excel(db_session, g)
+    out2 = await svc.suggest(db_session, "Cable tray 200mm", trade="MEP Works")
+    assert out2["benchmark"]["count"] >= 1
+
+
 async def test_import_excel_creates_records(db_session, tmp_path):
     f = _make_rate_sheet(tmp_path / "rates.xlsx", [
         ("Supply and install split AC unit", "no", 1200, "MEP", "USD"),

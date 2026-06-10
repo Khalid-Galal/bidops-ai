@@ -44,6 +44,8 @@ class HistoricalService:
         recorded_at: datetime | None = None,
         **fields,
     ) -> HistoricalPrice:
+        if fields.get("trade_category"):
+            fields["trade_category"] = _norm_trade(fields["trade_category"])
         rec = HistoricalPrice(
             description=description,
             rate=rate,
@@ -62,7 +64,7 @@ class HistoricalService:
     ) -> list[HistoricalPrice]:
         stmt = select(HistoricalPrice)
         if trade:
-            stmt = stmt.where(HistoricalPrice.trade_category == trade)
+            stmt = stmt.where(HistoricalPrice.trade_category == _norm_trade(trade))
         stmt = stmt.order_by(HistoricalPrice.id.desc()).limit(limit)
         return list((await db.execute(stmt)).scalars().all())
 
@@ -97,7 +99,7 @@ class HistoricalService:
     ) -> dict:
         stmt = select(HistoricalPrice)
         if trade:
-            stmt = stmt.where(HistoricalPrice.trade_category == trade)
+            stmt = stmt.where(HistoricalPrice.trade_category == _norm_trade(trade))
         if exclude_project_id is not None:
             stmt = stmt.where(
                 or_(
@@ -238,7 +240,7 @@ class HistoricalService:
                     unit=item.unit,
                     rate=item.unit_rate,
                     currency=item.currency,
-                    trade_category=item.trade_category,
+                    trade_category=_norm_trade(item.trade_category) if item.trade_category else None,
                     source=f"project:{project.name}",
                     source_project_id=project_id,
                     recorded_at=now,
