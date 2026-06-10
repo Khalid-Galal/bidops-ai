@@ -84,6 +84,34 @@ async def test_import_rejects_non_xlsx(hist_client):
     assert r.status_code == 400
 
 
+async def test_import_missing_required_columns(hist_client):
+    client, _ = hist_client
+    # A valid .xlsx but with no Rate column -> import_excel raises ValueError -> 400.
+    wb = openpyxl.Workbook(); ws = wb.active
+    ws.append(["Description", "Unit", "Trade"])
+    ws.append(["Concrete C30", "m3", "Civil"])
+    buf = io.BytesIO(); wb.save(buf); buf.seek(0)
+    async with client as c:
+        r = await c.post("/api/historical/import",
+                         files={"file": ("rates.xlsx", buf.getvalue(),
+                                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")})
+    assert r.status_code == 400, r.text
+
+
+async def test_import_oversized_returns_413(hist_client, monkeypatch):
+    client, _ = hist_client
+    monkeypatch.setattr("app.api.historical._MAX_UPLOAD_BYTES", 10)
+    wb = openpyxl.Workbook(); ws = wb.active
+    ws.append(["Description", "Unit", "Rate"])
+    ws.append(["Concrete C30", "m3", 90])
+    buf = io.BytesIO(); wb.save(buf); buf.seek(0)
+    async with client as c:
+        r = await c.post("/api/historical/import",
+                         files={"file": ("rates.xlsx", buf.getvalue(),
+                                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")})
+    assert r.status_code == 413, r.text
+
+
 async def test_feedback_then_suggest(hist_client):
     client, _ = hist_client
     async with client as c:

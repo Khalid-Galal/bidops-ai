@@ -61,12 +61,25 @@ async def test_import_excel_creates_records(db_session, tmp_path):
     assert all(r.source.startswith("import:") for r in recs)
 
 
+async def test_import_missing_required_columns(db_session, tmp_path):
+    # A sheet with no Rate column must be rejected outright.
+    f = _make_rate_sheet(
+        tmp_path / "norate.xlsx",
+        [("Split AC unit", "no", "MEP")],
+        headers=("Description", "Unit", "Trade"),
+    )
+    svc = HistoricalService()
+    with pytest.raises(ValueError):
+        await svc.import_excel(db_session, f)
+
+
 async def test_index_project_snapshots_priced_items(db_session):
     project = Project(name="Metro Line 3")
     db_session.add(project)
     await db_session.flush()
     db_session.add_all([
-        BOQItem(project_id=project.id, line_number="1", description="AC unit", unit="no",
+        BOQItem(project_id=project.id, line_number="1", description="AC unit",
+                description_ar="وحدة تكييف", unit="no",
                 quantity=5, client_row_index=2, trade_category="mep",
                 unit_rate=1200, total_price=6000, currency="USD"),
         BOQItem(project_id=project.id, line_number="2", description="Unpriced", unit="no",
@@ -84,6 +97,9 @@ async def test_index_project_snapshots_priced_items(db_session):
     )).scalar_one()
     assert rec.rate == 1200.0
     assert rec.source == "project:Metro Line 3"
+    # the snapshot carries the Arabic description and a recorded timestamp
+    assert rec.description_ar == "وحدة تكييف"
+    assert rec.recorded_at is not None
     # re-indexing is idempotent (no duplicate rows)
     res2 = await svc.index_project(db_session, project.id)
     assert res2["indexed"] == 1
