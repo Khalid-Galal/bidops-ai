@@ -68,3 +68,7 @@ async def test_suggest_respects_top_k(db_session):
     out = await HistoricalService().suggest(db_session, "cable tray 100mm", trade="mep", top_k=3)
     assert len(out["matches"]) == 3
     assert out["benchmark"]["count"] == 3
+    # Deterministic tie-break: all 8 rows tie on similarity, so the first three
+    # by id survive -> rates 10.0, 11.0, 12.0 (median 11.0), every run.
+    assert [m["rate"] for m in out["matches"]] == [10.0, 11.0, 12.0]
+    assert out["benchmark"]["median"] == 11.0

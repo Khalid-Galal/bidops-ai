@@ -107,6 +107,7 @@ class HistoricalService:
                     HistoricalPrice.source_project_id.is_(None),
                 )
             )
+        stmt = stmt.order_by(HistoricalPrice.id)
         records = list((await db.execute(stmt)).scalars().all())
 
         scored: list[tuple[HistoricalPrice, float]] = []
@@ -116,7 +117,9 @@ class HistoricalService:
                 score = max(score, float(self._semantic_scorer(description, rec.description)))
             if score >= min_score:
                 scored.append((rec, round(score, 4)))
-        scored.sort(key=lambda rs: rs[1], reverse=True)
+        # Total order: highest score first, then lowest id -> deterministic
+        # selection across DB backends under score ties.
+        scored.sort(key=lambda rs: (-rs[1], rs[0].id))
         top = scored[:top_k]
 
         rates = [rec.rate for rec, _ in top]
