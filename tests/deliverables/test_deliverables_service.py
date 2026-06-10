@@ -43,7 +43,7 @@ async def test_build_assembles_deliverables(db_session, tmp_path):
     assert "Pricing_Gaps.xlsx" in names
     assert "Comparison_PKG-001-MEP.xlsx" in names
     assert "manifest.json" in names
-    assert (folder / "Briefs" / "brief.html").exists()
+    assert (folder / "Briefs" / "PKG-001-MEP_brief.html").exists()
     manifest = json.loads((folder / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["project_id"] == pid
     assert manifest["project_name"] == "Metro"
@@ -66,3 +66,34 @@ async def test_build_is_idempotent(db_session, tmp_path):
 async def test_build_unknown_project(db_session, tmp_path):
     with pytest.raises(ValueError):
         await DeliverablesService(output_root=tmp_path).build(db_session, 999999)
+
+
+async def test_briefs_do_not_collide(db_session, tmp_path):
+    """Two packages whose brief files share a basename must BOTH survive the
+    flatten into Briefs/ (regression: the second copy silently overwrote the
+    first)."""
+    project = Project(name="Collide")
+    db_session.add(project)
+    await db_session.flush()
+    brief_a = tmp_path / "pkg_a" / "Package_Brief.html"
+    brief_a.parent.mkdir()
+    brief_a.write_text("<h1>Alpha brief</h1>")
+    brief_b = tmp_path / "pkg_b" / "Package_Brief.html"
+    brief_b.parent.mkdir()
+    brief_b.write_text("<h1>Bravo brief</h1>")
+    db_session.add(Package(project_id=project.id, name="Concrete", code="PKG-001-CON",
+                           trade_category="concrete", brief_path=str(brief_a)))
+    db_session.add(Package(project_id=project.id, name="HVAC", code="PKG-002-MEP",
+                           trade_category="mep", brief_path=str(brief_b)))
+    await db_session.commit()
+
+    svc = DeliverablesService(output_root=tmp_path / "deliv")
+    result = await svc.build(db_session, project.id)
+
+    briefs_dir = Path(result["folder"]) / "Briefs"
+    copies = sorted(briefs_dir.iterdir())
+    assert len(copies) == 2
+    assert result["briefs"] == 2
+    assert len(result["files"]) == len(set(result["files"]))  # no duplicate entries
+    contents = {p.read_text() for p in copies}
+    assert contents == {"<h1>Alpha brief</h1>", "<h1>Bravo brief</h1>"}

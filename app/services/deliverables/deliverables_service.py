@@ -64,7 +64,9 @@ class DeliverablesService:
         packages = list(
             (
                 await db.execute(
-                    select(Package).where(Package.project_id == project_id)
+                    select(Package)
+                    .where(Package.project_id == project_id)
+                    .order_by(Package.code)
                 )
             ).scalars().all()
         )
@@ -89,7 +91,12 @@ class DeliverablesService:
         for package in packages:
             if package.brief_path and Path(package.brief_path).exists():
                 briefs_dir.mkdir(exist_ok=True)
-                target = briefs_dir / Path(package.brief_path).name
+                # Exporter names every brief Package_Brief.html/.pdf (parent
+                # folder disambiguates); prefix the package code so flattening
+                # into Briefs/ cannot silently overwrite earlier copies.
+                target = briefs_dir / (
+                    f"{_safe_name(package.code)}_{Path(package.brief_path).name}"
+                )
                 shutil.copy2(package.brief_path, target)
                 files.append(f"Briefs/{target.name}")
                 briefs += 1
