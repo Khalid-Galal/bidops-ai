@@ -12,6 +12,7 @@ from fastapi.templating import Jinja2Templates
 from app.api.boq import router as boq_router
 from app.api.checklist import router as checklist_router
 from app.api.dashboard import router as dashboard_router
+from app.api.deliverables import router as deliverables_router
 from app.api.documents import router as documents_router
 from app.api.emails import router as emails_router
 from app.api.export import router as export_router
@@ -98,6 +99,7 @@ app.include_router(pricing_router, prefix="/api")
 app.include_router(indirects_router, prefix="/api")
 app.include_router(historical_router, prefix="/api")
 app.include_router(dashboard_router, prefix="/api")
+app.include_router(deliverables_router, prefix="/api")
 
 # Include page routes (imported here to avoid circular import with templates)
 from app.api.pages import router as pages_router  # noqa: E402
