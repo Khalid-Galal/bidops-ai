@@ -125,3 +125,13 @@ async def test_offers_tab_has_manual_entry_and_supplier_select(ui_client):
         assert "offerDetail" in r.text             # compliance detail view
         assert 'id="rfq-lang"' in r.text           # RFQ language override
         assert "editEmail" in r.text               # draft edit before send
+
+
+async def test_project_page_has_versioning_controls(ui_client):
+    client, pid = ui_client
+    async with client as c:
+        r = await c.get(f"/projects/{pid}")
+        assert "analyzeVersions" in r.text
+        # the documents table renders Category/Version headers when docs exist;
+        # with no docs the empty state shows — the button must exist regardless
+        assert "Analyze versions" in r.text

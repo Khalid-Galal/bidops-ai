@@ -80,12 +80,29 @@
     <!-- Document List -->
     <div class="card">
         <h3 class="section-title">Documents</h3>
+        <p class="action-bar">
+            <button class="btn btn-secondary" type="button" onclick="analyzeVersions()">Analyze versions</button>
+            <span id="analyze-result"></span>
+        </p>
+        <script>
+        async function analyzeVersions() {
+            var resp = await fetch('/api/projects/{{ project.id }}/documents/analyze', { method: 'POST' });
+            if (!resp.ok) { alert('Analyze failed: ' + resp.status); return; }
+            var r = await resp.json();
+            document.getElementById('analyze-result').textContent =
+                r.documents + ' docs — ' + r.duplicates + ' duplicates, '
+                + r.superseded + ' superseded';
+            setTimeout(function () { location.reload(); }, 600);
+        }
+        </script>
 
         {% if documents %}
         <table class="doc-table">
             <thead>
                 <tr>
                     <th>Filename</th>
+                    <th>Category</th>
+                    <th>Version</th>
                     <th>Type</th>
                     <th>Size</th>
                     <th>Status</th>
@@ -96,7 +113,13 @@
             <tbody id="doc-table-body">
                 {% for doc in documents %}
                 <tr>
-                    <td>{{ doc.filename }}</td>
+                    <td>{{ doc.filename }}
+                        {% if doc.is_superseded %}
+                        <span class="badge badge-failed" title="{{ doc.supersede_reason }}">superseded</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ doc.category if doc.category else '-' }}</td>
+                    <td>{{ doc.version_label if doc.version_label else '-' }}</td>
                     <td>{{ doc.file_type }}</td>
                     <td class="file-size">{{ "%.1f"|format(doc.file_size / 1024) }} KB</td>
                     <td><span class="badge badge-{{ doc.status }}">{{ doc.status }}</span></td>
