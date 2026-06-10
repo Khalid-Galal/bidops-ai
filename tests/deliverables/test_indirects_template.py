@@ -246,11 +246,30 @@ async def test_populate_template_endpoint(ind_client):
                             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
         )
         assert r.status_code == 200, r.text
+        assert r.headers["X-Indirects-Written"] == "1"
         wb = openpyxl.load_workbook(io.BytesIO(r.content))
         ws = wb["Indirects"]
         # site_supervision = 0.03 * 6000 = 180.0 (default rules)
         assert ws.cell(row=2, column=3).value == 180.0
         assert ws.cell(row=3, column=3).value == "=SUM(C2:C2)"  # formula intact
+
+
+async def test_populate_template_409_nothing_matched(ind_client):
+    client, pid = ind_client
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(["Description", "Amount"])
+    ws.append(["Quantum Flux", None])  # matches no indirect component
+    buf = io.BytesIO()
+    wb.save(buf)
+    async with client as c:
+        r = await c.post(
+            f"/api/projects/{pid}/indirects/populate-template",
+            files={"file": ("ind.xlsx", buf.getvalue(),
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
+        )
+    assert r.status_code == 409
+    assert "No template rows matched" in r.json()["detail"]
 
 
 async def test_populate_template_rejects_non_xlsx(ind_client):

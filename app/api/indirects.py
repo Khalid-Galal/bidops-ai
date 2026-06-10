@@ -113,18 +113,30 @@ async def populate_indirects_client_template(
             src_tmp.write(chunk)
     out_path = src_path + ".populated.xlsx"
     try:
-        populate_indirects_template(
+        result = populate_indirects_template(
             src_path, out_path, components,
             amount_column=amount_column, label_column=label_column,
         )
     except (ValueError, BadZipFile, InvalidFileException, KeyError) as exc:
         Path(src_path).unlink(missing_ok=True)
         Path(out_path).unlink(missing_ok=True)
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=400, detail=str(exc) or "Invalid template file"
+        ) from exc
     except Exception:
         Path(src_path).unlink(missing_ok=True)
         Path(out_path).unlink(missing_ok=True)
         raise
+
+    if result["written"] == 0 and result["skipped_formula"] == 0:
+        # Nothing matched at all — the populated file would be identical to
+        # the upload, so reject instead of returning a no-op download.
+        Path(src_path).unlink(missing_ok=True)
+        Path(out_path).unlink(missing_ok=True)
+        raise HTTPException(
+            status_code=409,
+            detail="No template rows matched the computed indirect components.",
+        )
 
     def _cleanup() -> None:
         Path(src_path).unlink(missing_ok=True)
@@ -135,4 +147,9 @@ async def populate_indirects_client_template(
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         filename=f"indirects_project_{project_id}.xlsx",
         background=BackgroundTask(_cleanup),
+        headers={
+            "X-Indirects-Written": str(result["written"]),
+            "X-Indirects-Skipped-Formula": str(result["skipped_formula"]),
+            "X-Indirects-Unmatched": str(len(result["unmatched_components"])),
+        },
     )

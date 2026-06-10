@@ -13,6 +13,7 @@ from app.database import get_db
 from app.main import templates
 from app.models.document import Document
 from app.models.project import Project
+from app.services.dashboard.dashboard_service import DashboardService
 
 router = APIRouter(tags=["pages"])
 
@@ -85,14 +86,12 @@ async def dashboard_page(
     db: AsyncSession = Depends(get_db),
 ):
     """Render the project status dashboard page."""
-    from app.services.dashboard.dashboard_service import DashboardService
-
     try:
         data = await DashboardService().project_dashboard(db, project_id)
-    except ValueError:
+    except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
-        )
+        ) from exc
     return templates.TemplateResponse(
         request,
         "dashboard.html",
