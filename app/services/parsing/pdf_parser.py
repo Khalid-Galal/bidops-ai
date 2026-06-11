@@ -12,10 +12,13 @@ The Docling converter is lazily initialized because:
 """
 
 import asyncio
+import logging
 import time
 from pathlib import Path
 
 from app.services.parsing.base import PageContent, ParsedDocument, ParserInterface
+
+logger = logging.getLogger(__name__)
 
 # Module-level converter cache -- lazy initialization.
 # NOTE: Adding Arabic to EasyOCR increases first-run model download size
@@ -46,12 +49,30 @@ def _get_converter():
     from docling.datamodel.base_models import InputFormat
 
     pipeline_options = PdfPipelineOptions()
-    pipeline_options.do_ocr = True
-    pipeline_options.ocr_options = EasyOcrOptions(
-        lang=["en", "ar"],  # English + Arabic OCR (Phase 2)
-        use_gpu=False,
-        force_full_page_ocr=False,  # Only OCR pages with insufficient text
-    )
+    # OCR is best-effort: newer docling (>=2.101) validates the OCR engine
+    # EAGERLY at pipeline init, so a broken easyocr import (e.g. a python-bidi
+    # version mismatch) would otherwise fail EVERY pdf -- including native-text
+    # ones that need no OCR at all. Probe the import and fall back to native
+    # text extraction when easyocr is unusable.
+    try:
+        import easyocr  # noqa: F401
+
+        ocr_available = True
+    except Exception as exc:
+        logger.warning(
+            "EasyOCR unavailable (%s) -- parsing PDFs without OCR "
+            "(native text only; scanned pages will come back empty)",
+            exc,
+        )
+        ocr_available = False
+
+    pipeline_options.do_ocr = ocr_available
+    if ocr_available:
+        pipeline_options.ocr_options = EasyOcrOptions(
+            lang=["en", "ar"],  # English + Arabic OCR (Phase 2)
+            use_gpu=False,
+            force_full_page_ocr=False,  # Only OCR pages with insufficient text
+        )
     pipeline_options.do_table_structure = True
     pipeline_options.table_structure_options = TableStructureOptions(
         do_cell_matching=True,

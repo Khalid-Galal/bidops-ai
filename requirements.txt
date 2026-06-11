@@ -8,7 +8,9 @@ aiosqlite
 alembic
 
 # Document parsing
-docling
+# docling is capped: 2.101 tightened validation twice (TableFormerMode enum,
+# eager OCR-engine check); review release notes before raising the cap.
+docling>=2.98,<2.102
 easyocr
 openpyxl
 
@@ -30,7 +32,10 @@ pydantic-settings
 
 # Arabic text processing (Phase 2)
 PyArabic
-python-bidi==0.4.2
+# python-bidi >=0.6 is REQUIRED by easyocr 1.7.2 (`from bidi import
+# get_display`); 0.6+ still ships bidi.algorithm for our text_cleaner.
+# The old ==0.4.2 pin broke the easyocr import entirely.
+python-bidi>=0.6
 
 # Language detection (Phase 2)
 lingua-language-detector
