@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import asyncio
+import logging
+import re
 
 import httpx
 import pytest
@@ -60,3 +62,48 @@ async def test_streaming_response_not_broken_by_middleware():
     assert r.status_code == 200
     assert r.text == "chunk0\nchunk1\nchunk2\n"
     assert r.headers["x-content-type-options"] == "nosniff"
+
+
+@pytest.mark.asyncio
+async def test_malicious_inbound_request_id_is_rejected():
+    # A client-supplied id that could inject CRLF (header smuggling) or quotes
+    # (JSON-body injection) must NOT be echoed back; a fresh hex id is used.
+    transport = httpx.ASGITransport(app=_app())
+    async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:
+        crlf_payload = "evil\r\nSet-Cookie: x=1"
+        r1 = await c.get("/ok", headers={"X-Request-ID": crlf_payload})
+        r2 = await c.get("/ok", headers={"X-Request-ID": 'a"b'})
+
+    for r in (r1, r2):
+        echoed = r.headers["x-request-id"]
+        assert "\r" not in echoed
+        assert "\n" not in echoed
+        assert '"' not in echoed
+        # The unsafe value was discarded -> a freshly generated hex id is used.
+        assert re.fullmatch(r"[a-f0-9]{32}", echoed)
+
+
+@pytest.mark.asyncio
+async def test_request_id_truncation_boundary():
+    # A safe but over-long id is truncated to the 128-char cap.
+    transport = httpx.ASGITransport(app=_app())
+    async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:
+        r = await c.get("/ok", headers={"X-Request-ID": "a" * 200})
+    echoed = r.headers["x-request-id"]
+    assert len(echoed) == 128
+    assert echoed == "a" * 128
+
+
+@pytest.mark.asyncio
+async def test_access_log_emitted(caplog):
+    # One structured access line per request, including method, path, and rid=.
+    transport = httpx.ASGITransport(app=_app())
+    with caplog.at_level(logging.INFO, logger="app.access"):
+        async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:
+            await c.get("/ok")
+    records = [r for r in caplog.records if r.name == "app.access"]
+    assert records, "expected an app.access log record"
+    msg = records[-1].getMessage()
+    assert "GET" in msg
+    assert "/ok" in msg
+    assert "rid=" in msg

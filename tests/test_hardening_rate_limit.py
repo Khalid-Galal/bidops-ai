@@ -40,10 +40,19 @@ async def test_enabled_limiter_trips_after_burst():
             codes.append((await c.get("/ping")).status_code)
     assert codes[0] == 200 and codes[1] == 200      # burst allowed
     assert 429 in codes                              # subsequent blocked
-    # 429 carries the envelope + correlation id (set by Observability)
+    # 429 carries the envelope + correlation id + security headers (set by
+    # Observability, which wraps RateLimit). Keep requesting until a 429 lands,
+    # then assert unconditionally.
     async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:
-        for _ in range(5):
+        r = None
+        for _ in range(12):
             r = await c.get("/ping")
-        if r.status_code == 429:
-            assert r.json()["error"]["type"] == "rate_limited"
-            assert r.headers.get("x-request-id")
+            if r.status_code == 429:
+                break
+        assert r is not None and r.status_code == 429, (
+            "expected a 429 within 12 requests but never observed one"
+        )
+        assert r.json()["error"]["type"] == "rate_limited"
+        assert r.headers.get("x-request-id")
+        assert r.headers["x-content-type-options"] == "nosniff"
+        assert r.headers["x-frame-options"] == "SAMEORIGIN"
