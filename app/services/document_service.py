@@ -67,6 +67,22 @@ def _get_embedding_service() -> EmbeddingService:
     return _embedding_service
 
 
+async def _get_embedding_service_async() -> EmbeddingService:
+    """Construct/return the embedding singleton OFF the event loop.
+
+    The first construction loads the sentence-transformer model (CPU + network
+    for HF Hub metadata), which would otherwise block the event loop and make
+    the whole server unresponsive during the first ingest (observed ~50s)."""
+    svc = await asyncio.to_thread(_get_embedding_service)
+    try:
+        from app.services.indexing.warmup import mark_models_ready
+
+        mark_models_ready()
+    except Exception:  # pragma: no cover - defensive
+        pass
+    return svc
+
+
 async def process_documents_batch(
     task_id: str,
     project_id: int,
@@ -165,11 +181,16 @@ async def process_documents_batch(
                         # fail the document parse -- search is secondary.
                         try:
                             chunking_svc = _get_chunking_service()
-                            embedding_svc = _get_embedding_service()
+                            # Model load happens off the event loop (cold start
+                            # would otherwise freeze the server ~50s).
+                            embedding_svc = await _get_embedding_service_async()
 
-                            # Delete any existing chunks (re-upload case).
-                            embedding_svc.delete_document_chunks(
-                                project_id, doc_id
+                            # Delete any existing chunks (re-upload case) -- Chroma
+                            # I/O, also off the loop.
+                            await asyncio.to_thread(
+                                embedding_svc.delete_document_chunks,
+                                project_id,
+                                doc_id,
                             )
 
                             # Chunk the parsed document.
