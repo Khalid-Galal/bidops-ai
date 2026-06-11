@@ -12,6 +12,17 @@ class Settings(BaseSettings):
     upload_dir: str = "data/uploads"
     debug: bool = False
     app_title: str = "BidOps AI"
+    app_version: str = "0.1.0"
+
+    # NFR / hardening (Phase 15). Rate limiting is OFF by default (single-user
+    # local app); when enabled it is a per-client-IP token bucket.
+    rate_limit_enabled: bool = False
+    rate_limit_per_minute: int = 120
+    rate_limit_burst: int = 30
+    # Load the embedding/NLI models in a background thread at startup so the
+    # first ingest/search is not slow. Off by default so the test suite and
+    # pure-pricing workflows never pay the cost.
+    warmup_models_on_startup: bool = False
 
     # ChromaDB vector storage (Phase 2)
     chroma_persist_dir: str = "data/chroma"
