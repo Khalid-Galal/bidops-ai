@@ -1,0 +1,31 @@
+# Keep the Docker build context lean: only app/, config/, requirements.txt are
+# needed to run. Everything below is dev-only, secret, or runtime state.
+.git
+.gitignore
+.venv
+venv
+.env
+.env.*
+data/
+.e2e_tmp/
+.e2e_tmp*
+.pytest_cache/
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+tests/
+docs/
+.planning/
+scripts/
+migrations/
+alembic.ini
+bidops-ai/
+.claude/
+.playwright-mcp/
+sample_tender/
+*.docx
+plan.md
+package-lock.json
+Dockerfile
+.dockerignore
