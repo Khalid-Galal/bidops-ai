@@ -214,12 +214,23 @@ def main() -> None:
     step("hybrid search", search, skip_if=has_pid)
 
     # ---- 5. LLM extract + checklist (expected to degrade w/o key) ---------
+    # These are the heaviest endpoints: on a COLD server the NLI model loads and
+    # the per-field pipeline makes many rate-limited (free-tier) Gemini calls, so
+    # they can exceed the client timeout while the server keeps working and
+    # persists the result. Treat a client timeout as DEGRADED (server completes
+    # async), not FAIL; give them a long per-call timeout.
+    def llm_call(path, note):
+        try:
+            return c.post(path, timeout=300.0).status_code, note
+        except httpx.TimeoutException:
+            return 408, note + " (client timeout; server completes async)"
+
     step("LLM extract (degrade ok)",
-         lambda: (c.post(f"/api/projects/{pid}/extract").status_code, "summary extraction"),
-         expect=(200,), degrade=(500, 503, 429), skip_if=has_pid)
+         lambda: llm_call(f"/api/projects/{pid}/extract", "summary extraction"),
+         expect=(200,), degrade=(408, 500, 503, 429), skip_if=has_pid)
     step("LLM checklist (degrade ok)",
-         lambda: (c.post(f"/api/projects/{pid}/checklist").status_code, "checklist extraction"),
-         expect=(200,), degrade=(500, 503, 429), skip_if=has_pid)
+         lambda: llm_call(f"/api/projects/{pid}/checklist", "checklist extraction"),
+         expect=(200,), degrade=(408, 500, 503, 429), skip_if=has_pid)
 
     # ---- 6. document versioning analyze -----------------------------------
     def analyze():
