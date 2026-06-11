@@ -31,3 +31,6 @@ Thumbs.db
 sample_tender/
 verification_out/
 verification_out_run*.log
+
+# E2E shakedown throwaway runtime (scripts/e2e_shakedown.py)
+.e2e_tmp/
