@@ -7,7 +7,9 @@ read the request scope and rewrite the `http.response.start` message headers.
 """
 from __future__ import annotations
 
+import json
 import logging
+import re
 import time
 import uuid
 from collections import defaultdict
@@ -29,6 +31,10 @@ SECURITY_HEADERS: list[tuple[bytes, bytes]] = [
 
 _MAX_REQUEST_ID_LEN = 128
 
+# Only accept a client-supplied request id if it is safe to echo into a header
+# and a JSON body (no CRLF, quotes, or control chars). Otherwise generate one.
+_REQUEST_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
+
 
 def new_request_id() -> str:
     return uuid.uuid4().hex
@@ -48,11 +54,13 @@ class ObservabilityMiddleware:
 
         headers = dict(scope.get("headers") or [])
         inbound = headers.get(b"x-request-id")
-        request_id = (
-            inbound.decode("latin-1")[:_MAX_REQUEST_ID_LEN]
-            if inbound
-            else new_request_id()
-        )
+        request_id = ""
+        if inbound:
+            candidate = inbound.decode("latin-1", "ignore")[:_MAX_REQUEST_ID_LEN]
+            if _REQUEST_ID_RE.match(candidate):
+                request_id = candidate
+        if not request_id:
+            request_id = new_request_id()
         # Make request.state.request_id available to handlers + exception handler.
         scope.setdefault("state", {})
         scope["state"]["request_id"] = request_id
@@ -99,7 +107,10 @@ class RateLimitMiddleware:
 
     Lightweight + dependency-free; intended as a safety valve (e.g. to avoid
     accidentally hammering the free-tier LLM keys), not a hostile-traffic
-    defence. State is in-process (single-worker local app)."""
+    defence. State is in-process (single-worker local app).
+
+    MUST be wrapped by ObservabilityMiddleware (added as the outer middleware)
+    so its 429 response receives the security + x-request-id headers."""
 
     def __init__(
         self,
@@ -145,11 +156,15 @@ class RateLimitMiddleware:
             return
 
         request_id = (scope.get("state") or {}).get("request_id", "")
-        body = (
-            b'{"error":{"type":"rate_limited",'
-            b'"message":"Too many requests; slow down.",'
-            b'"request_id":"' + request_id.encode("latin-1") + b'"}}'
-        )
+        body = json.dumps(
+            {
+                "error": {
+                    "type": "rate_limited",
+                    "message": "Too many requests; slow down.",
+                    "request_id": request_id,
+                }
+            }
+        ).encode("utf-8")
         headers = [
             (b"content-type", b"application/json"),
             (b"retry-after", b"1"),

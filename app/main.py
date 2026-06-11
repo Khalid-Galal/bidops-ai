@@ -89,7 +89,6 @@ register_exception_handlers(app)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -103,7 +102,8 @@ app.add_middleware(
 )
 
 # Observability OUTERMOST: assigns the request id (so RateLimit's 429 can carry
-# it), injects security + correlation headers, logs one line per request.
+# it), injects security + correlation headers, logs one line per request. DO NOT
+# reorder these three add_middleware calls.
 app.add_middleware(ObservabilityMiddleware)
 
 # Include API routers

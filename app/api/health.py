@@ -1,6 +1,8 @@
 """Health + readiness endpoints (Phase 15)."""
 from __future__ import annotations
 
+import logging
+
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
@@ -8,6 +10,8 @@ from sqlalchemy import text
 from app.config import get_settings
 from app.database import async_session_factory
 from app.services.indexing.warmup import models_ready
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["health"])
 
@@ -29,8 +33,9 @@ async def readiness_check():
             await db.execute(text("SELECT 1"))
         checks["database"] = "ok"
     except Exception as exc:  # pragma: no cover - exercised only on DB outage
+        logger.warning("Readiness DB check failed: %s", exc)
         db_ok = False
-        checks["database"] = f"error: {type(exc).__name__}"
+        checks["database"] = "error"
     checks["models_warm"] = models_ready()
     payload = {"status": "ready" if db_ok else "not_ready", "checks": checks}
     return JSONResponse(status_code=200 if db_ok else 503, content=payload)
