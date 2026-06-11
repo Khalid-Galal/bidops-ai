@@ -28,6 +28,19 @@ bootstraps its SQLite schema on startup.
 |---|---|---|
 | **Secret** | `BIDOPS_GEMINI_API_KEYS` | comma-separated Gemini API key(s) — enables the AI features |
 | Variable | `BIDOPS_GEMINI_MODEL` | `gemini-2.5-flash` (already defaulted in the image) |
+| **Secret** | `HF_TOKEN` | HF **write** token — enables free snapshot persistence (below) |
+| Variable | `BIDOPS_BACKUP_DATASET_REPO` | e.g. `<user>/bidops-data` — private dataset repo for snapshots |
+
+### Free snapshot persistence (no paid disk needed)
+
+When `HF_TOKEN` + `BIDOPS_BACKUP_DATASET_REPO` are set, the app snapshots its
+state (database, uploads, offer files, vector index, rules override) to that
+**private** HF Dataset repo whenever data changes (~every 60s), and restores
+the latest snapshot automatically on a fresh boot — so projects survive
+rebuilds, restarts, and Space sleep. The repo is auto-created on first backup.
+Regenerable artifacts (`packages/`, `deliverables/`) are excluded; re-run their
+export/build endpoints after a restore. Manual trigger: `POST /api/backup`;
+state: `GET /api/backup/status`.
 
 Without a Gemini key the deterministic pipeline (BOQ parsing, packaging, pricing,
 indirects, historical benchmarks, deliverables, RFQ/clarification drafts) works

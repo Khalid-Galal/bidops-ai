@@ -10,11 +10,21 @@ async def test_image_parser_returns_metadata_and_degrades_gracefully(tmp_path):
     assert parsed.content_type == "image"
     assert parsed.page_count == 1
     assert parsed.metadata.get("width") == 120 and parsed.metadata.get("height") == 40
-    # OCR may be unavailable in this env -> must NOT raise; full_text is str,
-    # and if no OCR engine, a warning is recorded.
+    # Must NOT raise regardless of OCR availability; full_text is always a str.
     assert isinstance(parsed.full_text, str)
     if not parsed.full_text.strip():
-        assert any("ocr" in w.lower() for w in parsed.warnings)
+        # Empty text is fine in BOTH environments: when no OCR engine is
+        # usable an "OCR unavailable" warning must be recorded; when easyocr
+        # works (python-bidi >=0.6) a blank image simply has no text and no
+        # warning is expected.
+        try:
+            import easyocr  # noqa: F401
+
+            ocr_available = True
+        except Exception:
+            ocr_available = False
+        if not ocr_available:
+            assert any("ocr" in w.lower() for w in parsed.warnings)
 
 
 def test_image_parser_extensions():

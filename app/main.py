@@ -1,5 +1,6 @@
 """FastAPI application entry point with lifespan management."""
 
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -9,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from app.api.backup import router as backup_router
 from app.api.boq import router as boq_router
 from app.api.checklist import router as checklist_router
 from app.api.dashboard import router as dashboard_router
@@ -48,6 +50,33 @@ async def lifespan(app: FastAPI):
     """Manage application startup and shutdown."""
     settings = get_settings()
 
+    # Restore the latest HF Dataset snapshot on a FRESH boot (no-op when the
+    # DB file already exists or backups are unconfigured).
+    #
+    # CRITICAL ORDERING: restore MUST complete before engine.begin() below.
+    # The engine is lazy, but once any connection is pooled it is bound to the
+    # current DB file; replacing the file underneath it split-brains reads.
+    # Never add import-time DB calls in routers/services.
+    from app.services.backup.backup_service import (
+        RESTORE_TIMEOUT_S,
+        get_backup_service,
+    )
+
+    backup_svc = get_backup_service()
+    if backup_svc.enabled():
+        if Path("data").is_symlink():
+            logger.info(
+                "Persistent disk detected AND HF Dataset snapshots enabled: "
+                "snapshots act as an additional off-site backup."
+            )
+        try:
+            # Bounded so a hung HF Hub call can never wedge startup.
+            await asyncio.wait_for(
+                asyncio.to_thread(backup_svc.restore_sync), timeout=RESTORE_TIMEOUT_S
+            )
+        except asyncio.TimeoutError:
+            logger.warning("Snapshot restore timed out -- starting fresh")
+
     # Startup: create database tables
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -61,17 +90,33 @@ async def lifespan(app: FastAPI):
     logger.info("BidOps AI started -- database tables created, directories ready")
 
     if settings.warmup_models_on_startup:
-        import asyncio
-
         from app.services.indexing.warmup import warmup_models
 
         asyncio.create_task(asyncio.to_thread(warmup_models))
         logger.info("Model warmup scheduled (background)")
 
+    # Periodic snapshots to the HF Dataset repo whenever data/ changes.
+    watcher_task = None
+    if backup_svc.enabled():
+        watcher_task = asyncio.create_task(backup_svc.watch())
+
     yield
 
-    # Shutdown: dispose database engine
+    # Shutdown: stop the watcher (await it so a mid-flight snapshot finishes
+    # releasing its lock), close DB connections, then take a final snapshot
+    # (best effort -- captures anything the watcher hadn't pushed yet).
+    if watcher_task is not None:
+        watcher_task.cancel()
+        try:
+            await watcher_task
+        except asyncio.CancelledError:
+            pass
     await engine.dispose()
+    if backup_svc.enabled() and backup_svc.dirty():
+        try:
+            await backup_svc.backup()
+        except Exception as exc:  # pragma: no cover - best effort
+            logger.warning("Final shutdown backup failed: %s", exc)
     logger.info("BidOps AI shutdown complete")
 
 
@@ -126,6 +171,7 @@ app.include_router(historical_router, prefix="/api")
 app.include_router(dashboard_router, prefix="/api")
 app.include_router(deliverables_router, prefix="/api")
 app.include_router(versioning_router, prefix="/api")
+app.include_router(backup_router, prefix="/api")
 
 # Include page routes (imported here to avoid circular import with templates)
 from app.api.pages import router as pages_router  # noqa: E402

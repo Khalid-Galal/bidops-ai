@@ -62,6 +62,13 @@ class Settings(BaseSettings):
     confidence_low_threshold: float = 0.5
     review_threshold: float = 0.5
 
+    # Free-tier persistence: snapshot data/ to a private HF Dataset repo and
+    # restore it on a fresh boot. Enabled when BOTH backup_dataset_repo and a
+    # write token (BIDOPS_HF_TOKEN, or the standard HF_TOKEN env var) are set.
+    backup_dataset_repo: str = ""  # e.g. "Khaled-Galal/bidops-data"
+    hf_token: str = ""
+    backup_interval_seconds: int = 60
+
     def gemini_key_list(self) -> list[str]:
         """Return configured Gemini API keys (rotation list preferred).
 
