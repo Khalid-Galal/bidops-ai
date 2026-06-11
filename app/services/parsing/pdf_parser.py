@@ -41,6 +41,7 @@ def _get_converter():
         PdfPipelineOptions,
         EasyOcrOptions,
         TableStructureOptions,
+        TableFormerMode,
     )
     from docling.datamodel.base_models import InputFormat
 
@@ -54,7 +55,11 @@ def _get_converter():
     pipeline_options.do_table_structure = True
     pipeline_options.table_structure_options = TableStructureOptions(
         do_cell_matching=True,
-        mode="ACCURATE",  # Best accuracy for tender BOQ tables
+        # Pass the enum member, NOT the string "ACCURATE": newer docling
+        # (>=2.101) validates this field strictly and only accepts the enum /
+        # its lowercase value, while older docling accepted the uppercase
+        # string. The member works across both versions.
+        mode=TableFormerMode.ACCURATE,  # Best accuracy for tender BOQ tables
     )
 
     _converter = DocumentConverter(
