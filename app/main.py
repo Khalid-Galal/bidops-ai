@@ -30,6 +30,8 @@ from app.api.suppliers import router as suppliers_router
 from app.api.versioning import router as versioning_router
 from app.config import get_settings
 from app.database import engine
+from app.errors import register_exception_handlers
+from app.middleware import ObservabilityMiddleware, RateLimitMiddleware
 from app.models import Base
 
 logging.basicConfig(level=logging.INFO)
@@ -58,6 +60,14 @@ async def lifespan(app: FastAPI):
 
     logger.info("BidOps AI started -- database tables created, directories ready")
 
+    if settings.warmup_models_on_startup:
+        import asyncio
+
+        from app.services.indexing.warmup import warmup_models
+
+        asyncio.create_task(asyncio.to_thread(warmup_models))
+        logger.info("Model warmup scheduled (background)")
+
     yield
 
     # Shutdown: dispose database engine
@@ -69,11 +79,13 @@ settings = get_settings()
 
 app = FastAPI(
     title=settings.app_title,
-    version="0.1.0",
+    version=settings.app_version,
     lifespan=lifespan,
 )
 
-# CORS middleware for local development (v1 is local-only, allow all origins)
+register_exception_handlers(app)
+
+# CORS (local dev: allow all). Added first => innermost of the custom stack.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -81,6 +93,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Rate limiting (off by default; safety valve for the free-tier LLM keys).
+app.add_middleware(
+    RateLimitMiddleware,
+    enabled=settings.rate_limit_enabled,
+    per_minute=settings.rate_limit_per_minute,
+    burst=settings.rate_limit_burst,
+)
+
+# Observability OUTERMOST: assigns the request id (so RateLimit's 429 can carry
+# it), injects security + correlation headers, logs one line per request.
+app.add_middleware(ObservabilityMiddleware)
 
 # Include API routers
 app.include_router(health_router)
