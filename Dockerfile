@@ -50,4 +50,6 @@ RUN python -c "from sentence_transformers import CrossEncoder; CrossEncoder('cro
 COPY --chown=user:user . .
 
 EXPOSE 7860
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7860"]
+# entrypoint.sh routes data/ onto the persistent /data volume when the HF
+# persistent-storage add-on is enabled; otherwise data/ stays ephemeral.
+CMD ["bash", "entrypoint.sh"]
