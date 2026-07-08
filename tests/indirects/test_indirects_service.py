@@ -1,5 +1,8 @@
 from app.schemas.rules import DurationBasedRole, RulesConfig
-from app.services.indirects.indirects_service import IndirectsService
+from app.services.indirects.indirects_service import (
+    IndirectsService,
+    parse_duration_months,
+)
 
 
 class _FakeRules:
@@ -143,3 +146,69 @@ async def test_cost_summary_empty_project(db_session):
     assert out["total_cost_base"] == 0.0
     assert out["grand_total"] == 0.0
     assert out["currency"]  # non-null fallback (rules default "USD")
+
+
+# ---------------------------------------------------------------------------
+# project_duration -> duration_months wiring
+# ---------------------------------------------------------------------------
+
+import json  # noqa: E402
+
+
+def test_parse_duration_months_english_and_arabic():
+    assert parse_duration_months("24 months") == 24
+    assert parse_duration_months("18 Months from site handover") == 18
+    assert parse_duration_months("2 years") == 24
+    assert parse_duration_months("1.5 years") == 18
+    assert parse_duration_months("مدة التنفيذ 24 شهر") == 24
+    assert parse_duration_months("٢٤ شهراً") == 24  # Arabic-Indic digits + form
+    assert parse_duration_months("سنتان") is None  # no digits -> unparseable
+    assert parse_duration_months("36") == 36  # bare number read as months
+    assert parse_duration_months("") is None
+    assert parse_duration_months(None) is None
+
+
+async def _seed_project_with_duration(db, value):
+    pid = await _seed_priced_project(db)
+    project = await db.get(Project, pid)
+    project.summary_json = json.dumps(
+        {"project_duration": {"value": value, "confidence": 0.9}}
+    )
+    await db.commit()
+    return pid
+
+
+async def test_resolve_duration_months_from_summary(db_session):
+    pid = await _seed_project_with_duration(db_session, "18 months")
+    assert await _IS().resolve_duration_months(db_session, pid) == 18
+
+
+async def test_resolve_duration_months_user_value_wins(db_session):
+    pid = await _seed_project_with_duration(db_session, "18 months")
+    # An explicit user-supplied duration overrides the extracted value.
+    assert await _IS().resolve_duration_months(db_session, pid, 6) == 6
+
+
+async def test_resolve_duration_months_no_summary_returns_zero(db_session):
+    pid = await _seed_priced_project(db_session)  # no summary_json
+    assert await _IS().resolve_duration_months(db_session, pid) == 0
+
+
+async def test_resolve_duration_months_missing_field_returns_zero(db_session):
+    pid = await _seed_priced_project(db_session)
+    project = await db_session.get(Project, pid)
+    project.summary_json = json.dumps({"project_name": {"value": "Metro"}})
+    await db_session.commit()
+    assert await _IS().resolve_duration_months(db_session, pid) == 0
+
+
+async def test_indirects_result_uses_extracted_duration(db_session):
+    # duration_based staff cost is driven by the extracted project_duration
+    # when the caller does not pass duration_months.
+    cfg = RulesConfig()
+    cfg.indirects.percentage_based = {}
+    cfg.indirects.duration_based = {"project_manager": DurationBasedRole(monthly_rate=1000)}
+    pid = await _seed_project_with_duration(db_session, "18 months")
+    out = await _IS(rules_service=_FakeRules(cfg)).indirects_result(db_session, pid)
+    assert out["indirects"]["duration_months"] == 18
+    assert out["indirects"]["duration_based"] == {"project_manager": 18000.0}

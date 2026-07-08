@@ -61,6 +61,7 @@ class PricingService:
         line_items = offer.line_items or []
         if not line_items:
             raise ValueError("Offer has no line items to populate from")
+        quantity_tolerance = self._rules().measurement.quantity_tolerance
 
         boq_items = list(
             (
@@ -98,12 +99,21 @@ class PricingService:
             item.currency = offer.currency
             item.selected_offer_id = offer.id
             item.mapping_confidence = score
-            item.requires_review = score < HIGH_CONFIDENCE
+            notes = []
+            if score < HIGH_CONFIDENCE:
+                notes.append(f"Low-confidence price mapping ({score})")
+            match_qty = match.get("quantity")
+            if match_qty not in (None, 0) and item.quantity:
+                qty_diff = abs(item.quantity - match_qty) / abs(item.quantity)
+                if qty_diff > quantity_tolerance:
+                    notes.append(
+                        f"Offer quantity {match_qty} differs from BOQ quantity "
+                        f"{item.quantity} by more than {quantity_tolerance:.0%}"
+                    )
+            item.requires_review = bool(notes)
+            item.review_notes = "; ".join(notes) or None
             if item.requires_review:
-                item.review_notes = f"Low-confidence price mapping ({score})"
                 needs_review += 1
-            else:
-                item.review_notes = None
             total_value += item.total_price
             populated += 1
 

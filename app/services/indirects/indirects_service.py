@@ -6,11 +6,45 @@ Pure logic — no LLM. Direct cost is read from the Phase 11 pricing summary.
 
 from __future__ import annotations
 
+import json
+import re
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.project import Project
 from app.services.pricing.commercial import compute_commercial
 from app.services.pricing.pricing_service import PricingService
 from app.services.rules.rules_service import RulesService
+
+# Arabic-Indic digits -> ASCII, so extracted durations like "٢٤ شهر" parse.
+_ARABIC_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
+# Year units (English + Arabic) and month units (English + Arabic). Arabic
+# month forms شهرا/شهور/أشهر all contain "شهر", so the bare "شهر" alternative
+# matches them via re.search.
+_YEARS_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(?:years?|yrs?|سنوات|سنة|أعوام|عام)")
+_MONTHS_RE = re.compile(r"(\d+)\s*(?:months?|mos?|أشهر|شهور|شهر)")
+
+
+def parse_duration_months(value: str | None) -> int | None:
+    """Parse a whole number of months from an extracted duration string.
+
+    Handles English and Arabic month/year units and Arabic-Indic digits
+    (e.g. "24 months", "2 years", "٢٤ شهر"). A bare number is read as months.
+    Returns None when no duration can be read.
+    """
+    if not value:
+        return None
+    text = value.translate(_ARABIC_DIGITS).lower()
+    m = _YEARS_RE.search(text)
+    if m:
+        return round(float(m.group(1)) * 12)
+    m = _MONTHS_RE.search(text)
+    if m:
+        return int(m.group(1))
+    m = re.search(r"\d+", text)
+    if m:
+        return int(m.group(0))
+    return None
 
 
 class IndirectsService:
@@ -59,6 +93,29 @@ class IndirectsService:
             "total_indirects": total_indirects,
         }
 
+    async def resolve_duration_months(
+        self, db: AsyncSession, project_id: int, duration_months: int = 0
+    ) -> int:
+        """Default an unset duration to the extracted project_duration.
+
+        Duration-based staff indirects silently compute to zero when the user
+        does not supply a duration, so when `duration_months` is falsy we fall
+        back to the months parsed from the project summary's `project_duration`
+        field (user-supplied values always win). Returns 0 if none is found.
+        """
+        if duration_months:
+            return duration_months
+        project = await db.get(Project, project_id)
+        if project is None or not project.summary_json:
+            return 0
+        try:
+            summary = json.loads(project.summary_json)
+        except (ValueError, TypeError):
+            return 0
+        field = summary.get("project_duration")
+        value = field.get("value") if isinstance(field, dict) else None
+        return parse_duration_months(value) or 0
+
     async def indirects_result(
         self,
         db: AsyncSession,
@@ -67,6 +124,7 @@ class IndirectsService:
         duration_months: int = 0,
         location: str = "default",
     ) -> dict:
+        duration_months = await self.resolve_duration_months(db, project_id, duration_months)
         summary = await PricingService(self._rules_service).pricing_summary(db, project_id)
         direct_cost = summary["cost_subtotal"]
         return {
@@ -87,6 +145,7 @@ class IndirectsService:
         location: str = "default",
     ) -> dict:
         rules = self._rules()
+        duration_months = await self.resolve_duration_months(db, project_id, duration_months)
         summary = await PricingService(self._rules_service).pricing_summary(db, project_id)
         direct_cost = summary["cost_subtotal"]
         indirects = self.compute(

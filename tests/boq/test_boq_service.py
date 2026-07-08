@@ -58,7 +58,7 @@ async def test_parse_and_store_creates_classified_items(db_session, tmp_path):
     assert len(items) == 3
     by_desc = {i.description: i for i in items}
     assert by_desc["Reinforced concrete in raft"].trade_category == "concrete"
-    assert by_desc["Supply LV electrical distribution boards"].trade_category == "mep"
+    assert by_desc["Supply LV electrical distribution boards"].trade_category == "electrical"
     # unmatched -> no category + flagged for review
     widget = by_desc["Bespoke unmatched widget"]
     assert widget.trade_category is None

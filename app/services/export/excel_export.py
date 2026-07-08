@@ -16,7 +16,8 @@ from app.models.project import Project
 from app.schemas.checklist import RequirementsChecklist
 from app.schemas.extraction import ProjectSummary
 
-# Human-readable labels for the 13 summary fields
+# Human-readable labels for the summary fields (13 original + 7 added later:
+# performance_bond..main_contractor -- see plan.md contract-conditions fields).
 FIELD_LABELS: dict[str, str] = {
     "project_name": "Project Name",
     "project_owner": "Project Owner",
@@ -31,6 +32,13 @@ FIELD_LABELS: dict[str, str] = {
     "retention_percentage": "Retention Percentage",
     "payment_terms": "Payment Terms",
     "stakeholders": "Stakeholders",
+    "performance_bond": "Performance Bond",
+    "liquidated_damages": "Liquidated Damages",
+    "project_duration": "Project Duration",
+    "defects_liability_period": "Defects Liability Period",
+    "insurances": "Insurances",
+    "clarification_deadline": "Clarification Deadline",
+    "main_contractor": "Main Contractor",
 }
 
 # Header styling

@@ -83,8 +83,12 @@ async def populate_indirects_client_template(
     if ext not in _ALLOWED_TEMPLATE_EXT:
         raise HTTPException(status_code=400, detail="Unsupported template type; upload .xlsx")
 
+    indirects_service = IndirectsService()
+    duration_months = await indirects_service.resolve_duration_months(
+        db, project_id, duration_months
+    )
     summary = await PricingService().pricing_summary(db, project_id)
-    ind = IndirectsService().compute(
+    ind = indirects_service.compute(
         summary["cost_subtotal"], duration_months=duration_months, location=location
     )
     components = {

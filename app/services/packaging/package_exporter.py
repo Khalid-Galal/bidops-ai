@@ -200,16 +200,28 @@ td,th{{border:1px solid #999;padding:4px;text-align:left}}h1{{font-size:1.4em}}<
         wb = Workbook()
         ws = wb.active
         ws.title = "Packages Register"
-        headers = ["Code", "Name", "Trade", "Items", "Status", "Folder", "Brief"]
+        headers = [
+            "Code", "Name", "Trade", "Items", "Status", "Deadline",
+            "Estimated Value", "Currency", "Offers Received", "Folder", "Brief",
+        ]
         ws.append(headers)
         for cell in ws[1]:
             cell.font = Font(bold=True)
         for pkg in packages:
             ws.append([
                 pkg.code, pkg.name, pkg.trade_category, pkg.total_items,
-                pkg.status, pkg.folder_path or "", pkg.brief_path or "",
+                pkg.status,
+                pkg.submission_deadline.strftime("%Y-%m-%d") if pkg.submission_deadline else "",
+                pkg.estimated_value if pkg.estimated_value is not None else "",
+                pkg.currency or "",
+                pkg.offers_received,
+                pkg.folder_path or "", pkg.brief_path or "",
             ])
-        for col, width in {"A": 22, "B": 28, "C": 16, "D": 8, "E": 12, "F": 40, "G": 40}.items():
+        widths = {
+            "A": 22, "B": 28, "C": 16, "D": 8, "E": 12, "F": 14,
+            "G": 16, "H": 10, "I": 14, "J": 40, "K": 40,
+        }
+        for col, width in widths.items():
             ws.column_dimensions[col].width = width
         path = self.register_path(project_id)
         wb.save(path)

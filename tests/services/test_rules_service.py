@@ -8,7 +8,7 @@ def test_load_returns_defaults(tmp_path):
     svc = RulesService(user_path=user)  # defaults_path defaults to config/rules.default.json
     cfg = svc.load()
     assert cfg.commercial.currency == "USD"
-    assert cfg.email.draft_only is True
+    assert cfg.email.default_language == "en"
 
 
 def test_save_then_load_roundtrip_with_partial_override(tmp_path):

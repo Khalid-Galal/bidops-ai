@@ -47,6 +47,10 @@ class OfferExtraction(BaseModel):
         default=None,
         description="Delivery/lead time in weeks, or null if not stated",
     )
+    delivery_terms: str | None = Field(
+        default=None,
+        description="Delivery/shipment terms or incoterms as stated in the offer (e.g. FOB, CIF, DDP, 'delivered to site'), or null if not stated",
+    )
     exclusions: list[str] = Field(
         default_factory=list,
         description="Explicit exclusions from scope stated in the offer",
@@ -145,6 +149,7 @@ class OfferDetailResponse(OfferResponse):
     line_items: list | None = None
     evaluator_notes: str | None = None
     recommendation: str | None = None
+    missing_required_fields: list[str] = Field(default_factory=list)
 
 
 class OfferScore(BaseModel):
@@ -171,12 +176,17 @@ class ComparisonOffer(BaseModel):
     currency: str | None = None
     validity_days: int | None = None
     delivery_weeks: int | None = None
+    delivery_terms: str | None = None
     payment_terms: str | None = None
+    vat_included: bool | None = None
+    vat_amount: float | None = None
     commercial_score: float | None = None
     technical_score: float | None = None
     overall_score: float | None = None
     rank: int | None = None
     status: str
+    exclusions: list[str] = Field(default_factory=list)
+    deviations: list[str] = Field(default_factory=list)
     exclusions_count: int = 0
     deviations_count: int = 0
 
@@ -191,6 +201,11 @@ class ComparisonResponse(BaseModel):
     price_max: float | None = None
     price_avg: float | None = None
     offers: list[ComparisonOffer] = Field(default_factory=list)
+    # Loud flags for conditions that make the raw price_min/max/avg above (and
+    # the per-offer ranking) unreliable at a glance: mixed currencies across
+    # offers, or a mix of VAT-inclusive/VAT-exclusive/unstated pricing. Minimal
+    # by design -- surfaced as text, not blocked or auto-converted.
+    warnings: list[str] = Field(default_factory=list)
 
 
 class ClarificationRequest(BaseModel):

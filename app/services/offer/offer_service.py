@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.base import OfferStatus
 from app.models.package import Package
 from app.models.supplier import Supplier, SupplierOffer
+from app.services.rules.rules_service import RulesService
 
 _SETTABLE = (
     "total_price", "currency", "vat_included", "vat_amount", "validity_days",
@@ -20,8 +21,21 @@ _SETTABLE = (
     "exclusions", "deviations", "line_items", "evaluator_notes",
 )
 
+# compliance.required_offer_fields uses plan.md's field names, which differ
+# from the SupplierOffer column names for a couple of fields.
+_REQUIRED_FIELD_ATTR = {
+    "validity_period": "validity_days",
+    "delivery_time": "delivery_weeks",
+}
+
 
 class OfferService:
+    def __init__(self, rules_service: RulesService | None = None) -> None:
+        self._rules_service = rules_service or RulesService()
+
+    def _rules(self):
+        return self._rules_service.load()
+
     async def create_offer(
         self, db: AsyncSession, package_id: int, supplier_id: int, file_paths: list[str]
     ) -> SupplierOffer:
@@ -31,12 +45,18 @@ class OfferService:
         supplier = await db.get(Supplier, supplier_id)
         if supplier is None:
             raise ValueError(f"Supplier {supplier_id} not found")
+        rules = self._rules()
         offer = SupplierOffer(
             package_id=package_id,
             supplier_id=supplier_id,
             file_paths=list(file_paths or []),
             status=OfferStatus.RECEIVED.value,
             received_at=datetime.now(timezone.utc),
+            # Prefill from rules.commercial defaults; a later manual edit or
+            # LLM extraction (which always sets the real extracted value,
+            # including null when genuinely not stated) overrides these.
+            validity_days=rules.commercial.default_validity_days or None,
+            payment_terms=rules.commercial.default_payment_terms or None,
         )
         db.add(offer)
         package.offers_received = (package.offers_received or 0) + 1
@@ -47,6 +67,19 @@ class OfferService:
 
     async def get_offer(self, db: AsyncSession, offer_id: int) -> SupplierOffer | None:
         return await db.get(SupplierOffer, offer_id)
+
+    def missing_required_fields(self, offer: SupplierOffer) -> list[str]:
+        """Deterministic (no-LLM) offer-completeness check against
+        rules.compliance.required_offer_fields. Returns the subset of
+        required field names that are still unset on the offer."""
+        rules = self._rules()
+        missing = []
+        for field in rules.compliance.required_offer_fields:
+            attr = _REQUIRED_FIELD_ATTR.get(field, field)
+            value = getattr(offer, attr, None)
+            if value in (None, "", []):
+                missing.append(field)
+        return missing
 
     async def list_offers(self, db: AsyncSession, package_id: int) -> list[SupplierOffer]:
         stmt = (

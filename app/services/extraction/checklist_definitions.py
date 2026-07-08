@@ -6,8 +6,12 @@ Each CategoryDefinition drives per-category retrieval and extraction:
 - `max_context_chunks` caps total unique chunks after deduplication across queries.
 - `prompt_hints` provides category-specific LLM extraction guidance.
 
-Six categories cover all requirement types in construction tenders:
-Technical, Commercial, Legal, HSE, Submission Documents, Eligibility.
+Queries carry English terms followed by their Arabic equivalents so the BM25
+half of hybrid search retrieves from Arabic-only tenders too.
+
+Eight categories cover all requirement types in construction tenders:
+Technical, Commercial, Legal, HSE, Submission Documents, Eligibility,
+Programme, and QA/QC.
 """
 
 from __future__ import annotations
@@ -22,6 +26,8 @@ RequirementCategory = Literal[
     "hse",
     "submission_documents",
     "eligibility",
+    "programme",
+    "qaqc",
 ]
 
 
@@ -49,9 +55,9 @@ CHECKLIST_CATEGORIES: list[CategoryDefinition] = [
         display_name="Technical",
         description="Technical specifications, standards, materials, testing, workmanship, design criteria",
         queries=[
-            "technical requirements specifications standards",
-            "material requirements testing inspection quality workmanship",
-            "design requirements drawings calculations tolerances",
+            "technical requirements specifications standards المتطلبات الفنية المواصفات الفنية",
+            "material requirements testing inspection quality workmanship مواصفات المواد الاختبارات",
+            "design requirements drawings calculations tolerances متطلبات التصميم الرسومات",
         ],
         top_k_per_query=8,
         max_context_chunks=20,
@@ -66,9 +72,9 @@ CHECKLIST_CATEGORIES: list[CategoryDefinition] = [
         display_name="Commercial",
         description="Pricing, payment, bonds, insurance, warranties, financial requirements",
         queries=[
-            "commercial requirements pricing payment terms",
-            "insurance requirements warranty bond guarantee",
-            "financial requirements tender bond advance payment retention",
+            "commercial requirements pricing payment terms المتطلبات التجارية التسعير شروط الدفع",
+            "insurance requirements warranty bond guarantee التأمينات الضمانات خطاب ضمان",
+            "financial requirements tender bond advance payment retention التأمين الابتدائي دفعة مقدمة محتجزات",
         ],
         top_k_per_query=8,
         max_context_chunks=20,
@@ -83,9 +89,9 @@ CHECKLIST_CATEGORIES: list[CategoryDefinition] = [
         display_name="Legal",
         description="Contract conditions, dispute resolution, applicable law, compliance, intellectual property",
         queries=[
-            "legal requirements conditions of contract applicable law",
-            "dispute resolution arbitration governing law compliance",
-            "intellectual property confidentiality indemnity liability",
+            "legal requirements conditions of contract applicable law الشروط القانونية شروط العقد القانون الواجب التطبيق",
+            "dispute resolution arbitration governing law compliance تسوية المنازعات التحكيم",
+            "intellectual property confidentiality indemnity liability الملكية الفكرية السرية المسؤولية",
         ],
         top_k_per_query=8,
         max_context_chunks=20,
@@ -100,9 +106,9 @@ CHECKLIST_CATEGORIES: list[CategoryDefinition] = [
         display_name="HSE",
         description="Health, safety, environment requirements, plans, permits",
         queries=[
-            "health safety environment requirements HSE plan",
-            "safety requirements PPE training risk assessment",
-            "environmental requirements waste management permits",
+            "health safety environment requirements HSE plan السلامة والصحة المهنية خطة السلامة",
+            "safety requirements PPE training risk assessment معدات الوقاية تقييم المخاطر",
+            "environmental requirements waste management permits المتطلبات البيئية إدارة المخلفات التصاريح",
         ],
         top_k_per_query=8,
         max_context_chunks=15,
@@ -118,9 +124,9 @@ CHECKLIST_CATEGORIES: list[CategoryDefinition] = [
         display_name="Submission Documents",
         description="Mandatory documents to be submitted with the tender",
         queries=[
-            "documents to be submitted tender submission requirements",
-            "required documents certificates appendices schedules",
-            "submission checklist tender form deliverables",
+            "documents to be submitted tender submission requirements مستندات العطاء المطلوبة الوثائق المطلوبة",
+            "required documents certificates appendices schedules الشهادات المرفقات الجداول",
+            "submission checklist tender form deliverables نموذج العطاء المستندات المطلوب تقديمها",
         ],
         top_k_per_query=8,
         max_context_chunks=15,
@@ -136,9 +142,9 @@ CHECKLIST_CATEGORIES: list[CategoryDefinition] = [
         display_name="Eligibility / Pre-Qualification",
         description="Pre-qualification criteria, eligibility requirements, minimum qualifications",
         queries=[
-            "eligibility criteria pre-qualification requirements minimum",
-            "experience requirements financial capacity turnover",
-            "required certifications licenses registrations",
+            "eligibility criteria pre-qualification requirements minimum شروط التأهيل معايير التأهيل المسبق",
+            "experience requirements financial capacity turnover الخبرة السابقة القدرة المالية حجم الأعمال",
+            "required certifications licenses registrations الشهادات التراخيص السجلات",
         ],
         top_k_per_query=8,
         max_context_chunks=15,
@@ -147,6 +153,42 @@ CHECKLIST_CATEGORIES: list[CategoryDefinition] = [
             "required certifications and licenses, technical capacity requirements, "
             "similar project experience, key personnel qualifications, "
             "and any disqualification criteria. These are CRITICAL for bid/no-bid decisions."
+        ),
+    ),
+    CategoryDefinition(
+        name="programme",
+        display_name="Programme / Schedule",
+        description="Tender programme, construction schedule, milestones, mobilization and completion periods",
+        queries=[
+            "tender programme schedule of works milestones mobilization period البرنامج الزمني برنامج التنفيذ",
+            "construction programme completion date primavera baseline المخطط الزمني تاريخ الإنجاز",
+            "time for completion phasing sectional completion مدة التنفيذ المراحل الزمنية",
+        ],
+        top_k_per_query=8,
+        max_context_chunks=15,
+        prompt_hints=(
+            "Focus on: the required tender/construction programme, baseline schedule "
+            "(e.g. Primavera/MS Project), key milestones and sectional completion dates, "
+            "mobilization period, time for completion, phasing, and any requirement to "
+            "submit or update a programme of works."
+        ),
+    ),
+    CategoryDefinition(
+        name="qaqc",
+        display_name="QA/QC",
+        description="Quality assurance and control: quality plan, inspection and test plans, ITPs, certifications",
+        queries=[
+            "quality assurance quality control plan QA QC خطة الجودة ضبط الجودة توكيد الجودة",
+            "inspection and test plan ITP method statement material approval خطة الفحص والاختبار اعتماد المواد",
+            "quality certifications ISO 9001 non-conformance audit شهادات الجودة عدم المطابقة التدقيق",
+        ],
+        top_k_per_query=8,
+        max_context_chunks=15,
+        prompt_hints=(
+            "Focus on: quality management/assurance plan requirements, inspection and "
+            "test plans (ITPs), method statements, material submittal and approval "
+            "procedures, hold/witness points, quality certifications (e.g. ISO 9001), "
+            "non-conformance handling, and QA/QC audits."
         ),
     ),
 ]

@@ -59,13 +59,13 @@ async def test_parse_and_list_boq(boq_client):
         summary = r.json()
         assert summary["total"] == 2
         assert summary["by_trade"].get("concrete") == 1
-        assert summary["by_trade"].get("mep") == 1
+        assert summary["by_trade"].get("mechanical") == 1
 
         lst = await client.get(f"/api/projects/{project_id}/boq")
         assert lst.status_code == 200
         items = lst.json()
         assert len(items) == 2
-        assert {i["trade_category"] for i in items} == {"concrete", "mep"}
+        assert {i["trade_category"] for i in items} == {"concrete", "mechanical"}
 
 
 async def test_boq_list_exposes_pricing_fields(boq_client):

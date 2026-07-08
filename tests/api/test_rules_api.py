@@ -22,7 +22,7 @@ async def test_get_rules_returns_defaults(rules_client):
     assert r.status_code == 200
     body = r.json()
     assert body["commercial"]["currency"] == "USD"
-    assert body["email"]["draft_only"] is True
+    assert body["email"]["default_language"] == "en"
 
 
 async def test_put_rules_persists_and_get_reflects(rules_client):
@@ -36,3 +36,11 @@ async def test_put_rules_persists_and_get_reflects(rules_client):
     assert after["commercial"]["currency"] == "EGP"
     assert after["commercial"]["vat_rate"] == 0.14
     assert after["measurement"]["unit_mappings"]["sqm"] == "m2"
+
+
+async def test_put_rules_rejects_typo_key(rules_client):
+    async with rules_client as client:
+        current = (await client.get("/api/rules")).json()
+        current["commercial"]["vat_rat"] = 0.14  # typo of vat_rate
+        put = await client.put("/api/rules", json=current)
+    assert put.status_code == 422

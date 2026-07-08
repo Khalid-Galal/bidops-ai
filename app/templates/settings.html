@@ -42,11 +42,14 @@ document.getElementById('rules-save').addEventListener('click', async function (
     alert('Invalid JSON: ' + e.message);
     return;
   }
-  await api('/api/rules', {
+  const saved = await api('/api/rules', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(parsed),
   });
+  // Echo the canonical parsed config back so the textarea always shows what
+  // was actually applied (not just the raw JSON the user submitted).
+  document.getElementById('rules-json').value = JSON.stringify(saved, null, 2);
   document.getElementById('rules-status').textContent = 'Saved.';
 });
 

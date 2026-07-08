@@ -58,6 +58,7 @@ async def _detail(db: AsyncSession, offer) -> OfferDetailResponse:
         line_items=offer.line_items,
         evaluator_notes=offer.evaluator_notes,
         recommendation=offer.recommendation,
+        missing_required_fields=OfferService().missing_required_fields(offer),
     )
 
 

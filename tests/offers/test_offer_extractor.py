@@ -61,6 +61,17 @@ async def test_extract_offer_populates_fields(db_session, tmp_path):
     assert offer.status == OfferStatus.UNDER_REVIEW.value
 
 
+async def test_extract_offer_populates_delivery_terms(db_session, tmp_path):
+    offer = await _seed_offer(db_session, tmp_path)
+    fake = OfferExtraction(total_price=150000, currency="USD", delivery_weeks=8,
+                           delivery_terms="DDP Site")
+    ex = OfferExtractor(llm_service=_FakeLLM(fake))
+    out = await ex.extract_offer(db_session, offer.id)
+    assert out["delivery_terms"] == "DDP Site"
+    await db_session.refresh(offer)
+    assert offer.delivery_terms == "DDP Site"
+
+
 async def test_check_compliance_sets_status_and_fields(db_session, tmp_path):
     checklist = {"requirements": [{"requirement": "ISO 9001 certificate"}],
                  "submission_documents": [], "eligibility_criteria": []}

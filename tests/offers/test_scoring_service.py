@@ -185,6 +185,142 @@ async def test_compare_currency_fallback_to_rules_default(db_session):
     assert result["currency"] == "EGP"
 
 
+async def test_ex_vat_normalization_equalizes_gross_vs_net_quotes(db_session):
+    """A VAT-inclusive offer and a VAT-exclusive offer with the same underlying
+    net price must score equally on price (item 24) -- without normalization
+    the gross-quoting offer would be penalized by its VAT amount."""
+    project = Project(name="P")
+    db_session.add(project)
+    await db_session.flush()
+    package = Package(project_id=project.id, name="X", code="C", trade_category="mep")
+    db_session.add(package)
+    supplier = Supplier(name="S", emails=[], trade_categories=["mep"])
+    db_session.add(supplier)
+    await db_session.flush()
+    # Both offers have a net (ex-VAT) price of 100; gross quotes 114 vs 100.
+    incl = SupplierOffer(package_id=package.id, supplier_id=supplier.id,
+                         status=OfferStatus.RECEIVED.value, file_paths=[],
+                         total_price=114.0, vat_included=True, vat_amount=14.0)
+    excl = SupplierOffer(package_id=package.id, supplier_id=supplier.id,
+                         status=OfferStatus.RECEIVED.value, file_paths=[],
+                         total_price=100.0, vat_included=False)
+    db_session.add_all([incl, excl])
+    await db_session.commit()
+    await db_session.refresh(incl)
+    await db_session.refresh(excl)
+    result = await ScoringService().score_package(db_session, package.id)
+    by_id = {r["offer_id"]: r for r in result["ranking"]}
+    assert by_id[incl.id]["subscores"]["price"] == 100.0
+    assert by_id[excl.id]["subscores"]["price"] == 100.0
+
+
+async def test_ex_vat_normalization_estimates_from_rules_vat_rate(db_session):
+    """When vat_amount wasn't extracted, fall back to rules.commercial.vat_rate
+    to strip an estimated VAT before scoring."""
+    project = Project(name="P")
+    db_session.add(project)
+    await db_session.flush()
+    package = Package(project_id=project.id, name="X", code="C", trade_category="mep")
+    db_session.add(package)
+    supplier = Supplier(name="S", emails=[], trade_categories=["mep"])
+    db_session.add(supplier)
+    await db_session.flush()
+    # 114 gross at 14% VAT rate -> net 100, same as the VAT-exclusive offer.
+    incl = SupplierOffer(package_id=package.id, supplier_id=supplier.id,
+                         status=OfferStatus.RECEIVED.value, file_paths=[],
+                         total_price=114.0, vat_included=True)
+    excl = SupplierOffer(package_id=package.id, supplier_id=supplier.id,
+                         status=OfferStatus.RECEIVED.value, file_paths=[],
+                         total_price=100.0, vat_included=False)
+    db_session.add_all([incl, excl])
+    await db_session.commit()
+    cfg = RulesConfig()
+    cfg.commercial.vat_rate = 0.14
+    result = await ScoringService(rules_service=_FakeRules(cfg)).score_package(
+        db_session, package.id
+    )
+    by_id = {r["offer_id"]: r for r in result["ranking"]}
+    assert by_id[incl.id]["subscores"]["price"] == 100.0
+    assert by_id[excl.id]["subscores"]["price"] == 100.0
+
+
+async def test_compare_warns_on_mixed_currency(db_session):
+    project = Project(name="P")
+    db_session.add(project)
+    await db_session.flush()
+    package = Package(project_id=project.id, name="X", code="C", trade_category="mep")
+    db_session.add(package)
+    supplier = Supplier(name="S", emails=[], trade_categories=["mep"])
+    db_session.add(supplier)
+    await db_session.flush()
+    usd = SupplierOffer(package_id=package.id, supplier_id=supplier.id,
+                        status=OfferStatus.RECEIVED.value, file_paths=[],
+                        total_price=100.0, currency="USD")
+    egp = SupplierOffer(package_id=package.id, supplier_id=supplier.id,
+                        status=OfferStatus.RECEIVED.value, file_paths=[],
+                        total_price=3000.0, currency="EGP")
+    db_session.add_all([usd, egp])
+    await db_session.commit()
+    result = await ScoringService().compare(db_session, package.id)
+    assert any("currencies" in w.lower() for w in result["warnings"])
+
+
+async def test_compare_warns_on_mixed_vat_states(db_session):
+    project = Project(name="P")
+    db_session.add(project)
+    await db_session.flush()
+    package = Package(project_id=project.id, name="X", code="C", trade_category="mep")
+    db_session.add(package)
+    supplier = Supplier(name="S", emails=[], trade_categories=["mep"])
+    db_session.add(supplier)
+    await db_session.flush()
+    incl = SupplierOffer(package_id=package.id, supplier_id=supplier.id,
+                         status=OfferStatus.RECEIVED.value, file_paths=[],
+                         total_price=114.0, vat_included=True, vat_amount=14.0)
+    excl = SupplierOffer(package_id=package.id, supplier_id=supplier.id,
+                         status=OfferStatus.RECEIVED.value, file_paths=[],
+                         total_price=100.0, vat_included=False)
+    db_session.add_all([incl, excl])
+    await db_session.commit()
+    result = await ScoringService().compare(db_session, package.id)
+    assert any("vat" in w.lower() for w in result["warnings"])
+
+
+async def test_compare_no_warnings_when_consistent(db_session):
+    package, offers = await _seed_offers(db_session)
+    for o in offers:
+        o.currency = "USD"
+        o.vat_included = False
+    await db_session.commit()
+    result = await ScoringService().compare(db_session, package.id)
+    assert result["warnings"] == []
+
+
+async def test_compare_includes_delivery_terms_and_vat_fields(db_session):
+    project = Project(name="P")
+    db_session.add(project)
+    await db_session.flush()
+    package = Package(project_id=project.id, name="X", code="C", trade_category="mep")
+    db_session.add(package)
+    supplier = Supplier(name="S", emails=[], trade_categories=["mep"])
+    db_session.add(supplier)
+    await db_session.flush()
+    o = SupplierOffer(package_id=package.id, supplier_id=supplier.id,
+                      status=OfferStatus.RECEIVED.value, file_paths=[],
+                      total_price=100.0, delivery_terms="DDP Site",
+                      vat_included=True, vat_amount=14.0,
+                      exclusions=["copper piping"], deviations=["alt supplier"])
+    db_session.add(o)
+    await db_session.commit()
+    result = await ScoringService().compare(db_session, package.id)
+    row = result["offers"][0]
+    assert row["delivery_terms"] == "DDP Site"
+    assert row["vat_included"] is True
+    assert row["vat_amount"] == 14.0
+    assert row["exclusions"] == ["copper piping"]
+    assert row["deviations"] == ["alt supplier"]
+
+
 async def test_compare_offer_currency_wins_over_rules_default(db_session):
     project = Project(name="P")
     db_session.add(project)

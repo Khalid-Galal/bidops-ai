@@ -9,40 +9,33 @@
     },
     "thresholds": { "excellent": 90, "good": 75, "acceptable": 60, "poor": 40 }
   },
-  "keywords": {
-    "mandatory": ["must", "shall", "required", "mandatory", "يجب", "إلزامي"],
-    "deadline": ["deadline", "due date", "submission", "closing date", "موعد التسليم"],
-    "bond": ["tender bond", "bid bond", "bank guarantee", "performance bond", "ضمان العطاء"],
-    "payment": ["advance payment", "retention", "milestone", "interim payment", "دفعة مقدمة"]
-  },
   "classification": {
     "document_categories": {
       "addendum": ["addendum", "addenda", "amendment", "bulletin", "ملحق"],
-      "boq": ["boq", "bill of quantities", "bills of quantities", "pricing schedule", "جداول الكميات"],
+      "boq": ["boq", "bill of quantities", "bills of quantities", "pricing schedule", "جداول الكميات", "جدول الكميات"],
       "drawings": ["drawing", "drawings", "dwg", "plan layout", "المخططات"],
-      "contract": ["contract", "agreement", "conditions of contract", "العقد"],
-      "itt": ["itt", "invitation to tender", "instructions to tenderers", "instruction to bidders", "rfp"],
-      "schedule": ["programme", "program of works", "schedule of works", "primavera", "gantt"],
-      "hse": ["hse", "health and safety", "safety plan", "environmental plan"],
-      "correspondence": ["letter", "correspondence", "minutes of meeting", "mom", "email"],
+      "contract": ["contract", "agreement", "conditions of contract", "العقد", "الشروط الخاصة", "الشروط العامة"],
+      "itt": ["itt", "invitation to tender", "instructions to tenderers", "instruction to bidders", "rfp", "كراسة الشروط", "دعوة لتقديم العروض"],
+      "schedule": ["programme", "program of works", "schedule of works", "primavera", "gantt", "البرنامج الزمني", "الجدول الزمني"],
+      "hse": ["hse", "health and safety", "safety plan", "environmental plan", "السلامة والصحة المهنية", "خطة السلامة"],
+      "correspondence": ["letter", "correspondence", "minutes of meeting", "mom", "email", "مراسلات", "محضر اجتماع"],
       "specs": ["specification", "specifications", "specs", "technical requirements", "المواصفات"]
     }
   },
   "packaging": {
-    "min_items_per_package": 5,
     "max_items_per_package": 100,
-    "grouping_criteria": ["trade_category", "spec_section"],
     "trade_categories": {
-      "concrete": ["concrete", "formwork", "rebar", "reinforcement"],
-      "structural_steel": ["steel", "fabrication", "erection"],
-      "mep": ["mechanical", "electrical", "plumbing", "hvac", "fire fighting"],
-      "finishes": ["flooring", "painting", "ceiling", "partition", "cladding"],
-      "civil": ["excavation", "earthwork", "roads", "utilities"]
+      "concrete": ["concrete", "formwork", "rebar", "reinforcement", "خرسانة", "حديد تسليح", "شدات خشبية", "صب خرساني"],
+      "structural_steel": ["steel", "fabrication", "erection", "حديد إنشائي", "أعمال حدادة", "تشوين حديد", "تركيبات معدنية"],
+      "electrical": ["electrical", "wiring", "cabling", "switchgear", "lighting", "power distribution", "كهرباء", "أعمال كهربائية", "لوحات كهربائية", "إنارة"],
+      "mechanical": ["mechanical", "hvac", "ductwork", "chiller", "ahu", "fan coil", "تكييف", "تهوية", "أعمال ميكانيكية", "مكيفات"],
+      "plumbing": ["plumbing", "sanitary", "drainage", "water supply", "piping", "صحي", "سباكة", "صرف صحي", "تمديدات مياه"],
+      "fire_fighting": ["fire fighting", "firefighting", "fire alarm", "sprinkler", "fire suppression", "حريق", "مكافحة الحريق", "إنذار حريق", "رشاشات"],
+      "finishes": ["flooring", "painting", "ceiling", "partition", "cladding", "دهانات", "أرضيات", "أسقف معلقة", "قواطيع"],
+      "civil": ["excavation", "earthwork", "roads", "utilities", "حفر", "ردم", "طرق", "مرافق"]
     }
   },
   "email": {
-    "provider": "smtp",
-    "draft_only": true,
     "from_address": "",
     "reply_to": "",
     "default_language": "en",
@@ -54,14 +47,11 @@
     }
   },
   "naming": {
-    "project_code_format": "PRJ-{year}-{seq:04d}",
     "package_code_format": "PKG-{project_code}-{trade_abbr}-{seq:03d}",
-    "offer_folder_format": "{package_code}/{supplier_name}",
-    "document_naming": "{project_code}_{category}_{date}_{seq}",
     "trade_abbreviations": {
-      "concrete": "CON", "structural_steel": "STL", "mep": "MEP",
+      "concrete": "CON", "structural_steel": "STL",
       "electrical": "ELE", "mechanical": "MEC", "plumbing": "PLB",
-      "hvac": "HVAC", "finishes": "FIN", "civil": "CIV"
+      "fire_fighting": "FF", "finishes": "FIN", "civil": "CIV"
     }
   },
   "commercial": {
@@ -72,7 +62,6 @@
     "markup": { "profit": 0.10, "overhead": 0.08, "contingency": 0.05, "risk": 0.03 }
   },
   "measurement": {
-    "contract_type": "lumpsum",
     "quantity_tolerance": 0.05,
     "unit_mappings": {
       "sqm": "m2", "sq.m": "m2", "square meter": "m2",
@@ -83,8 +72,7 @@
     }
   },
   "compliance": {
-    "required_offer_fields": ["total_price", "validity_period", "delivery_time"],
-    "non_compliance_triggers": ["exclusion", "deviation", "exception", "not included", "غير مشمول", "استثناء"]
+    "required_offer_fields": ["total_price", "validity_period", "delivery_time"]
   },
   "indirects": {
     "percentage_based": {

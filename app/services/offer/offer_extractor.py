@@ -37,7 +37,8 @@ Offer documents:
 {content}
 
 Extract the total price, currency, VAT inclusion, validity (days), payment terms,
-delivery time (weeks), any exclusions, any deviations, and priced line items.
+delivery time (weeks), delivery/shipment terms (incoterms), any exclusions, any
+deviations, and priced line items.
 
 INSTRUCTIONS:
 1. Copy values EXACTLY as they appear in the source document -- do NOT convert
@@ -146,6 +147,7 @@ class OfferExtractor:
         offer.validity_days = result.validity_days
         offer.payment_terms = result.payment_terms
         offer.delivery_weeks = result.delivery_weeks
+        offer.delivery_terms = result.delivery_terms
         offer.exclusions = result.exclusions
         offer.deviations = result.deviations
         offer.line_items = [li.model_dump() for li in result.line_items]

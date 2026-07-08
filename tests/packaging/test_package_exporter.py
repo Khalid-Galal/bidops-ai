@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from pathlib import Path
 
 from openpyxl import load_workbook
@@ -25,7 +26,9 @@ async def _seed(db, tmp_path):
     await db.flush()
 
     pkg = Package(project_id=project.id, name="Concrete Works",
-                  code="PKG-P0001-CON-001", trade_category="concrete", total_items=2)
+                  code="PKG-P0001-CON-001", trade_category="concrete", total_items=2,
+                  submission_deadline=datetime(2026, 8, 15, tzinfo=timezone.utc),
+                  estimated_value=250000.0, currency="EGP", offers_received=3)
     db.add(pkg)
     await db.flush()
     db.add_all([
@@ -79,8 +82,15 @@ async def test_export_creates_folders_boq_subset_docs_brief_register(db_session,
     assert register.exists()
     rwb = load_workbook(register)
     rws = rwb.active
+    header = [c.value for c in rws[1]]
+    assert "Deadline" in header and "Estimated Value" in header and "Offers Received" in header
     reg_rows = [r for r in rws.iter_rows(min_row=2, values_only=True) if r and r[0]]
     assert any("PKG-P0001-CON-001" in str(r) for r in reg_rows)
+    row = next(r for r in reg_rows if "PKG-P0001-CON-001" in str(r))
+    row_dict = dict(zip(header, row))
+    assert row_dict["Deadline"] == "2026-08-15"
+    assert row_dict["Estimated Value"] == 250000.0
+    assert row_dict["Offers Received"] == 3
     # package paths persisted
     from app.models.package import Package
     refreshed = await db_session.get(Package, pkg_id)

@@ -83,11 +83,11 @@ def build_extraction_prompt(field_def: FieldDefinition, context: str) -> str:
     extra_instructions = ""
     if field_def.field_type == "list":
         extra_instructions = (
-            "\n9. Return the value as a comma-separated list of items."
+            "\n10. Return the value as a comma-separated list of items."
         )
     elif field_def.field_type == "date":
         extra_instructions = (
-            "\n9. Preserve the date format exactly as it appears in the source"
+            "\n10. Preserve the date format exactly as it appears in the source"
             " (do not convert or reformat)."
         )
 
@@ -106,7 +106,8 @@ INSTRUCTIONS:
 5. If the field is not found in any excerpt, set value to null and confidence to 0.0.
 6. NEVER fabricate or infer values not explicitly stated in the documents.
 7. For list-type fields (e.g., stakeholders), include ALL items found across all excerpts.
-8. Set confidence between 0.0 and 1.0 based on how clearly and explicitly the value appears.{extra_instructions}
+8. Set confidence between 0.0 and 1.0 based on how clearly and explicitly the value appears.
+9. Documents may be in Arabic or English -- keep every citation quote verbatim in its original source language (do NOT translate the quote); report the value in English where reasonable.{extra_instructions}
 {valid_documents}
 DOCUMENT EXCERPTS:
 {context}"""
@@ -149,6 +150,7 @@ INSTRUCTIONS:
 5. If no {category.display_name.lower()} requirements are found, return an empty items list.
 6. Be thorough -- missing a requirement could lead to tender disqualification.
 7. For source_document, copy the filename EXACTLY as it appears between SOURCE: and | in the labels -- do NOT translate, re-case, or drop the extension. For quote, copy the exact sentence(s) verbatim -- do NOT paraphrase.
+8. Documents may be in Arabic or English -- keep every quote verbatim in its original source language (do NOT translate the quote); phrase the requirement text in English where reasonable.
 {valid_documents}
 DOCUMENT EXCERPTS:
 {context}"""

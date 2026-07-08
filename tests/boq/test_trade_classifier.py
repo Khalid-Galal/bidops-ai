@@ -12,7 +12,13 @@ def test_classify_uses_rules_trade_categories():
     assert cat == "concrete" and conf > 0
 
     cat, conf = classify_trade("Supply and install HVAC ductwork", rules)
-    assert cat == "mep"
+    assert cat == "mechanical"
+
+    cat, conf = classify_trade("تركيب مكيفات وأعمال تكييف وتهوية", rules)
+    assert cat == "mechanical" and conf > 0
+
+    cat, conf = classify_trade("توريد وتركيب لوحات كهربائية وإنارة", rules)
+    assert cat == "electrical" and conf > 0
 
     cat, conf = classify_trade("Excavation in all types of soil", rules)
     assert cat == "civil"

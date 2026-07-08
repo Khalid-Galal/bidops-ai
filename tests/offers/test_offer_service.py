@@ -44,6 +44,30 @@ async def test_create_offer_increments_stats(db_session):
     assert supplier.total_offers_received == 1
 
 
+async def test_create_offer_prefills_commercial_defaults(db_session):
+    # rules.commercial.default_validity_days/default_payment_terms prefill a
+    # freshly-created offer so it is not blank before extraction/manual entry.
+    package, supplier = await _seed(db_session)
+    offer = await OfferService().create_offer(db_session, package.id, supplier.id, [])
+    assert offer.validity_days == 90
+    assert offer.payment_terms == "Net 30"
+
+
+async def test_missing_required_fields(db_session):
+    package, supplier = await _seed(db_session)
+    svc = OfferService()
+    offer = await svc.create_offer(db_session, package.id, supplier.id, [])
+    # validity_days/payment_terms prefilled; total_price and delivery_weeks
+    # (mapped from delivery_time) still unset.
+    missing = svc.missing_required_fields(offer)
+    assert set(missing) == {"total_price", "delivery_time"}
+
+    updated = await svc.update_commercial(
+        db_session, offer.id, total_price=1000, delivery_weeks=4,
+    )
+    assert svc.missing_required_fields(updated) == []
+
+
 async def test_create_offer_unknown_package_or_supplier(db_session):
     package, supplier = await _seed(db_session)
     svc = OfferService()

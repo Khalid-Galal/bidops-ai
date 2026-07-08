@@ -6,10 +6,17 @@ constructs a complete, valid config without any file present.
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
-class ScoringWeights(BaseModel):
+class _StrictModel(BaseModel):
+    """Base for all rules sections: reject unknown keys instead of silently
+    dropping typos (extra='ignore' is Pydantic's default)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class ScoringWeights(_StrictModel):
     technical_compliance: float = 0.30
     price: float = 0.35
     delivery_time: float = 0.15
@@ -17,43 +24,30 @@ class ScoringWeights(BaseModel):
     supplier_rating: float = 0.10
 
 
-class ScoringThresholds(BaseModel):
+class ScoringThresholds(_StrictModel):
     excellent: float = 90
     good: float = 75
     acceptable: float = 60
     poor: float = 40
 
 
-class Scoring(BaseModel):
+class Scoring(_StrictModel):
     weights: ScoringWeights = Field(default_factory=ScoringWeights)
     thresholds: ScoringThresholds = Field(default_factory=ScoringThresholds)
 
 
-class Keywords(BaseModel):
-    mandatory: list[str] = Field(default_factory=list)
-    deadline: list[str] = Field(default_factory=list)
-    bond: list[str] = Field(default_factory=list)
-    payment: list[str] = Field(default_factory=list)
-
-
-class Packaging(BaseModel):
-    min_items_per_package: int = 5
+class Packaging(_StrictModel):
     max_items_per_package: int = 100
-    grouping_criteria: list[str] = Field(
-        default_factory=lambda: ["trade_category", "spec_section"]
-    )
     trade_categories: dict[str, list[str]] = Field(default_factory=dict)
 
 
-class EmailSubjectFormats(BaseModel):
+class EmailSubjectFormats(_StrictModel):
     rfq: str = "[{project_code}] RFQ - {package_name}"
     clarification: str = "[{project_code}] Clarification Request - {supplier_name}"
     reminder: str = "[{project_code}] Reminder - {package_name}"
 
 
-class EmailRules(BaseModel):
-    provider: str = "smtp"
-    draft_only: bool = True
+class EmailRules(_StrictModel):
     from_address: str = ""
     reply_to: str = ""
     default_language: str = "en"
@@ -61,22 +55,19 @@ class EmailRules(BaseModel):
     subject_formats: EmailSubjectFormats = Field(default_factory=EmailSubjectFormats)
 
 
-class Naming(BaseModel):
-    project_code_format: str = "PRJ-{year}-{seq:04d}"
+class Naming(_StrictModel):
     package_code_format: str = "PKG-{project_code}-{trade_abbr}-{seq:03d}"
-    offer_folder_format: str = "{package_code}/{supplier_name}"
-    document_naming: str = "{project_code}_{category}_{date}_{seq}"
     trade_abbreviations: dict[str, str] = Field(default_factory=dict)
 
 
-class Markup(BaseModel):
+class Markup(_StrictModel):
     profit: float = 0.10
     overhead: float = 0.08
     contingency: float = 0.05
     risk: float = 0.03
 
 
-class Commercial(BaseModel):
+class Commercial(_StrictModel):
     currency: str = "USD"
     vat_rate: float = 0.0
     default_validity_days: int = 90
@@ -84,24 +75,22 @@ class Commercial(BaseModel):
     markup: Markup = Field(default_factory=Markup)
 
 
-class Measurement(BaseModel):
-    contract_type: str = "lumpsum"
+class Measurement(_StrictModel):
     quantity_tolerance: float = 0.05
     unit_mappings: dict[str, str] = Field(default_factory=dict)
 
 
-class Compliance(BaseModel):
+class Compliance(_StrictModel):
     required_offer_fields: list[str] = Field(
         default_factory=lambda: ["total_price", "validity_period", "delivery_time"]
     )
-    non_compliance_triggers: list[str] = Field(default_factory=list)
 
 
-class DurationBasedRole(BaseModel):
+class DurationBasedRole(_StrictModel):
     monthly_rate: float = 0.0
 
 
-class Indirects(BaseModel):
+class Indirects(_StrictModel):
     percentage_based: dict[str, float] = Field(default_factory=dict)
     duration_based: dict[str, DurationBasedRole] = Field(default_factory=dict)
     location_factors: dict[str, float] = Field(
@@ -109,17 +98,16 @@ class Indirects(BaseModel):
     )
 
 
-class Classification(BaseModel):
+class Classification(_StrictModel):
     """Keyword → document-category mapping. Dict order = match precedence."""
 
     document_categories: dict[str, list[str]] = Field(default_factory=dict)
 
 
-class RulesConfig(BaseModel):
+class RulesConfig(_StrictModel):
     """Complete business-rules configuration. All sections default-constructible."""
 
     scoring: Scoring = Field(default_factory=Scoring)
-    keywords: Keywords = Field(default_factory=Keywords)
     classification: Classification = Field(default_factory=Classification)
     packaging: Packaging = Field(default_factory=Packaging)
     email: EmailRules = Field(default_factory=EmailRules)

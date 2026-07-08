@@ -30,6 +30,26 @@ class ScoringService:
         return self._rules_service.load()
 
     @staticmethod
+    def _ex_vat_price(offer: SupplierOffer, vat_rate: float) -> float | None:
+        """Comparable ex-VAT (tax-exclusive) basis for price ranking.
+
+        vat_included is True: strip the extracted vat_amount when present,
+        otherwise estimate it from rules.commercial.vat_rate (total / (1+rate)).
+        vat_included is False or unknown: total_price is already treated as the
+        ex-VAT basis (nothing to strip). This keeps price ranking apples-to-apples
+        even when suppliers mix VAT-inclusive and VAT-exclusive quotes.
+        """
+        price = offer.total_price
+        if not price or price <= 0:
+            return price
+        if offer.vat_included:
+            if offer.vat_amount:
+                return price - offer.vat_amount
+            if vat_rate > 0:
+                return price / (1 + vat_rate)
+        return price
+
+    @staticmethod
     def _ratio_score(value: float | None, best: float | None) -> float:
         """Lower-is-better ratio score: 100 when value == best (the minimum).
 
@@ -93,7 +113,9 @@ class ScoringService:
         weights = scoring.weights.model_dump()
         wsum = sum(weights.values()) or 1.0
 
-        prices = [o.total_price for o in offers if o.total_price and o.total_price > 0]
+        vat_rate = self._rules().commercial.vat_rate
+        ex_vat_prices = {o.id: self._ex_vat_price(o, vat_rate) for o in offers}
+        prices = [p for p in ex_vat_prices.values() if p and p > 0]
         min_price = min(prices) if prices else None
         deliveries = [o.delivery_weeks for o in offers if o.delivery_weeks and o.delivery_weeks > 0]
         min_delivery = min(deliveries) if deliveries else None
@@ -120,7 +142,7 @@ class ScoringService:
             if technical is None and offer.compliance_analysis:
                 technical = offer.compliance_analysis.get("compliance_score")
             sub = {
-                "price": self._ratio_score(offer.total_price, min_price),
+                "price": self._ratio_score(ex_vat_prices[offer.id], min_price),
                 "delivery_time": self._ratio_score(offer.delivery_weeks, min_delivery),
                 "technical_compliance": float(technical) if technical is not None else _NEUTRAL,
                 "supplier_rating": (
@@ -192,10 +214,16 @@ class ScoringService:
         )
         rows = []
         prices = []
+        currencies = set()
+        vat_states = set()
         for offer in offers:
             supplier = suppliers.get(offer.supplier_id)
             if offer.total_price:
                 prices.append(offer.total_price)
+            if offer.currency:
+                currencies.add(offer.currency)
+            if offer.total_price:
+                vat_states.add(offer.vat_included)
             rows.append(
                 {
                     "offer_id": offer.id,
@@ -205,17 +233,40 @@ class ScoringService:
                     "currency": offer.currency,
                     "validity_days": offer.validity_days,
                     "delivery_weeks": offer.delivery_weeks,
+                    "delivery_terms": offer.delivery_terms,
                     "payment_terms": offer.payment_terms,
+                    "vat_included": offer.vat_included,
+                    "vat_amount": offer.vat_amount,
                     "commercial_score": offer.commercial_score,
                     "technical_score": offer.technical_score,
                     "overall_score": offer.overall_score,
                     "rank": offer.rank,
                     "status": offer.status,
+                    "exclusions": offer.exclusions or [],
+                    "deviations": offer.deviations or [],
                     "exclusions_count": len(offer.exclusions or []),
                     "deviations_count": len(offer.deviations or []),
                 }
             )
         currency = next((o.currency for o in offers if o.currency), self._rules().commercial.currency)
+
+        # Loud flags -- these do not block or auto-convert anything, they just
+        # tell the evaluator the raw price_min/max/avg (and the ranking) below
+        # mix things that are not directly comparable.
+        warnings: list[str] = []
+        if len(currencies) > 1:
+            warnings.append(
+                "Offers use different currencies ("
+                + ", ".join(sorted(currencies))
+                + ") -- totals are not directly comparable without manual FX conversion."
+            )
+        if len(vat_states) > 1:
+            warnings.append(
+                "Offers mix VAT-inclusive, VAT-exclusive, and/or unstated VAT pricing -- "
+                "price_min/max/avg below are raw totals; ranking uses an ex-VAT basis "
+                "where VAT status is known."
+            )
+
         return {
             "package_id": package_id,
             "package_name": package.name,
@@ -226,4 +277,5 @@ class ScoringService:
             "price_max": max(prices) if prices else None,
             "price_avg": round(sum(prices) / len(prices), 2) if prices else None,
             "offers": rows,
+            "warnings": warnings,
         }

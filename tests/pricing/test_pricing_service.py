@@ -232,3 +232,38 @@ async def test_update_item_price(db_session):
     assert updated.total_price == 450.0  # quantity 1
     assert updated.requires_review is False
     assert await svc.update_item_price(db_session, 999999, 1.0) is None
+
+
+async def test_populate_flags_quantity_mismatch_beyond_tolerance(db_session):
+    # items[0] has BOQ quantity 5; offer line item states quantity 2 -> 60%
+    # deviation, well beyond the default 5% tolerance -> flagged for review
+    # even though the description match itself is high-confidence.
+    package, offer, items = await _seed_priced(
+        db_session,
+        line_items=[
+            {"description": "Split AC unit supply & installation", "rate": 1200,
+             "unit": "no", "quantity": 2},
+        ],
+    )
+    result = await PricingService().populate_from_offer(db_session, offer.id)
+    assert result["items_needs_review"] == 1
+    await db_session.refresh(items[0])
+    assert items[0].unit_rate == 1200  # still priced
+    assert items[0].requires_review is True
+    assert "quantity" in items[0].review_notes.lower()
+
+
+async def test_populate_within_tolerance_not_flagged(db_session):
+    # BOQ quantity 5, offer line item quantity 5.1 -> 2% deviation, within the
+    # default 5% tolerance -> not flagged.
+    package, offer, items = await _seed_priced(
+        db_session,
+        line_items=[
+            {"description": "Split AC unit supply & installation", "rate": 1200,
+             "unit": "no", "quantity": 5.1},
+        ],
+    )
+    await PricingService().populate_from_offer(db_session, offer.id)
+    await db_session.refresh(items[0])
+    assert items[0].requires_review is False
+    assert items[0].review_notes is None
