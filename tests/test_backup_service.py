@@ -25,6 +25,9 @@ class FakeHub:
         self.created = []
         self.uploaded = []
         self.download_path: str | None = None
+        self.download_by_revision: dict[str, str] = {}
+        self.squash_calls = []
+        self.revisions_to_list: list = []
 
     def create_repo(self, repo_id, repo_type=None, private=None, exist_ok=None, token=None):
         self.created.append({"repo_id": repo_id, "private": private, "repo_type": repo_type})
@@ -37,10 +40,20 @@ class FakeHub:
         self.uploaded.append({"repo_id": repo_id, "path_in_repo": path_in_repo,
                               "local_copy": str(dest)})
 
-    def hf_hub_download(self, repo_id=None, filename=None, repo_type=None, token=None):
+    def hf_hub_download(self, repo_id=None, filename=None, repo_type=None,
+                        revision=None, token=None):
+        if revision is not None and revision in self.download_by_revision:
+            return self.download_by_revision[revision]
         if self.download_path is None:
             raise FileNotFoundError("no snapshot in fake hub")
         return self.download_path
+
+    def super_squash_history(self, repo_id=None, branch=None, commit_message=None,
+                             repo_type=None, token=None):
+        self.squash_calls.append({"repo_id": repo_id, "repo_type": repo_type})
+
+    def list_repo_commits(self, repo_id=None, repo_type=None, token=None, revision=None):
+        return self.revisions_to_list
 
 
 def _make_data_dir(tmp_path: Path) -> Path:
@@ -270,6 +283,142 @@ async def test_manual_backup_endpoint_cooldown_429(tmp_path, monkeypatch):
         r = await c.post("/api/backup")   # immediate retry -> cooldown
         assert r.status_code == 429
     assert len(hub.uploaded) == 1
+
+
+@pytest.mark.asyncio
+async def test_restore_by_revision_pulls_that_snapshot(tmp_path, monkeypatch):
+    """Rollback path: restoring an older revision must not fetch the latest."""
+    _make_data_dir(tmp_path)
+    hub = FakeHub()
+    svc = _service(tmp_path, hub, monkeypatch)
+    await svc.backup()
+    old_snapshot = hub.uploaded[0]["local_copy"]
+    hub.download_by_revision["deadbeef"] = old_snapshot
+    hub.download_path = "should-not-be-used-when-revision-given"
+
+    fresh = tmp_path / "fresh"
+    monkeypatch.setenv("BIDOPS_DATABASE_PATH", str(fresh / "bidops.db"))
+    from app.config import get_settings
+
+    get_settings.cache_clear()
+    svc2 = BackupService(hub=hub, data_dir=fresh, repo_id="user/test-data", token="tok")
+
+    assert svc2.restore_sync(revision="deadbeef") is True
+    assert (fresh / "bidops.db").exists()
+
+
+def test_restore_force_overwrites_existing_local_files(tmp_path, monkeypatch):
+    """force=True is the explicit manual-rollback path: it must overwrite
+    local data instead of skipping it (unlike the fresh-boot auto-restore)."""
+    data = _make_data_dir(tmp_path)
+    hub = FakeHub()
+    svc = _service(tmp_path, hub, monkeypatch)
+    hub.download_path = str(tmp_path / "snap.tar.gz")
+
+    with tarfile.open(hub.download_path, "w:gz") as tar:
+        rules = tmp_path / "rules_new.json"
+        rules.write_text('{"rolled": "back"}')
+        tar.add(str(rules), arcname="rules.json")
+
+    (data / "rules.json").write_text('{"current": true}')
+    assert svc.restore_sync(force=True) is True
+    assert (data / "rules.json").read_text() == '{"rolled": "back"}'
+
+
+@pytest.mark.asyncio
+async def test_backup_squashes_history_every_n_backups(tmp_path, monkeypatch):
+    _make_data_dir(tmp_path)
+    hub = FakeHub()
+    svc = _service(tmp_path, hub, monkeypatch)
+    from app.services.backup import backup_service as mod
+
+    monkeypatch.setattr(mod, "SQUASH_EVERY_N_BACKUPS", 2)
+
+    await svc.backup()
+    assert hub.squash_calls == []
+    await svc.backup()
+    assert len(hub.squash_calls) == 1
+    assert hub.squash_calls[0]["repo_id"] == "user/test-data"
+
+
+def test_list_revisions_returns_hub_commits(tmp_path, monkeypatch):
+    hub = FakeHub()
+    svc = _service(tmp_path, hub, monkeypatch)
+
+    class FakeCommit:
+        commit_id = "abc123"
+        title = "snapshot ..."
+        created_at = None
+
+    hub.revisions_to_list = [FakeCommit()]
+    assert svc.list_revisions() == [
+        {"commit_id": "abc123", "title": "snapshot ...", "created_at": None}
+    ]
+
+
+def test_list_revisions_disabled_returns_empty(tmp_path):
+    svc = BackupService(hub=FakeHub(), data_dir=tmp_path, repo_id="", token="")
+    assert svc.list_revisions() == []
+
+
+@pytest.mark.asyncio
+async def test_restore_endpoint_rolls_back_to_revision(tmp_path, monkeypatch):
+    _make_data_dir(tmp_path)
+    hub = FakeHub()
+    svc = _service(tmp_path, hub, monkeypatch)
+    await svc.backup()
+    hub.download_by_revision["rev1"] = hub.uploaded[0]["local_copy"]
+    monkeypatch.setattr(bs_module, "_service", svc)
+
+    from app.api.backup import router
+
+    api = FastAPI()
+    api.include_router(router, prefix="/api")
+    transport = httpx.ASGITransport(app=api)
+    async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:
+        r = await c.post("/api/backup/restore", params={"revision": "rev1", "force": "true"})
+        assert r.status_code == 200
+        assert r.json()["status"] == "ok"
+        assert r.json()["revision"] == "rev1"
+
+
+@pytest.mark.asyncio
+async def test_restore_endpoint_503_when_unconfigured(monkeypatch, tmp_path):
+    monkeypatch.delenv("HF_TOKEN", raising=False)
+    svc = BackupService(hub=FakeHub(), data_dir=tmp_path, repo_id="", token="")
+    monkeypatch.setattr(bs_module, "_service", svc)
+
+    from app.api.backup import router
+
+    api = FastAPI()
+    api.include_router(router, prefix="/api")
+    transport = httpx.ASGITransport(app=api)
+    async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:
+        assert (await c.post("/api/backup/restore")).status_code == 503
+
+
+@pytest.mark.asyncio
+async def test_revisions_endpoint_lists_commits(tmp_path, monkeypatch):
+    hub = FakeHub()
+    svc = _service(tmp_path, hub, monkeypatch)
+
+    class FakeCommit:
+        commit_id = "abc123"
+        title = "snapshot ..."
+        created_at = None
+
+    hub.revisions_to_list = [FakeCommit()]
+    monkeypatch.setattr(bs_module, "_service", svc)
+
+    from app.api.backup import router
+
+    api = FastAPI()
+    api.include_router(router, prefix="/api")
+    transport = httpx.ASGITransport(app=api)
+    async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:
+        r = await c.get("/api/backup/revisions")
+        assert r.status_code == 200
+        assert r.json()["revisions"][0]["commit_id"] == "abc123"
 
 
 def test_restore_rejects_corrupt_archive_and_leaves_dir_clean(tmp_path, monkeypatch):

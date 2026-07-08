@@ -10,7 +10,6 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import shutil
 import uuid
 from pathlib import Path
 from typing import AsyncGenerator
@@ -41,6 +40,13 @@ ALLOWED_EXTENSIONS = {
     ".png", ".jpg", ".jpeg", ".tiff", ".tif", ".bmp",
     ".zip",
 }
+
+# Cap document uploads to avoid unbounded reads into memory/disk.
+_MAX_UPLOAD_BYTES = 25 * 1024 * 1024
+
+
+def _safe_filename(name: str | None) -> str:
+    return Path(name or "document").name or "document"
 
 
 @router.post(
@@ -99,12 +105,23 @@ async def upload_documents(
             continue
 
         # Generate safe filename to avoid collisions and path traversal.
-        safe_name = f"{uuid.uuid4().hex}_{file.filename}"
+        safe_name = f"{uuid.uuid4().hex}_{_safe_filename(file.filename)}"
         dest_path = upload_dir / safe_name
 
-        # Stream file to disk (NOT await file.read() which loads into memory).
+        # Stream file to disk in bounded chunks (NOT await file.read() which
+        # loads the whole upload into memory), enforcing a max size cap.
+        total = 0
         with open(dest_path, "wb") as dest_file:
-            shutil.copyfileobj(file.file, dest_file)
+            while chunk := await file.read(1024 * 1024):
+                total += len(chunk)
+                if total > _MAX_UPLOAD_BYTES:
+                    dest_file.close()
+                    dest_path.unlink(missing_ok=True)
+                    raise HTTPException(
+                        status_code=413,
+                        detail="Upload exceeds the maximum allowed size",
+                    )
+                dest_file.write(chunk)
 
         file_size = dest_path.stat().st_size
 

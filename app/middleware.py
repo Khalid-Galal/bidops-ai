@@ -130,6 +130,12 @@ class RateLimitMiddleware:
         )
 
     def _client_key(self, scope: Scope) -> str:
+        headers = dict(scope.get("headers") or [])
+        forwarded = headers.get(b"x-forwarded-for")
+        if forwarded:
+            first_hop = forwarded.decode("latin-1", "ignore").split(",")[0].strip()
+            if first_hop:
+                return first_hop
         client = scope.get("client")
         return client[0] if client else "unknown"
 

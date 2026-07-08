@@ -18,6 +18,10 @@ from app.services.parsing.base import (
 # Hard cap on members processed from a single archive (zip-bomb guard).
 MAX_MEMBERS = 1000
 
+# Zip-bomb guards on decompressed size (uncompressed ZipInfo.file_size).
+MAX_MEMBER_SIZE_BYTES = 200 * 1024 * 1024  # 200MB per member
+MAX_TOTAL_SIZE_BYTES = 500 * 1024 * 1024  # 500MB running total per archive
+
 
 class ZipParser(ParserInterface):
     """Extracts a .zip and aggregates parsed text from supported members.
@@ -54,7 +58,22 @@ class ZipParser(ParserInterface):
                         f"the first {MAX_MEMBERS}."
                     )
                     members = members[:MAX_MEMBERS]
-                for member in members:
+                total_size = 0
+                for member, size in members:
+                    if size > MAX_MEMBER_SIZE_BYTES:
+                        warnings.append(
+                            f"Skipped oversized member ({size} bytes > "
+                            f"{MAX_MEMBER_SIZE_BYTES} byte cap): {member}"
+                        )
+                        continue
+                    if total_size + size > MAX_TOTAL_SIZE_BYTES:
+                        warnings.append(
+                            "Stopped extraction: archive's decompressed size "
+                            f"budget of {MAX_TOTAL_SIZE_BYTES} bytes exceeded "
+                            f"at member: {member}"
+                        )
+                        break
+                    total_size += size
                     try:
                         parser = get_parser_for_file(member)
                     except ValueError:
@@ -107,10 +126,14 @@ class ZipParser(ParserInterface):
         )
 
 
-def _list_members(file_path: str) -> list[str]:
-    """Return the non-directory member names of an archive (blocking)."""
+def _list_members(file_path: str) -> list[tuple[str, int]]:
+    """Return (name, uncompressed_size) for non-directory members (blocking)."""
     with zipfile.ZipFile(file_path) as zf:
-        return [m for m in zf.namelist() if not m.endswith("/")]
+        return [
+            (info.filename, info.file_size)
+            for info in zf.infolist()
+            if not info.filename.endswith("/")
+        ]
 
 
 def _extract_member(file_path: str, member: str, dest_dir: str) -> Path:

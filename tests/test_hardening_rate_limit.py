@@ -56,3 +56,27 @@ async def test_enabled_limiter_trips_after_burst():
         assert r.headers.get("x-request-id")
         assert r.headers["x-content-type-options"] == "nosniff"
         assert r.headers["x-frame-options"] == "SAMEORIGIN"
+
+
+@pytest.mark.asyncio
+async def test_buckets_keyed_on_first_xff_hop_not_shared_proxy_ip():
+    """Behind a reverse proxy every request shares the same scope['client'] IP;
+    distinct end-clients must get distinct buckets keyed on X-Forwarded-For."""
+    transport = httpx.ASGITransport(app=_app(enabled=True, per_minute=1, burst=2))
+    async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:
+        # client A exhausts its burst
+        for _ in range(2):
+            assert (
+                await c.get("/ping", headers={"x-forwarded-for": "1.1.1.1"})
+            ).status_code == 200
+        blocked = await c.get("/ping", headers={"x-forwarded-for": "1.1.1.1"})
+        assert blocked.status_code == 429
+
+        # client B (different first hop) is unaffected despite sharing the
+        # same proxy connection / scope['client'] IP.
+        for _ in range(2):
+            assert (
+                await c.get(
+                    "/ping", headers={"x-forwarded-for": "2.2.2.2, 1.1.1.1"}
+                )
+            ).status_code == 200

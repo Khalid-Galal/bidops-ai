@@ -9,6 +9,11 @@ from fastapi import APIRouter, HTTPException
 
 from app.services.backup.backup_service import get_backup_service
 
+_NOT_CONFIGURED_DETAIL = (
+    "Backup not configured. Set BIDOPS_BACKUP_DATASET_REPO and a "
+    "write token (HF_TOKEN or BIDOPS_HF_TOKEN)."
+)
+
 router = APIRouter(tags=["backup"])
 
 # The endpoint is unauthenticated (like the rest of the app), so guard the
@@ -22,13 +27,7 @@ async def backup_now():
     """Snapshot the data dir to the configured HF Dataset repo right now."""
     svc = get_backup_service()
     if not svc.enabled():
-        raise HTTPException(
-            status_code=503,
-            detail=(
-                "Backup not configured. Set BIDOPS_BACKUP_DATASET_REPO and a "
-                "write token (HF_TOKEN or BIDOPS_HF_TOKEN)."
-            ),
-        )
+        raise HTTPException(status_code=503, detail=_NOT_CONFIGURED_DETAIL)
     if svc.backup_in_progress():
         raise HTTPException(status_code=429, detail="A backup is already running.")
     if svc.last_backup_at and (time.time() - svc.last_backup_at) < _MANUAL_COOLDOWN_SECONDS:
@@ -40,6 +39,37 @@ async def backup_now():
     if result.get("status") == "error":
         raise HTTPException(status_code=502, detail=f"Backup failed: {result.get('error')}")
     return result
+
+
+@router.post("/backup/restore")
+async def restore_now(revision: str | None = None, force: bool = False):
+    """Restore a snapshot into the data dir now -- the manual rollback path.
+
+    ``revision`` (a commit SHA from ``GET /backup/revisions``) restores that
+    older snapshot instead of the latest one. ``force=true`` is required to
+    overwrite files that already exist locally -- omitting it only restores
+    into an empty data dir (same guard as the startup auto-restore).
+    """
+    svc = get_backup_service()
+    if not svc.enabled():
+        raise HTTPException(status_code=503, detail=_NOT_CONFIGURED_DETAIL)
+    if svc.backup_in_progress():
+        raise HTTPException(status_code=429, detail="A backup is already running.")
+    result = await svc.restore(revision=revision, force=force)
+    if result.get("status") == "error":
+        raise HTTPException(status_code=502, detail=f"Restore failed: {result.get('error')}")
+    if result.get("status") == "disabled":
+        raise HTTPException(status_code=503, detail=_NOT_CONFIGURED_DETAIL)
+    return result
+
+
+@router.get("/backup/revisions")
+async def list_revisions():
+    """List snapshot revisions on the dataset repo, newest first."""
+    svc = get_backup_service()
+    if not svc.enabled():
+        raise HTTPException(status_code=503, detail=_NOT_CONFIGURED_DETAIL)
+    return {"revisions": svc.list_revisions()}
 
 
 @router.get("/backup/status")

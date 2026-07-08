@@ -18,6 +18,22 @@ Design notes:
   container). It never clobbers live local data or a persistent-disk volume.
 - All tar/network work runs in a thread (``asyncio.to_thread``) -- never on
   the event loop (Phase 15 lesson).
+
+Rollback / dataset growth:
+- Every successful ``backup()`` overwrites ``ARCHIVE_NAME`` at the head of the
+  dataset repo's default branch, but the HF Dataset repo is git-backed, so
+  each snapshot is also a distinct commit ("revision"). ``restore_sync`` and
+  ``restore()`` accept an optional ``revision`` (a commit SHA, as returned by
+  ``list_revisions()``/``GET /backup/revisions``) to roll back to an older
+  snapshot instead of the latest one.
+- To bound the repo's history growth, every ``SQUASH_EVERY_N_BACKUPS``
+  successful backups the service squashes the whole commit history into one
+  commit via ``huggingface_hub``'s ``super_squash_history`` (the minimal
+  retention primitive the Hub API offers). This is irreversible and discards
+  older revisions -- rollback only reaches back to snapshots taken since the
+  last squash. ``POST /api/backup/restore`` (optionally with
+  ``?revision=<sha>``) exposes manual rollback; ``GET /api/backup/revisions``
+  lists the revisions currently restorable.
 """
 
 from __future__ import annotations
@@ -43,6 +59,14 @@ ARCHIVE_NAME = "bidops-data.tar.gz"
 ARCHIVE_TIMEOUT_S = 300
 UPLOAD_TIMEOUT_S = 600
 RESTORE_TIMEOUT_S = 180
+SQUASH_TIMEOUT_S = 60
+
+# Retention: bound the dataset repo's git history growth by squashing it back
+# to a single commit every N successful backups. Squashing is irreversible
+# (huggingface_hub's ``super_squash_history``) so rollback via ``revision``
+# only reaches snapshots taken since the last squash -- an accepted tradeoff
+# for a single-user tool where unbounded history growth is the bigger risk.
+SQUASH_EVERY_N_BACKUPS = 20
 
 # Top-level entries under data/ that are regenerable artifacts -- not worth
 # snapshot space. Everything else (db, uploads, offers, chroma, rules.json)
@@ -76,6 +100,8 @@ class BackupService:
         # DELETIONS (a removed file bumps no mtime but changes the file set).
         self._last_archive_names: frozenset[str] | None = None
         self._consecutive_failures = 0
+        # Backups since the last history squash; bounds dataset repo growth.
+        self._backups_since_squash = 0
 
     # -- configuration -----------------------------------------------------
 
@@ -205,6 +231,37 @@ class BackupService:
             commit_message=f"snapshot {datetime.now(timezone.utc).isoformat()}",
         )
 
+    def _squash_history(self) -> None:
+        """Collapse the dataset repo's commit history to bound its growth."""
+        hub = self._get_hub()
+        hub.super_squash_history(repo_id=self.repo_id, repo_type="dataset", token=self.token)
+
+    def list_revisions(self) -> list[dict]:
+        """Commits on the dataset repo's default branch, newest first.
+
+        Each entry's ``commit_id`` is a valid ``revision`` for ``restore()``/
+        ``restore_sync()``. Returns an empty list on any failure (repo not
+        created yet, network, disabled).
+        """
+        if not self.enabled():
+            return []
+        hub = self._get_hub()
+        try:
+            commits = hub.list_repo_commits(
+                repo_id=self.repo_id, repo_type="dataset", token=self.token
+            )
+        except Exception as exc:
+            logger.info("Could not list backup revisions: %s", exc)
+            return []
+        return [
+            {
+                "commit_id": c.commit_id,
+                "title": c.title,
+                "created_at": c.created_at.isoformat() if c.created_at else None,
+            }
+            for c in commits
+        ]
+
     # -- public API ----------------------------------------------------------
 
     def backup_in_progress(self) -> bool:
@@ -236,6 +293,18 @@ class BackupService:
                 logger.info(
                     "Backup uploaded to %s: %d files, %d bytes", self.repo_id, count, size
                 )
+                # Retention: squash history periodically to bound repo growth.
+                # Best-effort -- a failed squash must not fail the backup that
+                # already succeeded.
+                self._backups_since_squash += 1
+                if self._backups_since_squash >= SQUASH_EVERY_N_BACKUPS:
+                    try:
+                        await asyncio.wait_for(
+                            asyncio.to_thread(self._squash_history), timeout=SQUASH_TIMEOUT_S
+                        )
+                        self._backups_since_squash = 0
+                    except Exception as exc:
+                        logger.warning("Backup history squash failed: %s", exc)
                 return {"status": "ok", "files": count, "bytes": size}
             except Exception as exc:
                 self.last_error = f"{type(exc).__name__}: {exc}"
@@ -252,8 +321,18 @@ class BackupService:
             finally:
                 tmp_file.unlink(missing_ok=True)
 
-    def restore_sync(self) -> bool:
-        """Restore the latest snapshot into the data dir (fresh boot only).
+    def restore_sync(self, revision: str | None = None, force: bool = False) -> bool:
+        """Restore a snapshot into the data dir (fresh boot only by default).
+
+        ``revision`` is an optional dataset repo commit SHA (see
+        ``list_revisions()``) to roll back to an older snapshot instead of
+        the latest one on the default branch.
+
+        ``force=True`` is the explicit rollback path: it skips the "DB
+        already exists" fresh-boot guard and overwrites existing local
+        entries with the snapshot's, instead of skipping them. Only the
+        manual restore API/CLI entrypoint should ever pass ``force=True`` --
+        the startup auto-restore must keep the guard.
 
         Returns True when a snapshot was restored. Never raises: any failure
         (no repo yet, no snapshot yet, network) logs and starts fresh.
@@ -261,7 +340,7 @@ class BackupService:
         if not self.enabled():
             return False
         db_path, _ = self._db_paths()
-        if db_path.exists():
+        if db_path.exists() and not force:
             logger.info("Restore skipped: %s already exists (live data)", db_path)
             return False
         # Extract into a STAGING dir, integrity-check the DB, then move into
@@ -274,6 +353,7 @@ class BackupService:
                 repo_id=self.repo_id,
                 filename=ARCHIVE_NAME,
                 repo_type="dataset",
+                revision=revision,
                 token=self.token,
             )
             shutil.rmtree(staging, ignore_errors=True)
@@ -294,10 +374,20 @@ class BackupService:
             for entry in staging.iterdir():
                 target = self._data_dir / entry.name
                 if target.exists():
-                    logger.warning("Restore: %s already exists, keeping local copy", target)
-                    continue
+                    if not force:
+                        logger.warning("Restore: %s already exists, keeping local copy", target)
+                        continue
+                    if target.is_dir() and not target.is_symlink():
+                        shutil.rmtree(target)
+                    else:
+                        target.unlink()
                 shutil.move(str(entry), str(target))
-            logger.info("Restored snapshot from %s into %s", self.repo_id, self._data_dir)
+            logger.info(
+                "Restored snapshot from %s (revision=%s) into %s",
+                self.repo_id,
+                revision or "latest",
+                self._data_dir,
+            )
             return True
         except Exception as exc:
             logger.info(
@@ -306,6 +396,26 @@ class BackupService:
             return False
         finally:
             shutil.rmtree(staging, ignore_errors=True)
+
+    async def restore(self, revision: str | None = None, force: bool = False) -> dict:
+        """Async wrapper around ``restore_sync`` for the manual restore API.
+
+        Shares ``backup()``'s lock so a restore and a snapshot can never run
+        concurrently against the same data dir.
+        """
+        if not self.enabled():
+            return {"status": "disabled"}
+        async with self._lock:
+            try:
+                restored = await asyncio.wait_for(
+                    asyncio.to_thread(self.restore_sync, revision, force),
+                    timeout=RESTORE_TIMEOUT_S,
+                )
+            except asyncio.TimeoutError:
+                return {"status": "error", "error": "restore timed out"}
+            if restored:
+                return {"status": "ok", "revision": revision or "latest"}
+            return {"status": "error", "error": "no snapshot restored (see logs)"}
 
     # -- change watcher --------------------------------------------------------
 
