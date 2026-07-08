@@ -10,8 +10,9 @@ FROM python:3.11-slim
 #    WeasyPrint's native text-rendering stack (no GTK needed on WeasyPrint>=61).
 #    With these present pdf_export.py's capability probe succeeds and PDF export
 #    returns 200 instead of degrading to 501.
-#  - fonts-dejavu-core / fonts-noto-naskh-arabic: Latin + Arabic glyphs so
-#    tender deliverables (which include Arabic) render correctly.
+#  - fonts-dejavu-core / fonts-noto-core: Latin + Arabic (Noto Naskh) glyphs so
+#    tender deliverables (which include Arabic) render correctly. Debian ships
+#    Naskh inside fonts-noto-core; there is no fonts-noto-naskh-arabic package.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libgl1 \
         libglib2.0-0 \
@@ -21,7 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libharfbuzz-subset0 \
         fontconfig \
         fonts-dejavu-core \
-        fonts-noto-naskh-arabic \
+        fonts-noto-core \
     && rm -rf /var/lib/apt/lists/*
 
 # Run as the UID 1000 user HF expects.
@@ -56,7 +57,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # re-download ~1.5GB on every restart. If the build ever times out, comment
 # these two lines out -- the app will lazy-download them on first use instead.
 RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('paraphrase-multilingual-mpnet-base-v2')"
-RUN python -c "from sentence_transformers import CrossEncoder; CrossEncoder('cross-encoder/nli-deberta-v3-xsmall')"
+RUN python -c "from sentence_transformers import CrossEncoder; CrossEncoder('MoritzLaurer/mDeBERTa-v3-base-mnli-xnli')"
 
 # Bake the heavy PDF-parsing models so the first tender ingest does not download
 # ~2GB over the network on an ephemeral Space. Both caches land under HOME

@@ -101,6 +101,8 @@ class CitationVerifier:
         self._confidence_low = confidence_low
         self._review_threshold = review_threshold
         self._model: CrossEncoder | None = None
+        # Entailment logit position; re-resolved from the model config on load.
+        self._entailment_index = 1
         logger.info("CitationVerifier initialized with model: %s", model_name)
 
     def _get_model(self) -> CrossEncoder:
@@ -112,7 +114,26 @@ class CitationVerifier:
         if self._model is None:
             logger.info("Loading NLI model: %s", self._model_name)
             self._model = CrossEncoder(self._model_name)
-            logger.info("NLI model loaded")
+            # NLI models disagree on label order (deberta-v3-xsmall is
+            # [contradiction, entailment, neutral]; mDeBERTa-xnli is
+            # [entailment, neutral, contradiction]) -- resolve the entailment
+            # index from the model config instead of hardcoding it.
+            self._entailment_index = 1
+            id2label = getattr(
+                getattr(self._model, "config", None), "id2label", None
+            ) or getattr(
+                getattr(getattr(self._model, "model", None), "config", None),
+                "id2label",
+                None,
+            )
+            if id2label:
+                for idx, label in id2label.items():
+                    if str(label).lower().startswith("entail"):
+                        self._entailment_index = int(idx)
+                        break
+            logger.info(
+                "NLI model loaded (entailment index=%d)", self._entailment_index
+            )
         return self._model
 
     def verify_citation(self, claim: str, source_text: str) -> float:
@@ -141,12 +162,13 @@ class CitationVerifier:
         try:
             model = self._get_model()
             scores = model.predict([(source_text, claim)])
-            # NLI model outputs logits for [contradiction, entailment, neutral]
+            # NLI model outputs logits over 3 labels; entailment position is
+            # model-dependent and resolved in _get_model().
             logits = scores[0]  # shape: (3,)
             # Apply softmax with numerical stability
             exp_logits = np.exp(logits - np.max(logits))
             probs = exp_logits / exp_logits.sum()
-            entailment_prob = float(probs[1])  # index 1 = entailment
+            entailment_prob = float(probs[self._entailment_index])
             return entailment_prob
         except Exception:
             logger.warning(
