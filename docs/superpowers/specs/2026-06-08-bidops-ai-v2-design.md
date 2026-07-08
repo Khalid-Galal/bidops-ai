@@ -90,6 +90,14 @@ Also: establish a reproducible venv run, set `BIDOPS_GEMINI_API_KEY`, run a synt
 - **Reliability/security NFRs** consolidated into P15 to avoid blocking core automation.
 - **Windows-first**: weasyprint needs native Pango (PDF export degrades to HTTP 501 if absent); Tesseract binary needed for image OCR.
 
+## 9. Errata
+
+**D3 (Frontend) — Pivoted to Jinja Server-Rendered**
+Initially approved as "React SPA (bidops-ai/frontend, re-pointed to root app's JSON API)." The shipped system pivoted to Jinja2 server-rendered templates at the root `app/` level. Rationale: simpler stack for single-user desktop tool, faster server-side rendering, avoids React SPA complexity and build overhead.
+
+**P15 (Auth/RBAC) — Shipped without auth by explicit decision**
+Phase 15 was deferred as stated (line 77), marking auth/RBAC as "last/optional." The shipped v1 system intentionally omitted authentication enforcement, suitable for single-user local deployment. Auth models were ported in P6 (structured) but not enforced in runtime, preserving works-without-key degradation guarantee and local-first design.
+
 ---
 
 *Each phase will be planned in detail (its own plan doc) immediately before execution, following the project's established GSD `.planning/` workflow.*

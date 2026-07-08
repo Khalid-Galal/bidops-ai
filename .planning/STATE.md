@@ -1,5 +1,7 @@
 # Project State
 
+> **SUPERSEDED (2026-07-08):** describes the February v1; the shipped system is the root app/ FastAPI+Jinja build - see docs/reviews/2026-07-07-full-system-review.md
+
 ## Project Reference
 
 See: .planning/PROJECT.md (updated 2026-02-04)

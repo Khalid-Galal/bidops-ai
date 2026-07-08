@@ -34,3 +34,10 @@ verification_out_run*.log
 
 # E2E shakedown throwaway runtime (scripts/e2e_shakedown.py)
 .e2e_tmp/
+
+# Salvage tree and development artifacts
+bidops-ai/
+.playwright-mcp/
+
+# Documentation artifacts
+*.docx

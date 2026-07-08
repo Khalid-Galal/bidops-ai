@@ -1,5 +1,7 @@
 # Roadmap: BidOps AI
 
+> **SUPERSEDED (2026-07-08):** describes the February v1; the shipped system is the root app/ FastAPI+Jinja build - see docs/reviews/2026-07-07-full-system-review.md
+
 ## Overview
 
 BidOps AI transforms construction tender document folders into structured, citation-backed project summaries and requirements checklists. The roadmap builds capabilities in dependency order: first ingest documents reliably across formats, then handle bilingual content and enable search, then extract structured data with LLM-powered intelligence (summary first, then checklist), and finally deliver a complete review and export workflow through the web interface.

@@ -1,5 +1,7 @@
 # BidOps AI
 
+> **SUPERSEDED (2026-07-08):** describes the February v1; the shipped system is the root app/ FastAPI+Jinja build - see docs/reviews/2026-07-07-full-system-review.md
+
 ## What This Is
 
 A tender document intelligence system that ingests construction project documents (PDFs, Excel BOQs, Word files), extracts structured project metadata with evidence citations, and generates comprehensive bidding requirements checklists. Built for a single estimator/bid manager to dramatically reduce manual tender analysis time.
