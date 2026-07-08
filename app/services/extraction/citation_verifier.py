@@ -18,6 +18,8 @@ Key design decisions:
 from __future__ import annotations
 
 import logging
+import re
+import unicodedata
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -28,6 +30,47 @@ if TYPE_CHECKING:
     from app.services.search.hybrid_search import SearchResult
 
 logger = logging.getLogger(__name__)
+
+# Arabic diacritics (harakat, tanwin, shadda, sukun, superscript alef) and the
+# tatweel elongation mark -- decorative marks that must be ignored when matching
+# a verbatim quote against source text.
+_ARABIC_DIACRITICS = re.compile(
+    "[ؐ-ًؚ-ٰٟۖ-ۜ۟-۪ۨ-ۭـ]"
+)
+_WHITESPACE = re.compile(r"\s+")
+
+
+def _normalize_for_match(text: str) -> str:
+    """Normalize text for language-agnostic verbatim substring matching.
+
+    NFKC-normalizes, strips Arabic diacritics/tatweel, casefolds, and collapses
+    all whitespace runs to single spaces so that a quote extracted verbatim from
+    a chunk matches regardless of unicode form, case, or whitespace drift.
+    """
+    normalized = unicodedata.normalize("NFKC", text)
+    normalized = _ARABIC_DIACRITICS.sub("", normalized)
+    normalized = normalized.casefold()
+    return _WHITESPACE.sub(" ", normalized).strip()
+
+
+def _normalize_filename(name: str) -> str:
+    """NFKC-normalize + casefold + strip a filename for tolerant comparison."""
+    return unicodedata.normalize("NFKC", name).casefold().strip()
+
+
+def _strip_extension(name: str) -> str:
+    """Drop a trailing file extension, if any (already-normalized input)."""
+    root, dot, _ext = name.rpartition(".")
+    return root if dot else name
+
+
+def _filenames_match(a: str, b: str) -> bool:
+    """Compare two filenames case/unicode-insensitively, tolerating a missing extension."""
+    na = _normalize_filename(a)
+    nb = _normalize_filename(b)
+    if na == nb:
+        return True
+    return _strip_extension(na) == _strip_extension(nb)
 
 
 class CitationVerifier:
@@ -48,7 +91,7 @@ class CitationVerifier:
 
     def __init__(
         self,
-        model_name: str = "cross-encoder/nli-deberta-v3-xsmall",
+        model_name: str = "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli",
         confidence_high: float = 0.8,
         confidence_low: float = 0.5,
         review_threshold: float = 0.5,
@@ -87,6 +130,14 @@ class CitationVerifier:
         Returns:
             Entailment probability between 0.0 and 1.0.
         """
+        # Verbatim short-circuit: extractive citations quote the source exactly,
+        # so a normalized substring match means guaranteed entailment. This is
+        # language-agnostic (fixes the Arabic NLI collapse) and skips the model
+        # entirely -- cheaper and more reliable than NLI for verbatim quotes.
+        normalized_claim = _normalize_for_match(claim)
+        if normalized_claim and normalized_claim in _normalize_for_match(source_text):
+            return 1.0
+
         try:
             model = self._get_model()
             scores = model.predict([(source_text, claim)])
@@ -107,10 +158,14 @@ class CitationVerifier:
     def _find_source_chunk(
         self, citation: Citation, source_chunks: list[SearchResult]
     ) -> SearchResult | None:
-        """Find the source chunk matching a citation's document and page.
+        """Find the source chunk backing a citation.
 
-        Tries exact match on filename + page_number first, then falls back
-        to filename-only match (LLM may cite wrong page number).
+        Matches in three layers, most reliable first:
+        1. Normalized verbatim-quote substring -- the prompt demands exact
+           quotes, so this is language-agnostic and immune to filename drift.
+        2. Normalized filename + page number (case/unicode-insensitive,
+           extension-tolerant).
+        3. Normalized filename only (LLM may cite the wrong page number).
 
         Args:
             citation: The citation to find a source for.
@@ -119,17 +174,24 @@ class CitationVerifier:
         Returns:
             The matching SearchResult, or None if no match found.
         """
-        # Try exact match: filename AND page number
+        # 1. Primary: normalized verbatim-quote substring match.
+        quote = _normalize_for_match(citation.quote)
+        if quote:
+            for chunk in source_chunks:
+                if quote in _normalize_for_match(chunk.text):
+                    return chunk
+
+        # 2. Fallback: filename AND page number (normalized comparison).
         for chunk in source_chunks:
             if (
-                chunk.filename == citation.document_name
+                _filenames_match(chunk.filename, citation.document_name)
                 and chunk.page_number == citation.page_number
             ):
                 return chunk
 
-        # Fallback: match by filename only (LLM may cite wrong page)
+        # 3. Fallback: filename only (LLM may cite wrong page).
         for chunk in source_chunks:
-            if chunk.filename == citation.document_name:
+            if _filenames_match(chunk.filename, citation.document_name):
                 return chunk
 
         # No match found -- citation references non-existent source

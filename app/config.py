@@ -38,9 +38,13 @@ class Settings(BaseSettings):
     # per-key free-tier rate limits. Takes precedence over gemini_api_key.
     gemini_api_keys: str = ""
     gemini_model: str = "gemini-2.5-pro"
+    # Generation temperature for all Gemini calls. Low by default because
+    # extraction/verification tasks need verbatim, deterministic-ish output,
+    # not creative variance.
+    llm_temperature: float = 0.1
 
     # NLI citation verification (Phase 3)
-    nli_model: str = "cross-encoder/nli-deberta-v3-xsmall"
+    nli_model: str = "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli"
 
     # SMTP transport for outbound email (Phase 9). Empty host/user => "not
     # configured": drafts still work, but POST /send returns 503. Set these in

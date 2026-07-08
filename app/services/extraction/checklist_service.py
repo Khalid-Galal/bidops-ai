@@ -42,6 +42,18 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# Cross-category dedup precedence. submission_documents and eligibility are the
+# checklist's dedicated buckets -- a document that must be submitted with the bid
+# (or an eligibility condition) belongs in its own tab even when it is a
+# near-duplicate of a technical/commercial/legal/hse item, so those categories
+# win a cross-category duplicate pair regardless of confidence.
+_DEDUP_CATEGORY_PRIORITY = {"submission_documents": 2, "eligibility": 1}
+
+
+def _dedup_priority(category: str) -> int:
+    """Return the cross-category dedup precedence for a requirement category."""
+    return _DEDUP_CATEGORY_PRIORITY.get(category, 0)
+
 
 class ChecklistService:
     """Orchestrates per-category extraction with retrieval, LLM, NLI, and deduplication.
@@ -166,22 +178,11 @@ class ChecklistService:
                 quote=item.quote,
             )
 
-            # Find matching source chunk (same logic as CitationVerifier._find_source_chunk)
-            source: SearchResult | None = None
-            # Exact match: filename AND page number
-            for chunk in chunks:
-                if (
-                    chunk.filename == item.source_document
-                    and chunk.page_number == item.page_number
-                ):
-                    source = chunk
-                    break
-            # Fallback: filename only
-            if source is None:
-                for chunk in chunks:
-                    if chunk.filename == item.source_document:
-                        source = chunk
-                        break
+            # Find matching source chunk via the single shared matcher so both
+            # extraction paths (summary + checklist) behave identically.
+            source: SearchResult | None = self._citation_verifier._find_source_chunk(
+                citation, chunks
+            )
 
             # NLI verification
             if source is not None:
@@ -273,8 +274,17 @@ class ChecklistService:
                 similarity = float(np.dot(a, b) / (norm_a * norm_b))
 
                 if similarity >= 0.9:
-                    # Mark the lower-confidence item as duplicate
-                    if requirements[i].confidence >= requirements[j].confidence:
+                    # Decide which copy survives. A submission_documents /
+                    # eligibility item wins the pair outright (never starve the
+                    # dedicated buckets); otherwise the higher-confidence item
+                    # wins, keeping the earlier one on exact ties.
+                    pi = _dedup_priority(requirements[i].category)
+                    pj = _dedup_priority(requirements[j].category)
+                    if pi != pj:
+                        keep_i = pi > pj
+                    else:
+                        keep_i = requirements[i].confidence >= requirements[j].confidence
+                    if keep_i:
                         duplicate_indices.add(j)
                     else:
                         duplicate_indices.add(i)

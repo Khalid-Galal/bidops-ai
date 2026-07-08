@@ -14,6 +14,7 @@ import threading
 from typing import TypeVar
 
 import instructor
+from google.genai.types import GenerateContentConfig, ThinkingConfig
 from pydantic import BaseModel
 from tenacity import (
     retry,
@@ -22,9 +23,15 @@ from tenacity import (
     wait_exponential,
 )
 
+from app.config import get_settings
+
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=BaseModel)
+
+# Low thinking budget: extraction/verification is verbatim lookup, not
+# multi-step reasoning, so a large thinking budget just burns quota/latency.
+_THINKING_BUDGET = 128
 
 # Substrings identifying provider errors that should trigger rotation to the
 # next API key (rather than failing the call outright).
@@ -66,6 +73,7 @@ class GeminiService:
         api_key: str = "",
         model: str = "gemini-2.5-pro",
         api_keys: list[str] | None = None,
+        temperature: float | None = None,
     ) -> None:
         keys = [k.strip() for k in (api_keys or []) if k and k.strip()]
         if not keys and api_key:
@@ -77,6 +85,13 @@ class GeminiService:
         self._clients: dict[str, instructor.Instructor] = {}
         self._idx = 0
         self._lock = threading.Lock()
+        self._temperature = (
+            temperature if temperature is not None else get_settings().llm_temperature
+        )
+        self._generation_config = GenerateContentConfig(
+            temperature=self._temperature,
+            thinking_config=ThinkingConfig(thinking_budget=_THINKING_BUDGET),
+        )
 
     @property
     def key_count(self) -> int:
@@ -143,6 +158,7 @@ class GeminiService:
                     messages=[{"role": "user", "content": prompt}],
                     response_model=response_model,
                     max_retries=per_key_retries,
+                    config=self._generation_config,
                 )
             except (ConnectionError, TimeoutError):
                 # Transient network error -- let tenacity retry the whole call.

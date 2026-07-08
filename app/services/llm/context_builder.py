@@ -7,12 +7,38 @@ and page numbers.
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.services.extraction.checklist_definitions import CategoryDefinition
     from app.services.extraction.field_definitions import FieldDefinition
     from app.services.search.hybrid_search import SearchResult
+
+# Matches the filename inside a "[SOURCE:<filename> | PAGE:<n>]" label so the
+# valid document names can be enumerated back to the LLM.
+_SOURCE_LABEL = re.compile(r"\[SOURCE:(.*?) \| PAGE:")
+
+
+def _valid_documents_block(context: str) -> str:
+    """Enumerate the unique source filenames present in a labeled context.
+
+    Listing the exact filenames the LLM may cite lets it copy the value
+    character-for-character instead of paraphrasing or re-casing it, which is
+    what the downstream citation matcher expects.
+    """
+    seen: list[str] = []
+    for name in _SOURCE_LABEL.findall(context):
+        name = name.strip()
+        if name and name not in seen:
+            seen.append(name)
+    if not seen:
+        return ""
+    listing = "\n".join(f"- {name}" for name in seen)
+    return (
+        "\nVALID DOCUMENTS (copy the filename EXACTLY as one of these into"
+        f" your citation, character-for-character):\n{listing}\n"
+    )
 
 
 def build_labeled_context(chunks: list[SearchResult]) -> str:
@@ -52,6 +78,8 @@ def build_extraction_prompt(field_def: FieldDefinition, context: str) -> str:
     if field_def.enum_values:
         enum_line = f"VALID VALUES: {', '.join(field_def.enum_values)}\n"
 
+    valid_documents = _valid_documents_block(context)
+
     extra_instructions = ""
     if field_def.field_type == "list":
         extra_instructions = (
@@ -72,14 +100,14 @@ EXPECTED TYPE: {field_def.field_type}
 {enum_line}
 INSTRUCTIONS:
 1. Find the {field_def.name} in the provided document excerpts.
-2. Copy the EXACT value as it appears in the source document.
-3. For the quote field in citations, copy the EXACT sentence(s) containing this value -- do NOT paraphrase or summarize.
-4. Include the document_name and page_number from the [SOURCE:... | PAGE:...] labels in your citation.
+2. {"Copy the EXACT value as it appears in the source document." if not field_def.enum_values else "Map the value found in the document to the closest matching token from VALID VALUES above and return that exact snake_case token (not the document's wording)."}
+3. For the quote field in citations, copy the EXACT sentence(s) containing this value from the source document -- do NOT paraphrase or summarize, and do NOT substitute the VALID VALUES token here.
+4. For document_name, copy the filename EXACTLY as it appears between SOURCE: and | in the labels -- do NOT translate, re-case, or drop the extension -- and include the page_number from the same label.
 5. If the field is not found in any excerpt, set value to null and confidence to 0.0.
 6. NEVER fabricate or infer values not explicitly stated in the documents.
 7. For list-type fields (e.g., stakeholders), include ALL items found across all excerpts.
 8. Set confidence between 0.0 and 1.0 based on how clearly and explicitly the value appears.{extra_instructions}
-
+{valid_documents}
 DOCUMENT EXCERPTS:
 {context}"""
 
@@ -103,13 +131,7 @@ def build_checklist_extraction_prompt(
     Returns:
         Complete prompt string ready for LLM extraction.
     """
-    # Build list of other categories to explicitly skip
-    all_categories = [
-        "Technical", "Commercial", "Legal", "HSE",
-        "Submission Documents", "Eligibility / Pre-Qualification",
-    ]
-    other_categories = [c for c in all_categories if c != category.display_name]
-    skip_list = ", ".join(other_categories)
+    valid_documents = _valid_documents_block(context)
 
     prompt = f"""\
 Extract ALL {category.display_name} requirements from the tender document excerpts below.
@@ -122,11 +144,12 @@ CATEGORY DESCRIPTION: {category.description}
 INSTRUCTIONS:
 1. Extract EVERY {category.display_name.lower()} requirement, obligation, or condition found in the excerpts.
 2. For mandatory classification: "shall", "must", "required", "mandatory" = is_mandatory: true. "should", "may", "recommended", "desirable" = is_mandatory: false. For ambiguous language, default to mandatory (safer for tender compliance).
-3. ONLY extract {category.display_name.lower()} requirements. Skip requirements that belong to other categories ({skip_list}).
+3. Category precedence: any DOCUMENT that must be SUBMITTED with the bid belongs to Submission Documents, even when its content is commercial, legal, or eligibility-related. Under that rule, extract an item here only if it is a {category.display_name.lower()} requirement, and leave requirements owned by another category to that category.
 4. Do NOT fabricate or infer requirements not explicitly stated in the documents.
 5. If no {category.display_name.lower()} requirements are found, return an empty items list.
 6. Be thorough -- missing a requirement could lead to tender disqualification.
-
+7. For source_document, copy the filename EXACTLY as it appears between SOURCE: and | in the labels -- do NOT translate, re-case, or drop the extension. For quote, copy the exact sentence(s) verbatim -- do NOT paraphrase.
+{valid_documents}
 DOCUMENT EXCERPTS:
 {context}"""
 

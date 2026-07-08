@@ -38,6 +38,23 @@ Offer documents:
 
 Extract the total price, currency, VAT inclusion, validity (days), payment terms,
 delivery time (weeks), any exclusions, any deviations, and priced line items.
+
+INSTRUCTIONS:
+1. Copy values EXACTLY as they appear in the source document -- do NOT convert
+   units, currencies, or reformat dates/numbers.
+2. If a field is not explicitly stated in the documents, set it to null. NEVER
+   fabricate or infer a value that is not written in the offer.
+3. Currency: capture the currency code or symbol exactly as printed (e.g. USD,
+   EGP, SAR, $, "L.E."). If the price is a bare number with no currency stated,
+   leave currency null rather than guessing.
+4. VAT: only set vat_included to true/false when the offer explicitly states
+   whether VAT/tax is included or excluded/additional (e.g. "prices include
+   VAT", "VAT not included", "plus 14% VAT"). If VAT is not mentioned at all,
+   leave vat_included null.
+5. If the offer documents are in Arabic (or mixed Arabic/English), extract
+   values from the Arabic text directly -- do NOT translate descriptions,
+   payment terms, or exclusions/deviations; keep them as verbatim quotes in
+   the source language.
 """
 
 _COMPLIANCE_PROMPT = """Assess this supplier offer against the tender requirements for package "{package_name}".
@@ -50,6 +67,16 @@ Offer summary:
 
 Decide overall_compliance (COMPLIANT / NON_COMPLIANT / PARTIAL), a 0-100
 compliance_score, any missing_items, deviations, and clarifications_needed.
+
+INSTRUCTIONS:
+1. Base the assessment only on what is explicitly stated in the requirements
+   and offer summary above -- NEVER fabricate or infer missing information.
+2. If a requirement is not addressed by the offer at all, list it in
+   missing_items rather than guessing compliance.
+3. If the offer text includes Arabic content, keep any quoted requirement or
+   deviation text verbatim in its original language -- do NOT translate it.
+4. Set overall_compliance to UNKNOWN only if there is not enough information
+   in the requirements or offer summary to make a determination.
 """
 
 

@@ -3,6 +3,8 @@ the LLM extraction/compliance response models used by OfferExtractor."""
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 # ----------------------------------------------------------------------------
@@ -11,36 +13,83 @@ from pydantic import BaseModel, Field
 
 
 class OfferLineItem(BaseModel):
-    description: str = ""
-    unit: str | None = None
-    quantity: float | None = None
-    rate: float | None = None
-    total: float | None = None
+    description: str = Field(default="", description="Line item description, or empty if not found")
+    unit: str | None = Field(default=None, description="Unit of measure, or null if not stated")
+    quantity: float | None = Field(default=None, description="Quantity, or null if not stated")
+    rate: float | None = Field(default=None, description="Unit rate/price, or null if not stated")
+    total: float | None = Field(default=None, description="Line total, or null if not stated")
 
 
 class OfferExtraction(BaseModel):
     """Commercial data extracted from a supplier's offer documents."""
 
-    total_price: float | None = None
-    currency: str | None = None
-    vat_included: bool | None = None
-    validity_days: int | None = None
-    payment_terms: str | None = None
-    delivery_weeks: int | None = None
-    exclusions: list[str] = Field(default_factory=list)
-    deviations: list[str] = Field(default_factory=list)
-    line_items: list[OfferLineItem] = Field(default_factory=list)
+    total_price: float | None = Field(
+        default=None,
+        description="Total offer price, or null if not found in the documents",
+    )
+    currency: str | None = Field(
+        default=None,
+        description="ISO or local currency code/symbol as it appears in the offer (e.g. USD, EGP, SAR), or null if not stated",
+    )
+    vat_included: bool | None = Field(
+        default=None,
+        description="Whether the total price includes VAT/tax; true if explicitly included, false if explicitly excluded/additional, null if not mentioned",
+    )
+    validity_days: int | None = Field(
+        default=None,
+        description="Offer validity period in days, or null if not stated",
+    )
+    payment_terms: str | None = Field(
+        default=None,
+        description="Payment terms as described in the offer, or null if not stated",
+    )
+    delivery_weeks: int | None = Field(
+        default=None,
+        description="Delivery/lead time in weeks, or null if not stated",
+    )
+    exclusions: list[str] = Field(
+        default_factory=list,
+        description="Explicit exclusions from scope stated in the offer",
+    )
+    deviations: list[str] = Field(
+        default_factory=list,
+        description="Explicit deviations from the tender requirements stated in the offer",
+    )
+    line_items: list[OfferLineItem] = Field(
+        default_factory=list,
+        description="Priced line items found in the offer",
+    )
 
 
 class ComplianceAnalysis(BaseModel):
     """Compliance of an offer against the tender checklist + package scope."""
 
-    overall_compliance: str = "UNKNOWN"  # COMPLIANT | NON_COMPLIANT | PARTIAL | UNKNOWN
-    compliance_score: float = 0.0  # 0-100
-    missing_items: list[str] = Field(default_factory=list)
-    deviations: list[str] = Field(default_factory=list)
-    clarifications_needed: list[str] = Field(default_factory=list)
-    notes: str = ""
+    overall_compliance: Literal["COMPLIANT", "NON_COMPLIANT", "PARTIAL", "UNKNOWN"] = Field(
+        default="UNKNOWN",
+        description="Overall compliance verdict against the tender requirements",
+    )
+    compliance_score: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=100.0,
+        description="Compliance score from 0 to 100",
+    )
+    missing_items: list[str] = Field(
+        default_factory=list,
+        description="Required items/documents that the offer does not address",
+    )
+    deviations: list[str] = Field(
+        default_factory=list,
+        description="Deviations from tender requirements found in the offer",
+    )
+    clarifications_needed: list[str] = Field(
+        default_factory=list,
+        description="Points that need clarification from the supplier",
+    )
+    notes: str = Field(
+        default="",
+        description="Brief explanation of the compliance assessment",
+    )
 
 
 # ----------------------------------------------------------------------------
