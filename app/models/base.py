@@ -95,15 +95,6 @@ class EmailStatus(str, enum.Enum):
     BOUNCED = "bounced"
 
 
-class UserRole(str, enum.Enum):
-    """Authorization role assigned to a user."""
-
-    ADMIN = "admin"
-    TENDER_MANAGER = "tender_manager"
-    ESTIMATOR = "estimator"
-    VIEWER = "viewer"
-
-
 class TimestampMixin:
     """Mixin providing created_at / updated_at columns."""
 

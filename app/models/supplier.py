@@ -21,7 +21,6 @@ from app.models.base import Base, OfferStatus, TimestampMixin
 
 if TYPE_CHECKING:
     from app.models.package import Package
-    from app.models.user import Organization
 
 
 class Supplier(Base, TimestampMixin):
@@ -30,9 +29,10 @@ class Supplier(Base, TimestampMixin):
     __tablename__ = "suppliers"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    organization_id: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True, index=True
-    )
+    # No longer a real FK: the organizations table (and Organization model)
+    # was removed with the dead auth cluster. Kept as a plain nullable
+    # column since it's still referenced elsewhere as always-NULL.
+    organization_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
 
     # Basic info
     name: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -81,7 +81,6 @@ class Supplier(Base, TimestampMixin):
     custom_fields: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     # Relationships
-    organization: Mapped[Organization | None] = relationship()
     offers: Mapped[list[SupplierOffer]] = relationship(back_populates="supplier")
 
     def __repr__(self) -> str:

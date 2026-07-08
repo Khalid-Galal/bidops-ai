@@ -16,11 +16,10 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import get_settings
 from app.database import get_db
 from app.models.project import Project
 from app.schemas.search import SearchResponse, SearchResultItem
-from app.services.search.hybrid_search import HybridSearchService
+from app.services.accessors import get_search_service as _get_search_service
 
 logger = logging.getLogger(__name__)
 
@@ -28,31 +27,6 @@ router = APIRouter(
     prefix="/projects/{project_id}/search",
     tags=["search"],
 )
-
-# Lazy singleton for the search service (same pattern as document_service).
-_search_service: HybridSearchService | None = None
-
-
-def _get_search_service() -> HybridSearchService:
-    """Get or create the HybridSearchService singleton.
-
-    Lazily initializes the EmbeddingService and HybridSearchService
-    on first call to avoid startup cost when search is not used.
-
-    Returns:
-        The HybridSearchService singleton instance.
-    """
-    global _search_service
-    if _search_service is None:
-        settings = get_settings()
-        from app.services.indexing.embedding_service import EmbeddingService
-
-        embedding_svc = EmbeddingService(
-            persist_dir=settings.chroma_persist_dir,
-            model_name=settings.embedding_model,
-        )
-        _search_service = HybridSearchService(embedding_service=embedding_svc)
-    return _search_service
 
 
 @router.get("", response_model=SearchResponse)

@@ -12,7 +12,6 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 # model (v1 + v2 domain) with Base.metadata for autogenerate.
 from app.models import Base  # noqa: F401
 from app.models import (  # noqa: F401
-    audit,
     boq,
     document,
     email,
@@ -20,7 +19,6 @@ from app.models import (  # noqa: F401
     package,
     project,
     supplier,
-    user,
 )
 
 # Alembic Config object

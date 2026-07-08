@@ -19,6 +19,11 @@ from app.config import get_settings
 from app.database import async_session_factory
 from app.models.project import Project
 from app.schemas.checklist import ChecklistResponse, RequirementsChecklist
+from app.services.accessors import (
+    get_citation_verifier,
+    get_llm_service,
+    get_search_service,
+)
 
 
 class ChecklistItemUpdate(BaseModel):
@@ -55,30 +60,11 @@ def _get_checklist_service():
                 detail="BIDOPS_GEMINI_API_KEY (or BIDOPS_GEMINI_API_KEYS) not configured. Set it in .env or environment.",
             )
         from app.services.extraction.checklist_service import ChecklistService
-        from app.services.extraction.citation_verifier import CitationVerifier
-        from app.services.indexing.embedding_service import EmbeddingService
-        from app.services.llm.gemini_service import GeminiService
-        from app.services.search.hybrid_search import HybridSearchService
 
-        embedding_svc = EmbeddingService(
-            persist_dir=settings.chroma_persist_dir,
-            model_name=settings.embedding_model,
-        )
-        search_svc = HybridSearchService(embedding_service=embedding_svc)
-        llm_svc = GeminiService(
-            api_keys=settings.gemini_key_list(),
-            model=settings.gemini_model,
-        )
-        verifier = CitationVerifier(
-            model_name=settings.nli_model,
-            confidence_high=settings.confidence_high_threshold,
-            confidence_low=settings.confidence_low_threshold,
-            review_threshold=settings.review_threshold,
-        )
         _checklist_service = ChecklistService(
-            search_service=search_svc,
-            llm_service=llm_svc,
-            citation_verifier=verifier,
+            search_service=get_search_service(),
+            llm_service=get_llm_service(),
+            citation_verifier=get_citation_verifier(),
         )
     return _checklist_service
 

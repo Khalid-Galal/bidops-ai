@@ -220,9 +220,11 @@ async def process_documents_batch(
                                 # the newly-indexed chunks (the search service is
                                 # a separate singleton with its own cache).
                                 try:
-                                    from app.api.search import _get_search_service
+                                    from app.services.accessors import (
+                                        get_search_service,
+                                    )
 
-                                    _get_search_service().invalidate_keyword_index(
+                                    get_search_service().invalidate_keyword_index(
                                         project_id
                                     )
                                 except Exception as inv_exc:  # pragma: no cover

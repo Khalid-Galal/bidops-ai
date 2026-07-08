@@ -1,6 +1,12 @@
-"""SQLAlchemy models for BidOps AI."""
+"""SQLAlchemy models for BidOps AI.
 
-from app.models.audit import AuditLog
+Note: the dead auth cluster (User, Organization, AuditLog, UserRole) was
+removed here (2026-07). No destructive migration was added to drop the
+now-orphaned `users`/`organizations`/`audit_logs` tables or the
+`suppliers.organization_id` column on existing DBs - leaving them is
+harmless and avoids risky DDL against live data.
+"""
+
 from app.models.base import (
     Base,
     DocumentCategory,
@@ -11,7 +17,6 @@ from app.models.base import (
     PackageStatus,
     ProjectStatus,
     TimestampMixin,
-    UserRole,
 )
 from app.models.boq import BOQItem
 from app.models.document import Document
@@ -20,10 +25,8 @@ from app.models.historical import HistoricalPrice
 from app.models.package import Package, PackageDocument
 from app.models.project import Project
 from app.models.supplier import Supplier, SupplierOffer
-from app.models.user import Organization, User
 
 __all__ = [
-    "AuditLog",
     "BOQItem",
     "Base",
     "Document",
@@ -34,7 +37,6 @@ __all__ = [
     "EmailType",
     "HistoricalPrice",
     "OfferStatus",
-    "Organization",
     "Package",
     "PackageDocument",
     "PackageStatus",
@@ -43,6 +45,4 @@ __all__ = [
     "Supplier",
     "SupplierOffer",
     "TimestampMixin",
-    "User",
-    "UserRole",
 ]

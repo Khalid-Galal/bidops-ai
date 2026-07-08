@@ -33,9 +33,9 @@ class DocumentLinker:
     def _search(self):
         if self._injected is not None:
             return self._injected
-        from app.api.search import _get_search_service
+        from app.services.accessors import get_search_service
 
-        return _get_search_service()
+        return get_search_service()
 
     async def _build_query(self, db: AsyncSession, package: Package) -> str:
         descs = (
