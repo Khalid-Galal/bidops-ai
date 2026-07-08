@@ -15,8 +15,7 @@
   </div>
   <div class="card">
     <h3>Fill client BOQ template (formula-preserving)</h3>
-    <form method="post" enctype="multipart/form-data"
-          action="/api/projects/{{ project.id }}/pricing/populate-template">
+    <form id="price-template-form" enctype="multipart/form-data">
       <input type="file" name="file" accept=".xlsx" required>
       <button class="btn btn-primary" type="submit">Fill + download</button>
     </form>
@@ -51,4 +50,11 @@ async function populatePrices() {
     + r.items_needs_review + ' need review)';
   window.load_pricing();
 }
+
+document.getElementById('price-template-form').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  await downloadFile('/api/projects/' + PID + '/pricing/populate-template',
+    { method: 'POST', body: fd });
+});
 </script>

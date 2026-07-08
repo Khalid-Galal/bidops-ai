@@ -4,7 +4,7 @@
     <label>Duration (months): <input id="deliv-months" type="number" min="0" value="0" size="6"></label>
     <label>Location: <input id="deliv-location" value="default" size="12"></label>
     <button class="btn btn-primary" onclick="buildDeliverables()">Build</button>
-    <a class="btn btn-secondary" href="/api/projects/{{ project.id }}/deliverables/download">Download zip</a>
+    <button class="btn btn-secondary" onclick="downloadFile('/api/projects/' + PID + '/deliverables/download')">Download zip</button>
     <div id="deliv-files"></div>
   </div>
 </section>

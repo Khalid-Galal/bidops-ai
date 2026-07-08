@@ -33,11 +33,40 @@ async function api(path, opts) {
   const resp = await fetch(path, opts || {});
   if (!resp.ok) {
     let detail = resp.status;
-    try { detail = (await resp.json()).detail || detail; } catch (e) {}
+    try {
+      const body = await resp.json();
+      detail = typeof body.detail === 'string' || body.detail === undefined
+        ? (body.detail || detail) : JSON.stringify(body.detail);
+    } catch (e) {}
     alert('Error: ' + detail);
     throw new Error(String(detail));
   }
   return resp.status === 204 ? null : resp.json();
+}
+
+async function downloadFile(path, opts) {
+  const resp = await fetch(path, opts || {});
+  if (!resp.ok) {
+    let detail = resp.status;
+    try {
+      const body = await resp.json();
+      detail = typeof body.detail === 'string' ? body.detail : JSON.stringify(body.detail || detail);
+    } catch (e) {}
+    alert('Error: ' + detail);
+    throw new Error(String(detail));
+  }
+  const disposition = resp.headers.get('Content-Disposition') || '';
+  const m = disposition.match(/filename="?([^"]+)"?/);
+  const filename = m ? m[1] : 'download';
+  const blob = await resp.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
 }
 
 function postJSON(path, body) {
@@ -56,11 +85,12 @@ function tbl(headers, rows) {
   for (const row of rows) {
     html += '<tr>';
     for (const cell of row) {
-      /* cells beginning with !html: are trusted button markup built locally */
-      if (typeof cell === 'string' && cell.indexOf('!html:') === 0) {
-        html += '<td>' + cell.slice(6) + '</td>';
+      /* {html: '...'} is trusted button markup built locally, passed out-of-band
+         so no string data value can ever be mistaken for trusted markup */
+      if (cell && typeof cell === 'object' && typeof cell.html === 'string') {
+        html += '<td>' + cell.html + '</td>';
       } else {
-        html += '<td>' + esc(cell) + '</td>';
+        html += '<td dir="auto">' + esc(cell) + '</td>';
       }
     }
     html += '</tr>';

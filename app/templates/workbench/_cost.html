@@ -8,7 +8,7 @@
   </div>
   <div class="card">
     <h3>Fill client indirects template (formula-preserving)</h3>
-    <form id="ind-template-form" method="post" enctype="multipart/form-data" action="#">
+    <form id="ind-template-form" enctype="multipart/form-data">
       <input type="file" name="file" accept=".xlsx" required>
       <button class="btn btn-primary" type="submit">Fill + download</button>
     </form>
@@ -32,11 +32,13 @@ window.load_cost = async function () {
     + tbl(['Component', 'Amount'], breakdown);
 };
 
-document.getElementById('ind-template-form').addEventListener('submit', function (e) {
-  /* set query params from the inputs at submit time, then let the browser POST */
+document.getElementById('ind-template-form').addEventListener('submit', async function (e) {
+  e.preventDefault();
   const months = document.getElementById('cost-months').value || 0;
   const loc = document.getElementById('cost-location').value || 'default';
-  e.target.action = '/api/projects/' + PID + '/indirects/populate-template?duration_months='
-    + encodeURIComponent(months) + '&location=' + encodeURIComponent(loc);
+  const fd = new FormData(e.target);
+  await downloadFile('/api/projects/' + PID + '/indirects/populate-template?duration_months='
+    + encodeURIComponent(months) + '&location=' + encodeURIComponent(loc),
+    { method: 'POST', body: fd });
 });
 </script>

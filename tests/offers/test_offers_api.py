@@ -55,9 +55,11 @@ async def test_ingest_list_patch_detail(offers_client):
         assert up.status_code == 201, up.text
         offer_id = up.json()["id"]
         assert up.json()["status"] == "received"
+        assert up.json()["supplier_name"] == "CoolAir"
 
         lst = await c.get(base)
         assert lst.status_code == 200 and len(lst.json()) == 1
+        assert lst.json()[0]["supplier_name"] == "CoolAir"
 
         patched = await c.patch(f"/api/offers/{offer_id}",
                                 json={"total_price": 100000, "currency": "USD", "delivery_weeks": 6})

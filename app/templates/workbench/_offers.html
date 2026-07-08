@@ -13,7 +13,7 @@
       <button class="btn btn-secondary" onclick="loadOffers()">Reload</button>
       <button class="btn btn-primary" onclick="scoreOffers()">Score + rank</button>
       <button class="btn btn-secondary" onclick="loadComparison()">Comparison</button>
-      <a class="btn btn-secondary" id="cmp-xlsx" href="#">Comparison.xlsx</a>
+      <button class="btn btn-secondary" id="cmp-xlsx" onclick="downloadComparisonXlsx()">Comparison.xlsx</button>
     </h3>
     <div id="offer-table"></div>
     <div id="cmp-table"></div>
@@ -41,24 +41,28 @@ window.load_offers = async function () {
 
 function offerPkgId() { return document.getElementById('offer-pkg').value; }
 
+function downloadComparisonXlsx() {
+  const pkgId = offerPkgId();
+  if (!pkgId) return;
+  downloadFile('/api/projects/' + PID + '/packages/' + pkgId + '/offers/comparison.xlsx');
+}
+
 async function loadOffers() {
   const pkgId = offerPkgId();
   if (!pkgId) return;
-  document.getElementById('cmp-xlsx').href =
-    '/api/projects/' + PID + '/packages/' + pkgId + '/offers/comparison.xlsx';
   const offers = await api('/api/projects/' + PID + '/packages/' + pkgId + '/offers');
   document.getElementById('offer-table').innerHTML = tbl(
     ['ID', 'Supplier', 'Status', 'Price', 'Ccy', 'Score', 'Rank', ''],
     offers.map(function (o) {
-      return [o.id, o.supplier_id, o.status, o.total_price, o.currency,
+      return [o.id, o.supplier_name || o.supplier_id, o.status, o.total_price, o.currency,
         o.overall_score, o.rank,
-        '!html:'
-        + '<button class="btn btn-secondary" onclick="offerDetail(' + o.id + ')">Detail</button> '
-        + '<button class="btn btn-primary" onclick="editCommercial(' + o.id + ')">Edit commercial</button> '
-        + '<button class="btn btn-secondary" onclick="offerAct(' + o.id + ',\'extract\')">Extract</button> '
-        + '<button class="btn btn-secondary" onclick="offerAct(' + o.id + ',\'check-compliance\')">Compliance</button> '
-        + '<button class="btn btn-primary" onclick="offerAct(' + o.id + ',\'select\')">Select</button> '
-        + '<button class="btn btn-secondary" onclick="clarify(' + o.id + ')">Clarify</button>'];
+        { html:
+          '<button class="btn btn-secondary" onclick="offerDetail(' + o.id + ')">Detail</button> '
+          + '<button class="btn btn-primary" onclick="editCommercial(' + o.id + ')">Edit commercial</button> '
+          + '<button class="btn btn-secondary" onclick="offerAct(' + o.id + ',\'extract\')">Extract</button> '
+          + '<button class="btn btn-secondary" onclick="offerAct(' + o.id + ',\'check-compliance\')">Compliance</button> '
+          + '<button class="btn btn-primary" onclick="offerAct(' + o.id + ',\'select\')">Select</button> '
+          + '<button class="btn btn-secondary" onclick="clarify(' + o.id + ')">Clarify</button>' }];
     })
   );
 }

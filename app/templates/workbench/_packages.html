@@ -3,7 +3,7 @@
     <button class="btn btn-primary" onclick="pkgAction('generate')">Generate packages</button>
     <button class="btn btn-secondary" onclick="pkgAction('link-documents')">Link documents</button>
     <button class="btn btn-secondary" onclick="pkgAction('export')">Export folders + register</button>
-    <a class="btn btn-secondary" href="/api/projects/{{ project.id }}/packages/register">Download register</a>
+    <button class="btn btn-secondary" onclick="downloadFile('/api/projects/' + PID + '/packages/register')">Download register</button>
   </p>
   <div class="card">
     <h3>Packages</h3>
@@ -21,7 +21,7 @@ window.load_packages = async function () {
     ['Code', 'Name', 'Trade', 'Status', 'Items', ''],
     pkgs.map(function (p) {
       return [p.code, p.name, p.trade_category, p.status, p.total_items,
-        '!html:<button class="btn btn-secondary" onclick="pkgDetail(' + p.id + ')">Detail</button>'];
+        { html: '<button class="btn btn-secondary" onclick="pkgDetail(' + p.id + ')">Detail</button>' }];
     })
   );
 };

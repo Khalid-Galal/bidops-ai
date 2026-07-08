@@ -35,16 +35,18 @@ async function indexProject() {
   alert('Indexed ' + r.indexed + ' priced items into the corpus');
 }
 
+window._histDescriptions = {};
+
 async function loadSuggestions() {
   const s = await api('/api/projects/' + PID + '/historical/suggestions?only_unpriced=true');
   document.getElementById('hist-suggestions').innerHTML = tbl(
     ['#', 'Description', 'Suggested', 'Range', 'Matches', ''],
     s.suggestions.map(function (it) {
       const b = it.suggestion.benchmark;
-      const apply = b.suggested_rate === null ? '' :
-        '!html:<button class="btn btn-primary" onclick="applySuggestion('
-        + it.boq_item_id + ',' + b.suggested_rate + ',\''
-        + encodeURIComponent(it.description) + '\')">Apply ' + b.suggested_rate + '</button>';
+      window._histDescriptions[it.boq_item_id] = it.description;
+      const apply = b.suggested_rate === null ? '' : { html:
+        '<button class="btn btn-primary" onclick="applySuggestion('
+        + it.boq_item_id + ',' + b.suggested_rate + ')">Apply ' + b.suggested_rate + '</button>' };
       return [it.line_number, it.description,
         b.suggested_rate === null ? '—' : (b.suggested_rate + ' ' + (b.currency || '')),
         b.count ? (b.min + ' – ' + b.max) : 'no match',
@@ -53,7 +55,7 @@ async function loadSuggestions() {
   );
 }
 
-async function applySuggestion(itemId, rate, encDesc) {
+async function applySuggestion(itemId, rate) {
   await api('/api/boq-items/' + itemId + '/price', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -61,7 +63,7 @@ async function applySuggestion(itemId, rate, encDesc) {
   });
   /* feedback loop: the accepted rate re-enters the corpus */
   await postJSON('/api/historical/feedback',
-    { description: decodeURIComponent(encDesc), accepted_rate: rate });
+    { description: window._histDescriptions[itemId], accepted_rate: rate });
   alert('Applied ' + rate + ' and recorded feedback');
   loadSuggestions();
 }
@@ -97,6 +99,7 @@ document.getElementById('hist-import-form').addEventListener('submit', async fun
   const fd = new FormData(e.target);
   const r = await api('/api/historical/import', { method: 'POST', body: fd });
   document.getElementById('hist-import-result').textContent =
-    'imported ' + r.imported + ', skipped ' + r.skipped;
+    'imported ' + r.imported + ', skipped ' + r.skipped
+    + (r.total_errors ? ' — ' + r.total_errors + ' errors: ' + r.errors.join('; ') : '');
 });
 </script>

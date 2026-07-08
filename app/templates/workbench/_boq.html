@@ -22,7 +22,7 @@ window.load_boq = async function () {
         i.classification_confidence,
         i.unit_rate === undefined ? '' : i.unit_rate,
         i.total_price === undefined ? '' : i.total_price,
-        '!html:<button class="btn btn-secondary" onclick="setRate(' + i.id + ')">Set rate</button>'];
+        { html: '<button class="btn btn-secondary" onclick="setRate(' + i.id + ')">Set rate</button>' }];
     })
   );
 };

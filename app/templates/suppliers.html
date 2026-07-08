@@ -50,7 +50,11 @@ async function api(path, opts) {
   const resp = await fetch(path, opts || {});
   if (!resp.ok) {
     let detail = resp.status;
-    try { detail = (await resp.json()).detail || detail; } catch (e) {}
+    try {
+      const body = await resp.json();
+      detail = typeof body.detail === 'string' || body.detail === undefined
+        ? (body.detail || detail) : JSON.stringify(body.detail);
+    } catch (e) {}
     alert('Error: ' + detail);
     throw new Error(String(detail));
   }
@@ -148,7 +152,8 @@ document.getElementById('supplier-import-form').addEventListener('submit', async
   const upd = document.getElementById('import-update').checked ? '?update_existing=true' : '';
   const result = await api('/api/suppliers/import' + upd, { method: 'POST', body: fd });
   document.getElementById('import-result').textContent =
-    'imported ' + result.imported + ', updated ' + result.updated + ', skipped ' + result.skipped;
+    'imported ' + result.imported + ', updated ' + result.updated + ', skipped ' + result.skipped
+    + (result.total_errors ? ' — ' + result.total_errors + ' errors: ' + result.errors.join('; ') : '');
   loadSuppliers();
 });
 

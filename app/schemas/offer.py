@@ -123,6 +123,7 @@ class OfferResponse(BaseModel):
     id: int
     package_id: int
     supplier_id: int
+    supplier_name: str | None = None
     status: str
     total_price: float | None = None
     currency: str | None = None

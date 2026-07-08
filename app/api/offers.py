@@ -9,6 +9,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.background import BackgroundTask
 
@@ -47,7 +48,7 @@ async def _detail(db: AsyncSession, offer) -> OfferDetailResponse:
     supplier = await db.get(Supplier, offer.supplier_id)
     base = OfferResponse.model_validate(offer)
     return OfferDetailResponse(
-        **base.model_dump(),
+        **base.model_dump(exclude={"supplier_name"}),
         supplier_name=supplier.name if supplier else None,
         vat_included=offer.vat_included,
         exclusions=offer.exclusions,
@@ -103,7 +104,10 @@ async def ingest_offer(
                 out.write(chunk)
         saved.append(str(target))
     offer = await OfferService().create_offer(db, package_id, supplier_id, saved)
-    return OfferResponse.model_validate(offer)
+    supplier = await db.get(Supplier, offer.supplier_id)
+    resp = OfferResponse.model_validate(offer)
+    resp.supplier_name = supplier.name if supplier else None
+    return resp
 
 
 @router.get(
@@ -115,7 +119,22 @@ async def list_offers(
 ) -> list[OfferResponse]:
     await _require_package(db, project_id, package_id)
     offers = await OfferService().list_offers(db, package_id)
-    return [OfferResponse.model_validate(o) for o in offers]
+    suppliers = {
+        s.id: s.name
+        for s in (
+            await db.execute(
+                select(Supplier).where(Supplier.id.in_({o.supplier_id for o in offers}))
+            )
+        )
+        .scalars()
+        .all()
+    }
+    result = []
+    for o in offers:
+        resp = OfferResponse.model_validate(o)
+        resp.supplier_name = suppliers.get(o.supplier_id)
+        result.append(resp)
+    return result
 
 
 @router.post(

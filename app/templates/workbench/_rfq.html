@@ -76,9 +76,10 @@ async function loadEmails() {
     ['ID', 'Type', 'Status', 'To', 'Subject', ''],
     emails.map(function (m) {
       return [m.id, m.email_type, m.status, (m.to || []).join(', '), m.subject,
-        '!html:<button class="btn btn-secondary" onclick="previewEmail(' + m.id + ')">Preview</button> '
-        + '<button class="btn btn-secondary" onclick="editEmail(' + m.id + ')">Edit</button> '
-        + '<button class="btn btn-primary" onclick="sendEmail(' + m.id + ')">Send</button>'];
+        { html:
+          '<button class="btn btn-secondary" onclick="previewEmail(' + m.id + ')">Preview</button> '
+          + '<button class="btn btn-secondary" onclick="editEmail(' + m.id + ')">Edit</button> '
+          + '<button class="btn btn-primary" onclick="sendEmail(' + m.id + ')">Send</button>' }];
     })
   );
 }

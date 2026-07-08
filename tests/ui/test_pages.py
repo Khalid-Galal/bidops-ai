@@ -165,3 +165,29 @@ async def test_project_page_has_versioning_controls(ui_client):
         # the documents table renders Category/Version headers when docs exist;
         # with no docs the empty state shows — the button must exist regardless
         assert "Analyze versions" in r.text
+
+
+async def test_project_page_has_distinct_error_states(ui_client):
+    client, pid = ui_client
+    async with client as c:
+        r = await c.get(f"/projects/{pid}")
+        assert 'id="summary-error"' in r.text
+        assert 'id="checklist-error"' in r.text
+
+
+async def test_workbench_downloads_use_downloadFile_not_raw_links(ui_client):
+    client, pid = ui_client
+    async with client as c:
+        r = await c.get(f"/projects/{pid}/workbench")
+        # native download links/forms are gone; downloadFile() helper is used instead
+        assert 'href="/api/projects/' not in r.text
+        assert "function downloadFile" in r.text
+        assert "downloadFile(" in r.text
+
+
+async def test_workbench_tbl_uses_out_of_band_html_marker(ui_client):
+    client, pid = ui_client
+    async with client as c:
+        r = await c.get(f"/projects/{pid}/workbench")
+        assert "!html:" not in r.text
+        assert "cell.html" in r.text

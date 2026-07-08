@@ -169,6 +169,14 @@
         </div>
     </div>
 
+    <!-- Error state -->
+    <div class="card" id="summary-error" style="display: none;">
+        <div class="empty-state">
+            <p>Could not load extraction results.</p>
+            <p id="summary-error-detail"></p>
+        </div>
+    </div>
+
     <!-- Data display -->
     <div id="summary-data" style="display: none;"></div>
 </div>
@@ -191,6 +199,14 @@
         <div class="empty-state">
             <p>Checklist extraction in progress...</p>
             <p>This may take a few minutes. Refresh the page to check for updates.</p>
+        </div>
+    </div>
+
+    <!-- Error state -->
+    <div class="card" id="checklist-error" style="display: none;">
+        <div class="empty-state">
+            <p>Could not load checklist results.</p>
+            <p id="checklist-error-detail"></p>
         </div>
     </div>
 
@@ -267,16 +283,18 @@
         var loading = document.getElementById('summary-loading');
         var empty = document.getElementById('summary-empty');
         var progress = document.getElementById('summary-progress');
+        var error = document.getElementById('summary-error');
         var data = document.getElementById('summary-data');
 
         loading.style.display = 'block';
         empty.style.display = 'none';
         progress.style.display = 'none';
+        error.style.display = 'none';
         data.style.display = 'none';
 
         try {
             var resp = await fetch('/api/projects/' + pid + '/extract');
-            if (!resp.ok) throw new Error('Failed to load extraction results');
+            if (!resp.ok) throw new Error('Failed to load extraction results (HTTP ' + resp.status + ')');
             var result = await resp.json();
 
             loading.style.display = 'none';
@@ -294,7 +312,8 @@
             }
         } catch (err) {
             loading.style.display = 'none';
-            empty.style.display = 'block';
+            document.getElementById('summary-error-detail').textContent = err.message;
+            error.style.display = 'block';
             console.error('Summary load error:', err);
         }
     }
@@ -320,7 +339,7 @@
                 html += '    <span class="review-flag">Requires Review</span>';
             }
             html += '  </div>';
-            html += '  <div class="' + valueClass + '">' + escapeHtml(displayValue) + '</div>';
+            html += '  <div class="' + valueClass + '" dir="auto">' + escapeHtml(displayValue) + '</div>';
 
             // Citations
             if (field.citations && field.citations.length > 0) {
@@ -377,16 +396,18 @@
         var loading = document.getElementById('checklist-loading');
         var empty = document.getElementById('checklist-empty');
         var progress = document.getElementById('checklist-progress');
+        var error = document.getElementById('checklist-error');
         var data = document.getElementById('checklist-data');
 
         loading.style.display = 'block';
         empty.style.display = 'none';
         progress.style.display = 'none';
+        error.style.display = 'none';
         data.style.display = 'none';
 
         try {
             var resp = await fetch('/api/projects/' + pid + '/checklist');
-            if (!resp.ok) throw new Error('Failed to load checklist results');
+            if (!resp.ok) throw new Error('Failed to load checklist results (HTTP ' + resp.status + ')');
             var result = await resp.json();
 
             loading.style.display = 'none';
@@ -403,7 +424,8 @@
             }
         } catch (err) {
             loading.style.display = 'none';
-            empty.style.display = 'block';
+            document.getElementById('checklist-error-detail').textContent = err.message;
+            error.style.display = 'block';
             console.error('Checklist load error:', err);
         }
     }
@@ -447,9 +469,9 @@
                 html += '  <div class="checklist-item' + checkedClass + '" id="ci-' + cat.key + '-' + idx + '">';
                 html += '    <input type="checkbox"' + checkedAttr + ' onchange="toggleChecklistItem(' + projectId + ', ' + idx + ', \'' + cat.key + '\', this.checked)">';
                 html += '    <div class="checklist-item-content">';
-                html += '      <div class="checklist-item-text">' + escapeHtml(item.requirement || '') + '</div>';
+                html += '      <div class="checklist-item-text" dir="auto">' + escapeHtml(item.requirement || '') + '</div>';
                 if (item.description) {
-                    html += '      <div class="checklist-item-description">' + escapeHtml(item.description) + '</div>';
+                    html += '      <div class="checklist-item-description" dir="auto">' + escapeHtml(item.description) + '</div>';
                 }
                 html += '      <div class="checklist-item-meta">';
                 if (item.is_mandatory) {
