@@ -45,8 +45,12 @@ WORKDIR /home/user/app
 
 # Install CPU-only torch FIRST so the heavy CUDA build is never pulled in as a
 # transitive dependency of sentence-transformers / docling / easyocr.
+# MUST match requirements.txt's torch pin exactly: `torch==X.Y.Z` is satisfied
+# by the X.Y.Z+cpu wheel, so pip leaves it alone -- but ANY version mismatch
+# makes the requirements install "correct" it from PyPI, which is the CUDA
+# build (+~8GB of nvidia wheels; wedged the Space in APP_STARTING once).
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir torch torchvision \
+    pip install --no-cache-dir torch==2.12.0 torchvision \
         --index-url https://download.pytorch.org/whl/cpu
 
 # Python dependencies (kept as its own layer for build caching).

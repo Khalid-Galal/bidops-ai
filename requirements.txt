@@ -56,7 +56,10 @@ tenacity
 weasyprint
 
 # Load-bearing transitive dependencies (pinned to local versions)
-torch==2.12.0  # torch 2.10+ breaks easyocr's quantization; pin to <2.10 or known-good version
+# Locally tested version; easyocr 1.7.2 works on it (deprecation warning only).
+# MUST stay in lockstep with the Dockerfile's CPU-index preinstall: a mismatch
+# makes pip "correct" torch from PyPI = the CUDA build (+~8GB nvidia wheels).
+torch==2.12.0
 huggingface_hub==1.18.0
 numpy==2.4.6
 
