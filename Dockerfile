@@ -57,20 +57,14 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY --chown=user:user requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Bake the embedding + NLI models into the image so an ephemeral Space does not
-# re-download ~1.5GB on every restart. If the build ever times out, comment
-# these two lines out -- the app will lazy-download them on first use instead.
-RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('paraphrase-multilingual-mpnet-base-v2')"
-RUN python -c "from sentence_transformers import CrossEncoder; CrossEncoder('MoritzLaurer/mDeBERTa-v3-base-mnli-xnli')"
-
-# Bake the heavy PDF-parsing models so the first tender ingest does not download
-# ~2GB over the network on an ephemeral Space. Both caches land under HOME
-# (already /home/user here): docling -> ~/.cache/docling/models, easyocr ->
-# ~/.EasyOCR, which is exactly where pdf_parser.py reads them at runtime.
-# If the build ever times out, comment these two lines out -- the app will
-# lazy-download the models on first PDF parse instead.
-RUN python -c "from docling.utils.model_downloader import download_models; download_models()"
-RUN python -c "import easyocr; easyocr.Reader(['en', 'ar'], gpu=False)"
+# NO models are baked into the image. A fully-baked image (~+4GB: embedding,
+# multilingual NLI, docling layout/table, easyocr en+ar) made HF's free-tier
+# scheduler refuse to place the container ("unable to schedule" / wedged in
+# APP_STARTING). Instead entrypoint.sh routes all model caches onto the
+# persistent /data volume, so each model downloads at most once per volume
+# lifetime and every later restart/rebuild warms from disk -- same effect as
+# baking, without the image weight. Without a volume the caches are ephemeral
+# and re-download per restart (degraded but functional).
 
 # Application code (app/ package + config/rules.default.json).
 COPY --chown=user:user . .
