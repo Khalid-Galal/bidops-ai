@@ -18,8 +18,6 @@ tests/
 docs/
 .planning/
 scripts/
-migrations/
-alembic.ini
 bidops-ai/
 .claude/
 .playwright-mcp/

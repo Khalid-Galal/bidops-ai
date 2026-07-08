@@ -6,12 +6,22 @@ FROM python:3.11-slim
 # System libraries needed by some Python deps:
 #  - libgl1 / libglib2.0-0: OpenCV (easyocr / docling image handling)
 #  - libgomp1: OpenMP runtime used by torch / onnxruntime
-# (WeasyPrint/GTK is intentionally NOT installed -- PDF export degrades to 501;
-#  Excel export works.)
+#  - libpango-1.0-0 / libpangoft2-1.0-0 / libharfbuzz-subset0 / fontconfig:
+#    WeasyPrint's native text-rendering stack (no GTK needed on WeasyPrint>=61).
+#    With these present pdf_export.py's capability probe succeeds and PDF export
+#    returns 200 instead of degrading to 501.
+#  - fonts-dejavu-core / fonts-noto-naskh-arabic: Latin + Arabic glyphs so
+#    tender deliverables (which include Arabic) render correctly.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libgl1 \
         libglib2.0-0 \
         libgomp1 \
+        libpango-1.0-0 \
+        libpangoft2-1.0-0 \
+        libharfbuzz-subset0 \
+        fontconfig \
+        fonts-dejavu-core \
+        fonts-noto-naskh-arabic \
     && rm -rf /var/lib/apt/lists/*
 
 # Run as the UID 1000 user HF expects.
@@ -25,6 +35,8 @@ ENV HOME=/home/user \
     # Warm the embedding model at startup (it is baked into the image below, so
     # this loads from cache rather than downloading -- /ready flips to warm).
     BIDOPS_WARMUP_MODELS_ON_STARTUP=true \
+    # Cap free-tier LLM/API usage: token-bucket limiter on (safety valve).
+    BIDOPS_RATE_LIMIT_ENABLED=true \
     # The free-tier rotation keys use flash; override via a Space variable.
     BIDOPS_GEMINI_MODEL=gemini-2.5-flash
 
@@ -45,6 +57,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 # these two lines out -- the app will lazy-download them on first use instead.
 RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('paraphrase-multilingual-mpnet-base-v2')"
 RUN python -c "from sentence_transformers import CrossEncoder; CrossEncoder('cross-encoder/nli-deberta-v3-xsmall')"
+
+# Bake the heavy PDF-parsing models so the first tender ingest does not download
+# ~2GB over the network on an ephemeral Space. Both caches land under HOME
+# (already /home/user here): docling -> ~/.cache/docling/models, easyocr ->
+# ~/.EasyOCR, which is exactly where pdf_parser.py reads them at runtime.
+# If the build ever times out, comment these two lines out -- the app will
+# lazy-download the models on first PDF parse instead.
+RUN python -c "from docling.utils.model_downloader import download_models; download_models()"
+RUN python -c "import easyocr; easyocr.Reader(['en', 'ar'], gpu=False)"
 
 # Application code (app/ package + config/rules.default.json).
 COPY --chown=user:user . .

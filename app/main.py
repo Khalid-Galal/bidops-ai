@@ -39,6 +39,73 @@ from app.models import Base
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
+def _make_alembic_config():
+    """Build an Alembic Config pointing at the shipped migrations/ + alembic.ini.
+
+    Returns None (and logs) when the assets are missing -- e.g. an older image
+    that still excluded them -- so startup degrades gracefully instead of
+    crashing. Paths and the DB URL are resolved from the app settings/layout so
+    the same hook works locally and in the container.
+    """
+    from alembic.config import Config
+
+    root = Path(__file__).resolve().parent.parent
+    ini_path = root / "alembic.ini"
+    migrations_dir = root / "migrations"
+    if not ini_path.exists() or not migrations_dir.exists():
+        logger.warning(
+            "Alembic assets missing (alembic.ini / migrations/) -- skipping "
+            "migrations"
+        )
+        return None
+    cfg = Config(str(ini_path))
+    cfg.set_main_option("script_location", str(migrations_dir))
+    cfg.set_main_option(
+        "sqlalchemy.url", f"sqlite+aiosqlite:///{get_settings().database_path}"
+    )
+    return cfg
+
+
+def _alembic_upgrade_head() -> None:
+    """Bring an EXISTING database up to the latest schema before create_all.
+
+    create_all only adds missing tables; it never ALTERs existing ones, so a DB
+    restored from an HF Dataset snapshot / persistent volume needs the migration
+    chain replayed. Best effort -- a failure here must never wedge startup.
+
+    Runs the Alembic env (which uses asyncio.run) in a worker thread via the
+    caller's asyncio.to_thread, so it must not be invoked on the running loop.
+    """
+    try:
+        from alembic import command
+
+        cfg = _make_alembic_config()
+        if cfg is None:
+            return
+        command.upgrade(cfg, "head")
+        logger.info("Alembic: existing database upgraded to head")
+    except Exception as exc:  # pragma: no cover - never wedge startup
+        logger.warning("Alembic upgrade skipped/failed: %s", exc)
+
+
+def _alembic_stamp_head() -> None:
+    """Stamp a FRESH database (just built by create_all) at head.
+
+    Records the current revision as the baseline so future `upgrade head` runs
+    only apply migrations authored after this deploy. Best effort.
+    """
+    try:
+        from alembic import command
+
+        cfg = _make_alembic_config()
+        if cfg is None:
+            return
+        command.stamp(cfg, "head")
+        logger.info("Alembic: fresh database stamped at head")
+    except Exception as exc:  # pragma: no cover - never wedge startup
+        logger.warning("Alembic stamp skipped/failed: %s", exc)
+
 # Jinja2 template engine (accessible from pages.py via import)
 templates_dir = Path(__file__).parent / "templates"
 templates_dir.mkdir(parents=True, exist_ok=True)
@@ -77,9 +144,22 @@ async def lifespan(app: FastAPI):
         except asyncio.TimeoutError:
             logger.warning("Snapshot restore timed out -- starting fresh")
 
+    # Apply schema migrations to a DB restored from a snapshot / volume BEFORE
+    # create_all. Capture existence first: engine.begin() below creates the file
+    # for fresh installs. The upgrade runs while the app engine is still lazy
+    # (no pooled connection yet), preserving the restore-then-bind ordering.
+    db_existed = Path(settings.database_path).exists()
+    if db_existed:
+        await asyncio.to_thread(_alembic_upgrade_head)
+
     # Startup: create database tables
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    # Fresh DBs are fully built by create_all above; stamp them at head so the
+    # migration chain has a baseline for future upgrades.
+    if not db_existed:
+        await asyncio.to_thread(_alembic_stamp_head)
 
     # Ensure required directories exist
     Path("data").mkdir(parents=True, exist_ok=True)

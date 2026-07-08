@@ -1,5 +1,5 @@
 # Core framework
-fastapi[standard]
+fastapi[standard-no-fastapi-cloud-cli]==0.136.3
 uvicorn
 
 # Database
@@ -10,8 +10,8 @@ alembic
 # Document parsing
 # docling is capped: 2.101 tightened validation twice (TableFormerMode enum,
 # eager OCR-engine check); review release notes before raising the cap.
-docling>=2.98,<2.102
-easyocr
+docling==2.98.0
+easyocr==1.7.2
 openpyxl
 
 # Additional document formats (Phase 7A)
@@ -41,8 +41,8 @@ python-bidi>=0.6
 lingua-language-detector
 
 # Vector database and embeddings (Phase 2)
-chromadb
-sentence-transformers
+chromadb==1.5.9
+sentence-transformers==5.5.1
 
 # BM25 keyword search (Phase 2)
 rank-bm25
@@ -54,3 +54,11 @@ tenacity
 
 # PDF report generation (Phase 5)
 weasyprint
+
+# Load-bearing transitive dependencies (pinned to local versions)
+torch==2.12.0  # torch 2.10+ breaks easyocr's quantization; pin to <2.10 or known-good version
+huggingface_hub==1.18.0
+numpy==2.4.6
+
+# NOTE: This requirements.txt should be captured as requirements.lock on next rebuild
+# to create a complete reproducible environment across Space deployments.
